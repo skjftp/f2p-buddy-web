@@ -3,7 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { getFirestoreInstance } from '../../config/firebase';
 import { Campaign } from '../../store/slices/campaignSlice';
-import { useTheme } from '../../contexts/ThemeContext';
+// import { useTheme } from '../../contexts/ThemeContext';
 import CampaignCard from '../../components/campaigns/CampaignCard';
 import LeaderboardWidget from '../../components/dashboard/LeaderboardWidget';
 import AchievementTracker from '../../components/achievements/AchievementTracker';

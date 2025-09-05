@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store/store';
 
@@ -40,7 +40,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isDark, setIsDark] = useState(false);
   const organization = useSelector((state: RootState) => state.organization.current);
 
-  const getThemeColors = (): ThemeColors => {
+  const getThemeColors = useCallback((): ThemeColors => {
     const baseColors = {
       primary: organization?.primaryColor || defaultColors.primary,
       secondary: organization?.secondaryColor || defaultColors.secondary,
@@ -63,7 +63,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       text: '#333333',
       textSecondary: '#666666',
     };
-  };
+  }, [isDark, organization]);
 
   const toggleTheme = () => {
     setIsDark(!isDark);
