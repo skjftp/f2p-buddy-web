@@ -4,21 +4,22 @@ FROM golang:1.21-alpine AS builder
 # Set working directory
 WORKDIR /app
 
-# Install git (required for some Go modules)
-RUN apk add --no-cache git
+# Install git and ca-certificates (required for some Go modules)
+RUN apk add --no-cache git ca-certificates
 
-# Copy go mod files
+# Copy go module files first to leverage Docker layer caching
 COPY go.mod ./
-COPY go.sum* ./
 
-# Download dependencies and create go.sum if it doesn't exist
-RUN go mod download
+# Copy all source files
+COPY *.go ./
+
+# Initialize go modules and download dependencies
+# This will generate the proper go.sum file with all checksums
 RUN go mod tidy
+RUN go mod download
+RUN go mod verify
 
-# Copy source code
-COPY . .
-
-# Build the application
+# Build the application (Go will automatically exclude test files)
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 
 # Final stage

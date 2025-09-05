@@ -150,14 +150,15 @@ func getAchievements(c *gin.Context) {
 	achievementType := c.Query("type")
 	verified := c.Query("verified")
 
-	// Build query
-	query := firestoreClient.Collection("achievements")
+	// Build query properly
+	var query firestore.Query
+	baseQuery := firestoreClient.Collection("achievements")
 
 	if userID != "" {
-		query = query.Where("userId", "==", userID)
+		query = baseQuery.Where("userId", "==", userID)
 	} else {
 		// Default to current user's achievements
-		query = query.Where("userId", "==", uid.(string))
+		query = baseQuery.Where("userId", "==", uid.(string))
 	}
 
 	if campaignID != "" {

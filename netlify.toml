@@ -9,7 +9,7 @@
 
 [[redirects]]
   from = "/api/*"
-  to = "https://f2p-buddy-api-xyz123-uc.a.run.app/api/:splat"
+  to = "https://f2p-buddy-api-429516619081.us-central1.run.app/api/:splat"
   status = 200
   force = true
 

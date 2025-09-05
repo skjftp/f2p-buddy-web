@@ -39,7 +39,7 @@ class ConfigService {
       // Try different backend URLs based on environment
       const possibleUrls = [
         process.env.REACT_APP_API_BASE_URL, // If set in environment
-        'https://f2p-buddy-api-xyz123-uc.a.run.app', // Cloud Run URL (update when deployed)
+        'https://f2p-buddy-api-429516619081.us-central1.run.app', // Deployed Cloud Run URL
         'http://localhost:8080', // Local development
       ].filter(Boolean);
 
