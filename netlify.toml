@@ -1,0 +1,37 @@
+[build]
+  command = "npm run build"
+  publish = "build"
+
+[build.environment]
+  REACT_APP_FIREBASE_API_KEY = "AIzaSyDJ8k9X2Y3Z4A5B6C7D8E9F0G1H2I3J4K5L"
+  REACT_APP_FIREBASE_AUTH_DOMAIN = "f2p-buddy-1756234727.firebaseapp.com"
+  REACT_APP_FIREBASE_PROJECT_ID = "f2p-buddy-1756234727"
+  REACT_APP_FIREBASE_STORAGE_BUCKET = "f2p-buddy-1756234727.appspot.com"
+  REACT_APP_FIREBASE_MESSAGING_SENDER_ID = "123456789012"
+  REACT_APP_FIREBASE_APP_ID = "1:123456789012:web:1234567890abcdef"
+  REACT_APP_API_BASE_URL = "https://f2p-buddy-api-xyz123-uc.a.run.app"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://f2p-buddy-api-xyz123-uc.a.run.app/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+
+[[headers]]
+  for = "/static/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
