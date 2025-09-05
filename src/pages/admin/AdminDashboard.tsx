@@ -11,7 +11,7 @@ import EmployeeManagement from '../../components/admin/EmployeeManagement';
 type TabType = 'overview' | 'campaigns' | 'employees' | 'analytics';
 
 const AdminDashboard: React.FC = () => {
-  const { user, organization, logout } = useAuth();
+  const { organization, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);

@@ -11,7 +11,7 @@ interface StatsOverviewProps {
 }
 
 const StatsOverview: React.FC<StatsOverviewProps> = ({ stats }) => {
-  const { colors } = useTheme();
+  // const { colors } = useTheme();
 
   const statCards = [
     {

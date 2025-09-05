@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { collection, query, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { getFirestoreInstance } from '../../config/firebase';
 import { Campaign } from '../../store/slices/campaignSlice';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -11,7 +11,7 @@ import StatsOverview from '../../components/dashboard/StatsOverview';
 
 const EmployeeDashboard: React.FC = () => {
   const { user, organization, logout } = useAuth();
-  const { colors } = useTheme();
+  // const { colors } = useTheme();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [activeCampaigns, setActiveCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);

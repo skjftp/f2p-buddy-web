@@ -27,11 +27,11 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
     }
   };
 
-  const calculateProgress = () => {
-    const total = campaign.metrics.sales?.target || 0;
-    const achieved = campaign.metrics.sales?.achieved || 0;
-    return total > 0 ? (achieved / total) * 100 : 0;
-  };
+  // const calculateProgress = () => {
+  //   const total = campaign.metrics.sales?.target || 0;
+  //   const achieved = campaign.metrics.sales?.achieved || 0;
+  //   return total > 0 ? (achieved / total) * 100 : 0;
+  // };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {

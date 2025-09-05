@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface AnalyticsDashboardProps {
@@ -6,7 +6,7 @@ interface AnalyticsDashboardProps {
 }
 
 const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ organizationId }) => {
-  const [analyticsData, setAnalyticsData] = useState({
+  const [analyticsData] = useState({
     performanceData: [
       { month: 'Jan', sales: 45000, calls: 320, meetings: 45 },
       { month: 'Feb', sales: 52000, calls: 380, meetings: 52 },

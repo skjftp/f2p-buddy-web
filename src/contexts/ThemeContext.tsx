@@ -86,7 +86,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     document.documentElement.style.setProperty('--color-surface', colors.surface);
     document.documentElement.style.setProperty('--color-text', colors.text);
     document.documentElement.style.setProperty('--color-text-secondary', colors.textSecondary);
-  }, [isDark, organization]);
+  }, [isDark, organization, getThemeColors]);
 
   const value: ThemeContextType = {
     colors: getThemeColors(),

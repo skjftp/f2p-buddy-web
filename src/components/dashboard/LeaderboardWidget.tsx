@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, orderBy, limit, onSnapshot } from 'firebase/firestore';
-import { db } from '../../config/firebase';
+// import { collection, query, where, orderBy, limit, onSnapshot } from 'firebase/firestore';
+// import { db } from '../../config/firebase';
 
 interface LeaderboardEntry {
   id: string;
