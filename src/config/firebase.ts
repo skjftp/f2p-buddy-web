@@ -94,7 +94,7 @@ export const setupRecaptcha = async (elementId: string) => {
   const authInstance = await getAuthInstance();
   
   if (!(window as any).recaptchaVerifier) {
-    (window as any).recaptchaVerifier = new RecaptchaVerifier(elementId, {
+    (window as any).recaptchaVerifier = new RecaptchaVerifier(authInstance, elementId, {
       size: 'invisible',
       callback: () => {
         console.log('Recaptcha verified');
@@ -102,7 +102,7 @@ export const setupRecaptcha = async (elementId: string) => {
       'expired-callback': () => {
         console.log('Recaptcha expired');
       }
-    }, authInstance);
+    });
   }
   return (window as any).recaptchaVerifier;
 };
