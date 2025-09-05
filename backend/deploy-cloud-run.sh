@@ -36,7 +36,26 @@ if [ -f "cloudbuild.yaml" ]; then
     echo "Using Cloud Build configuration..."
     gcloud builds submit --config cloudbuild.yaml
 else
-    echo "Direct deployment to Cloud Run..."
+    echo "Direct deployment to Cloud Run with environment variables..."
+    
+    # Check if Firebase config is provided
+    if [ -z "$FIREBASE_API_KEY" ]; then
+        echo "🔑 Firebase configuration not provided as environment variables."
+        echo "You need to set these environment variables before deploying:"
+        echo "- FIREBASE_API_KEY"
+        echo "- FIREBASE_MESSAGING_SENDER_ID" 
+        echo "- FIREBASE_APP_ID"
+        echo ""
+        echo "Get these values from: https://console.firebase.google.com/project/f2p-buddy-1756234727/settings/general"
+        echo ""
+        read -p "Do you want to deploy without Firebase config? (y/N): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "Deployment cancelled. Please set environment variables and try again."
+            exit 1
+        fi
+    fi
+    
     gcloud run deploy $SERVICE_NAME \
         --source . \
         --platform managed \
@@ -47,7 +66,15 @@ else
         --cpu 1 \
         --timeout 3600 \
         --concurrency 80 \
-        --max-instances 10
+        --max-instances 10 \
+        --set-env-vars="FIREBASE_API_KEY=${FIREBASE_API_KEY:-placeholder}" \
+        --set-env-vars="FIREBASE_AUTH_DOMAIN=f2p-buddy-1756234727.firebaseapp.com" \
+        --set-env-vars="FIREBASE_PROJECT_ID=f2p-buddy-1756234727" \
+        --set-env-vars="FIREBASE_STORAGE_BUCKET=f2p-buddy-1756234727.appspot.com" \
+        --set-env-vars="FIREBASE_MESSAGING_SENDER_ID=${FIREBASE_MESSAGING_SENDER_ID:-placeholder}" \
+        --set-env-vars="FIREBASE_APP_ID=${FIREBASE_APP_ID:-placeholder}" \
+        --set-env-vars="ENVIRONMENT=production" \
+        --set-env-vars="APP_VERSION=1.0.0"
 fi
 
 if [ $? -eq 0 ]; then

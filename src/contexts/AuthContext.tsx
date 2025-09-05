@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect } from 'react';
 import { User, onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { useDispatch, useSelector } from 'react-redux';
-import { auth, db } from '../config/firebase';
+import { getAuthInstance, getFirestoreInstance } from '../config/firebase';
 import { setUser, clearUser, setLoading } from '../store/slices/authSlice';
 import { setOrganization, clearOrganization } from '../store/slices/organizationSlice';
 import { RootState } from '../store/store';
@@ -32,11 +32,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     dispatch(setLoading(true));
 
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: User | null) => {
+    // Initialize auth listener after Firebase is ready
+    const initializeAuthListener = async () => {
+      try {
+        const authInstance = await getAuthInstance();
+        
+        const unsubscribe = onAuthStateChanged(authInstance, async (firebaseUser: User | null) => {
       if (firebaseUser) {
         try {
           // Get user data from Firestore
-          const userDocRef = doc(db, 'users', firebaseUser.uid);
+          const dbInstance = await getFirestoreInstance();
+          const userDocRef = doc(dbInstance, 'users', firebaseUser.uid);
           const userDoc = await getDoc(userDocRef);
           
           if (userDoc.exists()) {
@@ -52,7 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             // Load organization data if user has organizationId
             if (userData.organizationId) {
-              const orgDocRef = doc(db, 'organizations', userData.organizationId);
+              const orgDocRef = doc(dbInstance, 'organizations', userData.organizationId);
               const orgDoc = await getDoc(orgDocRef);
               if (orgDoc.exists()) {
                 dispatch(setOrganization({
@@ -66,18 +72,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.error('Error loading user data:', error);
           dispatch(clearUser());
         }
-      } else {
+        } else {
+          dispatch(clearUser());
+          dispatch(clearOrganization());
+        }
+        });
+        
+        return unsubscribe;
+      } catch (error) {
+        console.error('Failed to initialize auth listener:', error);
         dispatch(clearUser());
-        dispatch(clearOrganization());
       }
+    };
+    
+    let unsubscribe: (() => void) | null = null;
+    initializeAuthListener().then(unsub => {
+      unsubscribe = unsub;
     });
-
-    return () => unsubscribe();
+    
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [dispatch]);
 
   const logout = async () => {
     try {
-      await signOut(auth);
+      const authInstance = await getAuthInstance();
+      await signOut(authInstance);
       dispatch(clearUser());
       dispatch(clearOrganization());
     } catch (error) {

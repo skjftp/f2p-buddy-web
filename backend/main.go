@@ -67,6 +67,9 @@ func setupRoutes(r *gin.Engine) {
 	// Health check
 	api.GET("/health", healthCheck)
 	
+	// Public config endpoint (no auth required)
+	api.GET("/config", getConfig)
+	
 	// Auth routes
 	auth := api.Group("/auth")
 	{

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db, setupRecaptcha } from '../config/firebase';
+import { getAuthInstance, getFirestoreInstance, setupRecaptcha } from '../config/firebase';
 import { toast } from 'react-toastify';
 import PhoneInput from 'react-phone-input-2';
 import OtpInput from 'react-otp-input';
@@ -167,9 +167,10 @@ const Login: React.FC = () => {
 
     setLoading(true);
     try {
-      const recaptchaVerifier = setupRecaptcha('recaptcha-container');
+      const authInstance = await getAuthInstance();
+      const recaptchaVerifier = await setupRecaptcha('recaptcha-container');
       const confirmation = await signInWithPhoneNumber(
-        auth, 
+        authInstance, 
         `+${phoneNumber}`, 
         recaptchaVerifier
       );
@@ -197,7 +198,8 @@ const Login: React.FC = () => {
       const user = result.user;
       
       // Check if user exists in Firestore
-      const userDocRef = doc(db, 'users', user.uid);
+      const dbInstance = await getFirestoreInstance();
+      const userDocRef = doc(dbInstance, 'users', user.uid);
       const userDoc = await getDoc(userDocRef);
       
       if (userDoc.exists()) {
@@ -224,7 +226,8 @@ const Login: React.FC = () => {
   };
 
   const selectRole = async (role: 'admin' | 'employee') => {
-    const user = auth.currentUser;
+    const authInstance = await getAuthInstance();
+    const user = authInstance.currentUser;
     if (!user) {
       toast.error('Authentication error. Please try again.');
       return;
@@ -232,7 +235,8 @@ const Login: React.FC = () => {
 
     setLoading(true);
     try {
-      await setDoc(doc(db, 'users', user.uid), {
+      const dbInstance = await getFirestoreInstance();
+      await setDoc(doc(dbInstance, 'users', user.uid), {
         uid: user.uid,
         phoneNumber: user.phoneNumber || `+${phoneNumber}`,
         role: role,
