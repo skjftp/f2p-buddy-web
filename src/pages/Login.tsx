@@ -82,6 +82,8 @@ const LoginStep: React.FC<LoginStepProps> = ({
               value={otp}
               onChange={onOtpChange}
               numInputs={6}
+              renderSeparator={<span>-</span>}
+              renderInput={(props) => <input {...props} />}
               inputStyle={{
                 width: '45px',
                 height: '45px',
@@ -89,7 +91,7 @@ const LoginStep: React.FC<LoginStepProps> = ({
                 borderRadius: '8px',
                 border: '2px solid #e1e5e9',
                 textAlign: 'center',
-                margin: '0 8px'
+                margin: '0 4px'
               }}
             />
           </div>
