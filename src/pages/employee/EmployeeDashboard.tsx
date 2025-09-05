@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { collection, query, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
-import { db } from '../../config/firebase';
+import { getFirestoreInstance } from '../../config/firebase';
 import { Campaign } from '../../store/slices/campaignSlice';
 import { useTheme } from '../../contexts/ThemeContext';
 import CampaignCard from '../../components/campaigns/CampaignCard';
@@ -26,24 +26,43 @@ const EmployeeDashboard: React.FC = () => {
     if (!organization?.id) return;
 
     // Listen to campaigns in real-time
-    const campaignsQuery = query(
-      collection(db, 'campaigns'),
-      where('orgId', '==', organization.id),
-      where('status', 'in', ['active', 'completed'])
-    );
+    const setupCampaignListener = async () => {
+      try {
+        const dbInstance = await getFirestoreInstance();
+        const campaignsQuery = query(
+          collection(dbInstance, 'campaigns'),
+          where('orgId', '==', organization.id),
+          where('status', 'in', ['active', 'completed'])
+        );
 
-    const unsubscribe = onSnapshot(campaignsQuery, (snapshot) => {
+        const unsubscribe = onSnapshot(campaignsQuery, (snapshot) => {
       const campaignList: Campaign[] = [];
       snapshot.forEach((doc) => {
         campaignList.push({ id: doc.id, ...doc.data() } as Campaign);
       });
       
-      setCampaigns(campaignList);
-      setActiveCampaigns(campaignList.filter(c => c.status === 'active'));
-      setLoading(false);
+          setCampaigns(campaignList);
+          setActiveCampaigns(campaignList.filter(c => c.status === 'active'));
+          setLoading(false);
+        });
+        
+        return unsubscribe;
+      } catch (error) {
+        console.error('Failed to setup campaign listener:', error);
+        setLoading(false);
+      }
+    };
+    
+    let unsubscribe: (() => void) | null = null;
+    setupCampaignListener().then(unsub => {
+      unsubscribe = unsub;
     });
-
-    return () => unsubscribe();
+    
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [organization?.id]);
 
   useEffect(() => {

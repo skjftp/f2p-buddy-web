@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
-import { db } from '../../config/firebase';
+import { getFirestoreInstance } from '../../config/firebase';
 
 interface Employee {
   id: string;
@@ -60,13 +60,16 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ organizationId 
       return;
     }
 
-    const employeesQuery = query(
-      collection(db, 'users'),
-      where('organizationId', '==', organizationId),
-      where('role', '==', 'employee')
-    );
+    const setupEmployeeListener = async () => {
+      try {
+        const dbInstance = await getFirestoreInstance();
+        const employeesQuery = query(
+          collection(dbInstance, 'users'),
+          where('organizationId', '==', organizationId),
+          where('role', '==', 'employee')
+        );
 
-    const unsubscribe = onSnapshot(employeesQuery, (snapshot) => {
+        const unsubscribe = onSnapshot(employeesQuery, (snapshot) => {
       const employeeList: Employee[] = [];
       snapshot.forEach((doc) => {
         const data = doc.data();
@@ -80,12 +83,28 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ organizationId 
           currentRank: 0
         });
       });
-      
-      setEmployees(employeeList);
-      setLoading(false);
+          
+          setEmployees(employeeList);
+          setLoading(false);
+        });
+        
+        return unsubscribe;
+      } catch (error) {
+        console.error('Failed to setup employee listener:', error);
+        setLoading(false);
+      }
+    };
+    
+    let unsubscribe: (() => void) | null = null;
+    setupEmployeeListener().then(unsub => {
+      unsubscribe = unsub;
     });
-
-    return () => unsubscribe();
+    
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [organizationId]);
 
   const filteredEmployees = employees.filter(employee => {

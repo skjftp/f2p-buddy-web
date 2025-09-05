@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '../../config/firebase';
+import { getFirestoreInstance } from '../../config/firebase';
 
 interface Achievement {
   id: string;
@@ -59,23 +59,42 @@ const AchievementTracker: React.FC<AchievementTrackerProps> = ({ userId }) => {
     }
 
     // Real implementation would query user's achievements
-    const achievementsQuery = query(
-      collection(db, 'achievements'),
-      where('userId', '==', userId),
-      orderBy('dateAchieved', 'desc')
-    );
+    const setupAchievementListener = async () => {
+      try {
+        const dbInstance = await getFirestoreInstance();
+        const achievementsQuery = query(
+          collection(dbInstance, 'achievements'),
+          where('userId', '==', userId),
+          orderBy('dateAchieved', 'desc')
+        );
 
-    const unsubscribe = onSnapshot(achievementsQuery, (snapshot) => {
+        const unsubscribe = onSnapshot(achievementsQuery, (snapshot) => {
       const achievementList: Achievement[] = [];
       snapshot.forEach((doc) => {
         achievementList.push({ id: doc.id, ...doc.data() } as Achievement);
       });
       
-      setAchievements(achievementList);
-      setLoading(false);
+          setAchievements(achievementList);
+          setLoading(false);
+        });
+        
+        return unsubscribe;
+      } catch (error) {
+        console.error('Failed to setup achievement listener:', error);
+        setLoading(false);
+      }
+    };
+    
+    let unsubscribe: (() => void) | null = null;
+    setupAchievementListener().then(unsub => {
+      unsubscribe = unsub;
     });
-
-    return () => unsubscribe();
+    
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, [userId]);
 
   if (loading) {

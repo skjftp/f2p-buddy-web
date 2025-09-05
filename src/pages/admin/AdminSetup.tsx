@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../../config/firebase';
+import { getFirestoreInstance, getStorageInstance } from '../../config/firebase';
 import { toast } from 'react-toastify';
 import { useDropzone } from 'react-dropzone';
 
@@ -85,13 +85,15 @@ const AdminSetup: React.FC = () => {
       
       // Upload logo if provided
       if (organizationData.logo) {
-        const logoRef = ref(storage, `organizations/${Date.now()}_${organizationData.logo.name}`);
+        const storageInstance = await getStorageInstance();
+        const logoRef = ref(storageInstance, `organizations/${Date.now()}_${organizationData.logo.name}`);
         const snapshot = await uploadBytes(logoRef, organizationData.logo);
         logoUrl = await getDownloadURL(snapshot.ref);
       }
 
       // Create organization
-      const orgRef = await addDoc(collection(db, 'organizations'), {
+      const dbInstance = await getFirestoreInstance();
+      const orgRef = await addDoc(collection(dbInstance, 'organizations'), {
         name: organizationData.name,
         logo: logoUrl,
         primaryColor: organizationData.primaryColor,
@@ -103,7 +105,7 @@ const AdminSetup: React.FC = () => {
       });
 
       // Update user with organization ID
-      await updateDoc(doc(db, 'users', user.uid), {
+      await updateDoc(doc(dbInstance, 'users', user.uid), {
         organizationId: orgRef.id,
         updatedAt: serverTimestamp()
       });

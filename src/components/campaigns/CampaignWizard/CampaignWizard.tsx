@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../../../config/firebase';
+import { getFirestoreInstance, getStorageInstance } from '../../../config/firebase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import { useDropzone } from 'react-dropzone';
@@ -162,7 +162,8 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
       let bannerUrl = '';
       
       if (campaignData.banner) {
-        const bannerRef = ref(storage, `campaigns/${Date.now()}_${campaignData.banner.name}`);
+        const storageInstance = await getStorageInstance();
+        const bannerRef = ref(storageInstance, `campaigns/${Date.now()}_${campaignData.banner.name}`);
         const snapshot = await uploadBytes(bannerRef, campaignData.banner);
         bannerUrl = await getDownloadURL(snapshot.ref);
       }
@@ -178,7 +179,8 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
         }
       });
 
-      await addDoc(collection(db, 'campaigns'), {
+      const dbInstance = await getFirestoreInstance();
+      await addDoc(collection(dbInstance, 'campaigns'), {
         name: campaignData.name,
         description: campaignData.description,
         startDate: campaignData.startDate,
