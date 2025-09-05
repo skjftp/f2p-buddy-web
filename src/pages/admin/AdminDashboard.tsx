@@ -27,7 +27,7 @@ const AdminDashboard: React.FC = () => {
     if (!organization?.id) return;
 
     // Listen to campaigns in real-time
-    const setupCampaignListener = async () => {
+    const setupCampaignListener = async (): Promise<(() => void) | undefined> => {
       try {
         const dbInstance = await getFirestoreInstance();
         const campaignsQuery = query(
@@ -57,12 +57,15 @@ const AdminDashboard: React.FC = () => {
       } catch (error) {
         console.error('Failed to setup campaign listener:', error);
         setLoading(false);
+        return undefined;
       }
     };
     
     let unsubscribe: (() => void) | null = null;
     setupCampaignListener().then(unsub => {
-      unsubscribe = unsub;
+      if (unsub) {
+        unsubscribe = unsub;
+      }
     });
     
     return () => {

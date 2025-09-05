@@ -59,7 +59,7 @@ const AchievementTracker: React.FC<AchievementTrackerProps> = ({ userId }) => {
     }
 
     // Real implementation would query user's achievements
-    const setupAchievementListener = async () => {
+    const setupAchievementListener = async (): Promise<(() => void) | undefined> => {
       try {
         const dbInstance = await getFirestoreInstance();
         const achievementsQuery = query(
@@ -82,12 +82,15 @@ const AchievementTracker: React.FC<AchievementTrackerProps> = ({ userId }) => {
       } catch (error) {
         console.error('Failed to setup achievement listener:', error);
         setLoading(false);
+        return undefined;
       }
     };
     
     let unsubscribe: (() => void) | null = null;
     setupAchievementListener().then(unsub => {
-      unsubscribe = unsub;
+      if (unsub) {
+        unsubscribe = unsub;
+      }
     });
     
     return () => {

@@ -60,7 +60,7 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ organizationId 
       return;
     }
 
-    const setupEmployeeListener = async () => {
+    const setupEmployeeListener = async (): Promise<(() => void) | undefined> => {
       try {
         const dbInstance = await getFirestoreInstance();
         const employeesQuery = query(
@@ -92,12 +92,15 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ organizationId 
       } catch (error) {
         console.error('Failed to setup employee listener:', error);
         setLoading(false);
+        return undefined;
       }
     };
     
     let unsubscribe: (() => void) | null = null;
     setupEmployeeListener().then(unsub => {
-      unsubscribe = unsub;
+      if (unsub) {
+        unsubscribe = unsub;
+      }
     });
     
     return () => {

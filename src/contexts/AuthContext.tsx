@@ -33,7 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     dispatch(setLoading(true));
 
     // Initialize auth listener after Firebase is ready
-    const initializeAuthListener = async () => {
+    const initializeAuthListener = async (): Promise<(() => void) | undefined> => {
       try {
         const authInstance = await getAuthInstance();
         
@@ -82,12 +82,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (error) {
         console.error('Failed to initialize auth listener:', error);
         dispatch(clearUser());
+        return undefined;
       }
     };
     
     let unsubscribe: (() => void) | null = null;
     initializeAuthListener().then(unsub => {
-      unsubscribe = unsub;
+      if (unsub) {
+        unsubscribe = unsub;
+      }
     });
     
     return () => {
