@@ -82,7 +82,6 @@ const LoginStep: React.FC<LoginStepProps> = ({
               value={otp}
               onChange={onOtpChange}
               numInputs={6}
-              separator={<span style={{ margin: '0 8px' }}>-</span>}
               inputStyle={{
                 width: '45px',
                 height: '45px',
@@ -90,11 +89,7 @@ const LoginStep: React.FC<LoginStepProps> = ({
                 borderRadius: '8px',
                 border: '2px solid #e1e5e9',
                 textAlign: 'center',
-                margin: '0 2px'
-              }}
-              focusStyle={{
-                border: '2px solid #667eea',
-                outline: 'none'
+                margin: '0 8px'
               }}
             />
           </div>
