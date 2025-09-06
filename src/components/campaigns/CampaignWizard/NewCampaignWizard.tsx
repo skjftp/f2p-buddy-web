@@ -98,7 +98,7 @@ interface CampaignData {
   contestType: 'points' | 'milestone' | 'percentage' | 'ranking';
   pointSystem?: {
     basePointsPerUnit: Record<string, number>; // skuId -> points
-    bonusMultipliers: Array<{threshold: number, multiplier: number}>;
+    bonusMultipliers?: Array<{threshold: number, multiplier: number}>;
   };
   milestoneSystem?: {
     milestones: Array<{name: string, target: number, points: number}>;
