@@ -6,6 +6,13 @@ import { getAuthInstance, getFirestoreInstance } from '../config/firebase';
 import { setUser, clearUser, setLoading } from '../store/slices/authSlice';
 import { setOrganization, clearOrganization } from '../store/slices/organizationSlice';
 import { RootState } from '../store/store';
+import { 
+  saveAuthState, 
+  getPersistedAuthState, 
+  getPersistedOrgState, 
+  clearPersistedAuthState,
+  hasValidPersistedAuth 
+} from '../utils/authPersistence';
 
 interface AuthContextType {
   user: any;
@@ -33,6 +40,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     dispatch(setLoading(true));
     let isSubscribed = true;
     let mounted = true;
+    
+    // Try to restore auth state from localStorage first
+    const persistedAuth = getPersistedAuthState();
+    const persistedOrg = getPersistedOrgState();
+    
+    if (persistedAuth && hasValidPersistedAuth()) {
+      console.log('🔄 Restoring auth state from localStorage');
+      dispatch(setUser(persistedAuth));
+      
+      if (persistedOrg) {
+        dispatch(setOrganization(persistedOrg));
+      }
+      
+      dispatch(setLoading(false));
+      
+      // Still set up the listener for real-time updates, but don't clear user if Firebase fails
+    } else {
+      console.log('🔍 No valid persisted auth, checking Firebase...');
+    }
+    
+    // Add delay to ensure Firebase is fully initialized
+    const initDelay = setTimeout(() => {
 
     // Initialize auth listener after Firebase is ready
     const initializeAuthListener = async (): Promise<(() => void) | undefined> => {
@@ -66,14 +95,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               
               if (userDoc && userDoc.exists()) {
                 const userData = userDoc.data();
-                dispatch(setUser({
+                const userStateData = {
                   uid: firebaseUser.uid,
                   phoneNumber: firebaseUser.phoneNumber || userData.phoneNumber,
                   role: userData.role,
                   organizationId: userData.organizationId,
                   displayName: userData.displayName,
                   createdAt: userData.createdAt,
-                }));
+                };
+                
+                dispatch(setUser(userStateData));
 
                 // Load organization data if user has organizationId
                 if (userData.organizationId) {
@@ -81,15 +112,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     const orgDocRef = doc(dbInstance, 'organizations', userData.organizationId);
                     const orgDoc = await getDoc(orgDocRef);
                     if (orgDoc.exists()) {
-                      dispatch(setOrganization({
+                      const orgData = {
                         id: orgDoc.id,
                         ...orgDoc.data(),
-                      } as any));
+                      };
+                      dispatch(setOrganization(orgData as any));
+                      
+                      // Save both user and org state to localStorage
+                      saveAuthState(userStateData, orgData);
                     }
                   } catch (orgError) {
                     console.warn('Could not load organization:', orgError);
-                    // Don't clear user if org loading fails
+                    // Save user state even if org loading fails
+                    saveAuthState(userStateData);
                   }
+                } else {
+                  // Save user state without org
+                  saveAuthState(userStateData);
                 }
               } else {
                 // User exists in auth but not in Firestore - this is OK during registration
@@ -121,8 +160,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               }));
             }
           } else {
-            dispatch(clearUser());
-            dispatch(clearOrganization());
+            // Only clear if we don't have persisted auth
+            if (!hasValidPersistedAuth()) {
+              dispatch(clearUser());
+              dispatch(clearOrganization());
+              clearPersistedAuthState();
+            }
           }
         });
         
@@ -140,8 +183,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         unsubscribe = unsub;
       }
     });
+    }, 500); // 500ms delay to ensure Firebase is ready
     
     return () => {
+      clearTimeout(initDelay);
       mounted = false;
       isSubscribed = false;
       if (unsubscribe) {
@@ -156,8 +201,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await signOut(authInstance);
       dispatch(clearUser());
       dispatch(clearOrganization());
+      clearPersistedAuthState();
+      console.log('✅ User logged out and auth state cleared');
     } catch (error) {
       console.error('Error signing out:', error);
+      // Clear local state anyway
+      dispatch(clearUser());
+      dispatch(clearOrganization());
+      clearPersistedAuthState();
     }
   };
 
