@@ -90,13 +90,18 @@ const AddUser: React.FC<AddUserProps> = ({ organizationId, onClose, onSuccess })
     newSelectedRegions[level] = itemId;
     
     // Auto-select parent regions
-    let currentItem = selectedItem;
-    let currentLevel = level;
+    let tempItem = selectedItem;
+    let tempLevel = level;
     
-    while (currentItem.parentId && currentLevel > 1) {
-      currentLevel--;
-      newSelectedRegions[currentLevel] = currentItem.parentId;
-      currentItem = hierarchyLevels[currentLevel - 1]?.items.find(item => item.id === currentItem.parentId)!;
+    while (tempItem.parentId && tempLevel > 1) {
+      tempLevel--;
+      newSelectedRegions[tempLevel] = tempItem.parentId;
+      const parentItem = hierarchyLevels[tempLevel - 1]?.items.find(item => item.id === tempItem.parentId);
+      if (parentItem) {
+        tempItem = parentItem;
+      } else {
+        break;
+      }
     }
 
     setUserData(prev => ({ ...prev, selectedRegions: newSelectedRegions }));
@@ -175,7 +180,7 @@ const AddUser: React.FC<AddUserProps> = ({ organizationId, onClose, onSuccess })
       if (file.name.endsWith('.csv')) {
         const text = await file.text();
         const lines = text.split('\n');
-        const headers = lines[0].split(',').map(h => h.trim());
+        // const headers = lines[0].split(',').map(h => h.trim());
         
         toast.info(`Parsing ${file.name}... Found ${lines.length - 1} users`);
         
