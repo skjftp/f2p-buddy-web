@@ -1903,8 +1903,7 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
           </div>
         )}
       </div>
-    </div>
-  );
+    );
 
   const getStepTitle = (step: number) => {
     switch (step) {
