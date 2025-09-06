@@ -25,7 +25,7 @@ interface Designation {
   id: string;
   name: string; // e.g., "Sales Executive", "Distributor", "Retailer"
   category: 'employee' | 'distributor' | 'retailer' | 'other';
-  description?: string;
+  description: string;
 }
 
 const OrganizationSettings: React.FC = () => {
