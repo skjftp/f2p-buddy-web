@@ -1258,273 +1258,653 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
   };
 
   // Step 6: Prize Structure
-  const renderStep6 = () => (
-    <div className="step-content">
-      <div className="step-header">
-        <h3>🎁 Prize Structure</h3>
-        <p>Define rewards at different levels</p>
-      </div>
+  const renderStep6 = () => {
+    const updatePrize = (level: 'panIndiaLevel' | 'regionalLevel' | 'subRegionalLevel', index: number, field: 'rank' | 'prize' | 'value', value: string | number) => {
+      setCampaignData(prev => ({
+        ...prev,
+        prizeStructure: {
+          ...prev.prizeStructure,
+          [level]: prev.prizeStructure[level].map((prize, i) => 
+            i === index ? { ...prize, [field]: value } : prize
+          )
+        }
+      }));
+    };
 
-      <div className="prize-levels">
-        <div className="prize-level">
-          <h4>🏆 Pan India Level</h4>
-          <div className="prizes-list">
-            {campaignData.prizeStructure.panIndiaLevel.map((prize, index) => (
-              <div key={index} className="prize-item">
-                <input 
-                  type="number" 
-                  placeholder="Rank" 
-                  className="form-input" 
-                  style={{width: '60px'}}
-                  value={prize.rank}
-                />
-                <input 
-                  type="text" 
-                  placeholder="Prize" 
-                  className="form-input"
-                  value={prize.prize}
-                />
-                <input 
-                  type="text" 
-                  placeholder="Value" 
-                  className="form-input"
-                  value={prize.value}
-                />
-                <button className="btn-icon btn-danger" onClick={() => {
-                  setCampaignData(prev => ({
-                    ...prev,
-                    prizeStructure: {
-                      ...prev.prizeStructure,
-                      panIndiaLevel: prev.prizeStructure.panIndiaLevel.filter((_, i) => i !== index)
-                    }
-                  }));
-                }}>×</button>
-              </div>
-            ))}
-            <button 
-              className="btn-secondary"
-              onClick={() => {
-                setCampaignData(prev => ({
-                  ...prev,
-                  prizeStructure: {
-                    ...prev.prizeStructure,
-                    panIndiaLevel: [...prev.prizeStructure.panIndiaLevel, {rank: 1, prize: '', value: ''}]
-                  }
-                }));
-              }}
-            >
-              + Add Pan India Prize
-            </button>
+    const addPrize = (level: 'panIndiaLevel' | 'regionalLevel' | 'subRegionalLevel') => {
+      const nextRank = campaignData.prizeStructure[level].length + 1;
+      setCampaignData(prev => ({
+        ...prev,
+        prizeStructure: {
+          ...prev.prizeStructure,
+          [level]: [...prev.prizeStructure[level], { rank: nextRank, prize: '', value: '' }]
+        }
+      }));
+    };
+
+    const removePrize = (level: 'panIndiaLevel' | 'regionalLevel' | 'subRegionalLevel', index: number) => {
+      setCampaignData(prev => ({
+        ...prev,
+        prizeStructure: {
+          ...prev.prizeStructure,
+          [level]: prev.prizeStructure[level].filter((_, i) => i !== index)
+        }
+      }));
+    };
+
+    const getPrizeTemplates = () => [
+      { name: 'Cash Prize', suggestions: ['₹10,000', '₹25,000', '₹50,000', '₹1,00,000'] },
+      { name: 'Gift Voucher', suggestions: ['Amazon ₹5,000', 'Flipkart ₹10,000', 'Reliance ₹15,000'] },
+      { name: 'Electronics', suggestions: ['iPhone 15', 'Samsung Galaxy', 'MacBook Air', 'iPad'] },
+      { name: 'Travel Package', suggestions: ['Goa Trip', 'Dubai Package', 'Thailand Tour', 'Europe Package'] },
+      { name: 'Recognition', suggestions: ['Certificate of Excellence', 'Trophy + Certificate', 'Wall Plaque'] }
+    ];
+
+    const renderPrizeLevel = (
+      level: 'panIndiaLevel' | 'regionalLevel' | 'subRegionalLevel',
+      title: string,
+      icon: string,
+      description: string
+    ) => (
+      <div className="prize-level-card">
+        <div className="prize-level-header">
+          <div className="level-info">
+            <h4>{icon} {title}</h4>
+            <p>{description}</p>
+          </div>
+          <div className="level-stats">
+            <span className="prize-count">{campaignData.prizeStructure[level].length} prize(s)</span>
           </div>
         </div>
 
-        <div className="prize-level">
-          <h4>🗺️ Regional Level</h4>
-          <div className="prizes-list">
-            {campaignData.prizeStructure.regionalLevel.map((prize, index) => (
-              <div key={index} className="prize-item">
-                <input 
-                  type="number" 
-                  placeholder="Rank" 
-                  className="form-input" 
-                  style={{width: '60px'}}
-                  value={prize.rank}
-                />
-                <input 
-                  type="text" 
-                  placeholder="Prize" 
-                  className="form-input"
-                  value={prize.prize}
-                />
-                <input 
-                  type="text" 
-                  placeholder="Value" 
-                  className="form-input"
-                  value={prize.value}
-                />
-                <button className="btn-icon btn-danger" onClick={() => {
-                  setCampaignData(prev => ({
-                    ...prev,
-                    prizeStructure: {
-                      ...prev.prizeStructure,
-                      regionalLevel: prev.prizeStructure.regionalLevel.filter((_, i) => i !== index)
-                    }
-                  }));
-                }}>×</button>
-              </div>
-            ))}
-            <button 
-              className="btn-secondary"
-              onClick={() => {
-                setCampaignData(prev => ({
-                  ...prev,
-                  prizeStructure: {
-                    ...prev.prizeStructure,
-                    regionalLevel: [...prev.prizeStructure.regionalLevel, {rank: 1, prize: '', value: ''}]
-                  }
-                }));
-              }}
-            >
-              + Add Regional Prize
-            </button>
-          </div>
-        </div>
-
-        <div className="prize-level">
-          <h4>📍 Sub-Regional Level</h4>
-          <div className="prizes-list">
-            {campaignData.prizeStructure.subRegionalLevel.map((prize, index) => (
-              <div key={index} className="prize-item">
-                <input 
-                  type="number" 
-                  placeholder="Rank" 
-                  className="form-input" 
-                  style={{width: '60px'}}
-                  value={prize.rank}
-                />
-                <input 
-                  type="text" 
-                  placeholder="Prize" 
-                  className="form-input"
-                  value={prize.prize}
-                />
-                <input 
-                  type="text" 
-                  placeholder="Value" 
-                  className="form-input"
-                  value={prize.value}
-                />
-                <button className="btn-icon btn-danger" onClick={() => {
-                  setCampaignData(prev => ({
-                    ...prev,
-                    prizeStructure: {
-                      ...prev.prizeStructure,
-                      subRegionalLevel: prev.prizeStructure.subRegionalLevel.filter((_, i) => i !== index)
-                    }
-                  }));
-                }}>×</button>
-              </div>
-            ))}
-            <button 
-              className="btn-secondary"
-              onClick={() => {
-                setCampaignData(prev => ({
-                  ...prev,
-                  prizeStructure: {
-                    ...prev.prizeStructure,
-                    subRegionalLevel: [...prev.prizeStructure.subRegionalLevel, {rank: 1, prize: '', value: ''}]
-                  }
-                }));
-              }}
-            >
-              + Add Sub-Regional Prize
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Step 7: User Targets & Participants
-  const renderStep7 = () => (
-    <div className="step-content">
-      <div className="step-header">
-        <h3>👥 User Targets & Participants</h3>
-        <p>Review computed individual targets or upload custom targets</p>
-      </div>
-
-      <div className="target-options">
-        <label className="target-option">
-          <input
-            type="radio"
-            name="targetMode"
-            value="computed"
-            checked={!campaignData.customTargetsEnabled}
-            onChange={() => setCampaignData(prev => ({ ...prev, customTargetsEnabled: false }))}
-          />
-          <div>
-            <strong>Use Computed Targets</strong>
-            <p>Auto-computed from regional distribution</p>
-          </div>
-        </label>
-
-        <label className="target-option">
-          <input
-            type="radio"
-            name="targetMode"
-            value="custom"
-            checked={campaignData.customTargetsEnabled}
-            onChange={() => setCampaignData(prev => ({ ...prev, customTargetsEnabled: true }))}
-          />
-          <div>
-            <strong>Custom CSV Upload</strong>
-            <p>Upload your own user-level targets</p>
-          </div>
-        </label>
-      </div>
-
-      {!campaignData.customTargetsEnabled ? (
-        <div className="computed-targets">
-          <h4>Auto-Computed Individual Targets</h4>
-          <p>Based on regional distribution from Step 4:</p>
-          
-          {Object.keys(campaignData.regionalDistribution).length > 0 ? (
-            <div className="targets-preview">
-              <div className="targets-summary">
-                <p><strong>Example:</strong> If Sumit is the only user in North Zone - Delhi:</p>
-                {campaignData.targetConfigs.map(config => {
-                  const northDistribution = campaignData.regionalDistribution[config.skuId]?.find(d => d.regionName === 'Region North Zone');
-                  return (
-                    <div key={config.skuId} className="target-example">
-                      <span className="sku-code">{config.skuCode}:</span>
-                      <span className="target-value">
-                        {northDistribution?.individualTarget || 0} {config.unit}
-                      </span>
-                      <span className="explanation">
-                        (Full regional target as only participant)
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="distribution-logic">
-                <h5>Distribution Logic:</h5>
-                <ul>
-                  <li>If 1 user in region → Gets full regional target</li>
-                  <li>If 4 users in region → Target divided equally (25% each)</li>
-                  <li>Custom CSV can override these calculations</li>
-                </ul>
-              </div>
+        <div className="prizes-container">
+          {campaignData.prizeStructure[level].length === 0 ? (
+            <div className="empty-prizes">
+              <div className="empty-icon">🏆</div>
+              <p>No prizes configured for this level</p>
+              <button 
+                className="btn-secondary"
+                onClick={() => addPrize(level)}
+              >
+                + Add First Prize
+              </button>
             </div>
           ) : (
-            <div className="empty-targets">
-              <p>Complete regional targeting in Step 4 to see computed targets</p>
+            <div className="prizes-grid">
+              {campaignData.prizeStructure[level]
+                .sort((a, b) => a.rank - b.rank)
+                .map((prize, index) => (
+                <div key={index} className="prize-card">
+                  <div className="prize-header">
+                    <div className="rank-badge">
+                      #{prize.rank}
+                    </div>
+                    <button 
+                      className="btn-icon btn-danger"
+                      onClick={() => removePrize(level, index)}
+                      title="Remove prize"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  
+                  <div className="prize-form">
+                    <div className="form-group">
+                      <label className="form-label">Rank Position</label>
+                      <input
+                        type="number"
+                        className="form-input"
+                        value={prize.rank}
+                        onChange={(e) => updatePrize(level, index, 'rank', parseInt(e.target.value) || 1)}
+                        min="1"
+                        placeholder="1"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Prize Description</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={prize.prize}
+                        onChange={(e) => updatePrize(level, index, 'prize', e.target.value)}
+                        placeholder="e.g., iPhone 15 Pro"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Prize Value</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={prize.value}
+                        onChange={(e) => updatePrize(level, index, 'value', e.target.value)}
+                        placeholder="e.g., ₹1,20,000"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              <div className="add-prize-card">
+                <button 
+                  className="add-prize-btn"
+                  onClick={() => addPrize(level)}
+                >
+                  <div className="add-icon">+</div>
+                  <span>Add Prize</span>
+                </button>
+              </div>
             </div>
           )}
         </div>
-      ) : (
-        <div className="custom-targets">
-          <h4>Upload Custom Targets</h4>
-          <div className="csv-upload">
-            <div className="upload-area">
-              <div className="upload-icon">📄</div>
-              <p>Drop CSV file here or click to upload</p>
-              <button className="btn-secondary">Choose File</button>
+      </div>
+    );
+
+    return (
+      <div className="step-content">
+        <div className="step-header">
+          <h3>🎁 Prize Structure</h3>
+          <p>Configure rewards for different performance levels and regions</p>
+        </div>
+
+        <div className="prize-structure">
+          {/* Prize Templates */}
+          <div className="prize-templates">
+            <h4>💡 Prize Ideas</h4>
+            <p>Common prize categories to inspire your reward structure</p>
+            <div className="templates-grid">
+              {getPrizeTemplates().map((template, index) => (
+                <div key={index} className="template-card">
+                  <div className="template-name">{template.name}</div>
+                  <div className="template-suggestions">
+                    {template.suggestions.map((suggestion, i) => (
+                      <span key={i} className="suggestion-tag">{suggestion}</span>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="csv-format">
-              <h5>Expected CSV Format:</h5>
-              <code>
-                user_id,user_name,region,{campaignData.targetConfigs.map(c => c.skuCode).join(',')}<br/>
-                user1,Sumit,North Zone - Delhi,1000,500<br/>
-                user2,Rahul,South Zone - Chennai,800,400
-              </code>
+          </div>
+
+          {/* Prize Levels */}
+          <div className="prize-levels">
+            {renderPrizeLevel(
+              'panIndiaLevel',
+              'Pan India Level',
+              '🇮🇳',
+              'Top performers across the entire organization'
+            )}
+
+            {renderPrizeLevel(
+              'regionalLevel',
+              'Regional Level',
+              '🗺️',
+              'Best performers within each selected region'
+            )}
+
+            {renderPrizeLevel(
+              'subRegionalLevel',
+              'Sub-Regional Level',
+              '📍',
+              'Winners at district/area level within regions'
+            )}
+          </div>
+
+          {/* Prize Summary */}
+          <div className="prize-summary">
+            <h4>📊 Prize Distribution Summary</h4>
+            <div className="summary-stats">
+              <div className="summary-stat">
+                <span className="stat-number">
+                  {campaignData.prizeStructure.panIndiaLevel.length + 
+                   campaignData.prizeStructure.regionalLevel.length + 
+                   campaignData.prizeStructure.subRegionalLevel.length}
+                </span>
+                <span className="stat-label">Total Prizes</span>
+              </div>
+              <div className="summary-stat">
+                <span className="stat-number">{campaignData.selectedRegions.length}</span>
+                <span className="stat-label">Target Regions</span>
+              </div>
+              <div className="summary-stat">
+                <span className="stat-number">
+                  {organizationUsers.filter(user => 
+                    campaignData.selectedDesignations.some(desId => 
+                      designations.find(des => des.id === desId)?.name === user.designationName
+                    ) &&
+                    campaignData.selectedRegions.some(regionId => 
+                      Object.values(user.regionHierarchy || {}).includes(regionId) ||
+                      user.finalRegionName === hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId)?.name
+                    )
+                  ).length}
+                </span>
+                <span className="stat-label">Eligible Participants</span>
+              </div>
             </div>
           </div>
         </div>
-      )}
-    </div>
-  );
+      </div>
+    );
+  };
+
+  // Step 7: User Targets & Participants
+  const renderStep7 = () => {
+    const [csvFile, setCsvFile] = useState<File | null>(null);
+    const [csvData, setCsvData] = useState<any[]>([]);
+    const [csvError, setCsvError] = useState<string>('');
+
+    // Compute user targets from regional distribution
+    const computeUserTargets = () => {
+      const userTargets: UserTarget[] = [];
+      
+      // Get eligible users based on region and designation selection
+      const eligibleUsers = organizationUsers.filter(user => {
+        const hasDesignation = campaignData.selectedDesignations.some(desId => 
+          designations.find(des => des.id === desId)?.name === user.designationName
+        );
+        
+        const hasRegion = campaignData.selectedRegions.some(regionId => {
+          const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
+          return Object.values(user.regionHierarchy || {}).includes(regionId) ||
+                 user.finalRegionName === regionItem?.name;
+        });
+        
+        return hasDesignation && hasRegion;
+      });
+
+      // For each eligible user, calculate their targets
+      eligibleUsers.forEach(user => {
+        const userTargetData: UserTarget = {
+          userId: user.id,
+          userName: user.name,
+          regionName: user.finalRegionName || 'Unknown Region',
+          targets: {}
+        };
+
+        // Find which region this user belongs to from selected regions
+        const userRegionId = campaignData.selectedRegions.find(regionId => {
+          const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
+          return Object.values(user.regionHierarchy || {}).includes(regionId) ||
+                 user.finalRegionName === regionItem?.name;
+        });
+
+        if (userRegionId) {
+          campaignData.targetConfigs.forEach(config => {
+            const regionalDist = campaignData.regionalDistribution[config.skuId]?.find(
+              dist => dist.regionId === userRegionId
+            );
+            
+            if (regionalDist) {
+              userTargetData.targets[config.skuId] = regionalDist.individualTarget;
+            }
+          });
+        }
+
+        userTargets.push(userTargetData);
+      });
+
+      setCampaignData(prev => ({ ...prev, userTargets }));
+    };
+
+    // Handle CSV file upload
+    const handleCsvUpload = (file: File) => {
+      setCsvFile(file);
+      setCsvError('');
+      
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const text = e.target?.result as string;
+          const lines = text.trim().split('\n');
+          const headers = lines[0].split(',');
+          
+          // Validate headers
+          const expectedHeaders = ['user_id', 'user_name', 'region', ...campaignData.targetConfigs.map(c => c.skuCode)];
+          const missingHeaders = expectedHeaders.filter(h => !headers.includes(h));
+          
+          if (missingHeaders.length > 0) {
+            setCsvError(`Missing required columns: ${missingHeaders.join(', ')}`);
+            return;
+          }
+
+          // Parse data
+          const data = lines.slice(1).map((line, index) => {
+            const values = line.split(',');
+            const row: any = { lineNumber: index + 2 };
+            
+            headers.forEach((header, i) => {
+              row[header] = values[i]?.trim() || '';
+            });
+            
+            return row;
+          });
+
+          setCsvData(data);
+          
+          // Convert to UserTarget format
+          const userTargets: UserTarget[] = data.map(row => ({
+            userId: row.user_id || `csv_${Date.now()}_${Math.random()}`,
+            userName: row.user_name,
+            regionName: row.region,
+            targets: campaignData.targetConfigs.reduce((acc, config) => {
+              acc[config.skuId] = parseFloat(row[config.skuCode]) || 0;
+              return acc;
+            }, {} as Record<string, number>)
+          }));
+
+          setCampaignData(prev => ({ ...prev, userTargets }));
+          
+        } catch (error) {
+          setCsvError('Invalid CSV format. Please check your file.');
+        }
+      };
+      
+      reader.readAsText(file);
+    };
+
+    const onCsvDrop = (acceptedFiles: File[]) => {
+      const file = acceptedFiles[0];
+      if (file) {
+        handleCsvUpload(file);
+      }
+    };
+
+    const { getRootProps: getCsvRootProps, getInputProps: getCsvInputProps, isDragActive: isCsvDragActive } = useDropzone({
+      onDrop: onCsvDrop,
+      accept: { 'text/csv': ['.csv'] },
+      multiple: false,
+      maxSize: 5 * 1024 * 1024, // 5MB
+    });
+
+    // Generate sample CSV
+    const generateSampleCsv = () => {
+      const eligibleUsers = organizationUsers.filter(user => {
+        const hasDesignation = campaignData.selectedDesignations.some(desId => 
+          designations.find(des => des.id === desId)?.name === user.designationName
+        );
+        const hasRegion = campaignData.selectedRegions.some(regionId => {
+          const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
+          return Object.values(user.regionHierarchy || {}).includes(regionId) ||
+                 user.finalRegionName === regionItem?.name;
+        });
+        return hasDesignation && hasRegion;
+      });
+
+      const headers = ['user_id', 'user_name', 'region', ...campaignData.targetConfigs.map(c => c.skuCode)];
+      let csv = headers.join(',') + '\n';
+      
+      eligibleUsers.slice(0, 10).forEach(user => { // Limit to first 10 for sample
+        const row = [
+          user.id,
+          user.name,
+          user.finalRegionName || 'Unknown Region',
+          ...campaignData.targetConfigs.map(() => '0') // Default targets
+        ];
+        csv += row.join(',') + '\n';
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `campaign_targets_template.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    };
+
+    // Auto-compute when switching to computed mode
+    React.useEffect(() => {
+      if (!campaignData.customTargetsEnabled && Object.keys(campaignData.regionalDistribution).length > 0) {
+        computeUserTargets();
+      }
+    }, [campaignData.customTargetsEnabled, campaignData.regionalDistribution]);
+
+    return (
+      <div className="step-content">
+        <div className="step-header">
+          <h3>👥 User Targets & Participants</h3>
+          <p>Review and finalize individual user targets for the campaign</p>
+        </div>
+
+        {Object.keys(campaignData.regionalDistribution).length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">🎯</div>
+            <h4>Complete Regional Distribution First</h4>
+            <p>Please complete regional targeting and distribution in Step 4 to proceed with user target assignment.</p>
+          </div>
+        ) : (
+          <div className="user-targets">
+            {/* Target Mode Selection */}
+            <div className="target-mode-selection">
+              <h4>📊 Target Assignment Method</h4>
+              <div className="mode-options">
+                <label className="mode-option">
+                  <input
+                    type="radio"
+                    name="targetMode"
+                    value="computed"
+                    checked={!campaignData.customTargetsEnabled}
+                    onChange={() => setCampaignData(prev => ({ ...prev, customTargetsEnabled: false }))}
+                  />
+                  <div className="option-content">
+                    <div className="option-icon">🔄</div>
+                    <div className="option-text">
+                      <strong>Auto-Computed Targets</strong>
+                      <p>Automatically calculated from regional distribution</p>
+                      <div className="option-features">
+                        <span>• Equal distribution within regions</span>
+                        <span>• Based on user count per region</span>
+                        <span>• Maintains total target accuracy</span>
+                      </div>
+                    </div>
+                  </div>
+                </label>
+
+                <label className="mode-option">
+                  <input
+                    type="radio"
+                    name="targetMode"
+                    value="custom"
+                    checked={campaignData.customTargetsEnabled}
+                    onChange={() => setCampaignData(prev => ({ ...prev, customTargetsEnabled: true }))}
+                  />
+                  <div className="option-content">
+                    <div className="option-icon">📄</div>
+                    <div className="option-text">
+                      <strong>Custom CSV Upload</strong>
+                      <p>Upload your own user-specific target assignments</p>
+                      <div className="option-features">
+                        <span>• Individual target control</span>
+                        <span>• Bulk upload capability</span>
+                        <span>• Override computed values</span>
+                      </div>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Computed Targets Display */}
+            {!campaignData.customTargetsEnabled && (
+              <div className="computed-targets-section">
+                <div className="section-header">
+                  <h4>🔄 Auto-Computed Individual Targets</h4>
+                  <button 
+                    className="btn-secondary"
+                    onClick={computeUserTargets}
+                  >
+                    🔄 Recalculate
+                  </button>
+                </div>
+
+                {campaignData.userTargets.length === 0 ? (
+                  <div className="empty-targets">
+                    <div className="empty-icon">👥</div>
+                    <h5>No Eligible Participants Found</h5>
+                    <p>No users match the selected regional and designation criteria. Please review your targeting in Step 4.</p>
+                  </div>
+                ) : (
+                  <div className="targets-display">
+                    <div className="targets-summary">
+                      <div className="summary-cards">
+                        <div className="summary-card">
+                          <span className="card-number">{campaignData.userTargets.length}</span>
+                          <span className="card-label">Participants</span>
+                        </div>
+                        <div className="summary-card">
+                          <span className="card-number">
+                            {Object.keys(campaignData.regionalDistribution).length}
+                          </span>
+                          <span className="card-label">SKUs</span>
+                        </div>
+                        <div className="summary-card">
+                          <span className="card-number">
+                            {campaignData.selectedRegions.length}
+                          </span>
+                          <span className="card-label">Regions</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="targets-table">
+                      <div className="table-header">
+                        <span>Participant</span>
+                        <span>Region</span>
+                        {campaignData.targetConfigs.map(config => (
+                          <span key={config.skuId}>
+                            {config.skuCode} ({config.unit})
+                          </span>
+                        ))}
+                      </div>
+                      
+                      <div className="table-body">
+                        {campaignData.userTargets.slice(0, 20).map((userTarget, index) => (
+                          <div key={userTarget.userId} className="table-row">
+                            <div className="participant-info">
+                              <span className="participant-name">{userTarget.userName}</span>
+                              <span className="participant-id">#{userTarget.userId}</span>
+                            </div>
+                            <span className="participant-region">{userTarget.regionName}</span>
+                            {campaignData.targetConfigs.map(config => (
+                              <span key={config.skuId} className="target-value">
+                                {userTarget.targets[config.skuId] || 0}
+                              </span>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+
+                      {campaignData.userTargets.length > 20 && (
+                        <div className="table-footer">
+                          <p>Showing first 20 participants. Total: {campaignData.userTargets.length}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Custom CSV Upload */}
+            {campaignData.customTargetsEnabled && (
+              <div className="csv-upload-section">
+                <div className="section-header">
+                  <h4>📄 Custom Target Upload</h4>
+                  <button 
+                    className="btn-secondary"
+                    onClick={generateSampleCsv}
+                  >
+                    📥 Download Template
+                  </button>
+                </div>
+
+                <div className="csv-upload-area">
+                  <div {...getCsvRootProps()} className={`csv-dropzone ${isCsvDragActive ? 'active' : ''} ${csvError ? 'error' : ''}`}>
+                    <input {...getCsvInputProps()} />
+                    <div className="dropzone-content">
+                      <div className="dropzone-icon">📄</div>
+                      <h5>Drop CSV file here or click to select</h5>
+                      <p>Maximum file size: 5MB</p>
+                    </div>
+                  </div>
+
+                  {csvError && (
+                    <div className="csv-error">
+                      <span className="error-icon">⚠️</span>
+                      <span>{csvError}</span>
+                    </div>
+                  )}
+
+                  {csvFile && !csvError && (
+                    <div className="csv-success">
+                      <span className="success-icon">✅</span>
+                      <span>Successfully uploaded: {csvFile.name}</span>
+                      <span className="file-info">({csvData.length} participants)</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="csv-format-guide">
+                  <h5>📋 Required CSV Format</h5>
+                  <div className="format-example">
+                    <code>
+                      user_id,user_name,region,{campaignData.targetConfigs.map(c => c.skuCode).join(',')}
+                      <br />
+                      user_001,Sumit Kumar,North Zone - Delhi,{campaignData.targetConfigs.map(() => '1000').join(',')}
+                      <br />
+                      user_002,Priya Sharma,South Zone - Chennai,{campaignData.targetConfigs.map(() => '800').join(',')}
+                    </code>
+                  </div>
+                  
+                  <div className="format-notes">
+                    <h6>Important Notes:</h6>
+                    <ul>
+                      <li><strong>user_id:</strong> Unique identifier for each participant</li>
+                      <li><strong>user_name:</strong> Full name of the participant</li>
+                      <li><strong>region:</strong> Participant's assigned region</li>
+                      <li><strong>SKU Columns:</strong> Target values for each selected SKU</li>
+                      <li>Use numeric values only for SKU targets</li>
+                      <li>CSV must contain all participants eligible for the campaign</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {csvData.length > 0 && !csvError && (
+                  <div className="csv-preview">
+                    <h5>📊 Upload Preview</h5>
+                    <div className="preview-table">
+                      <div className="preview-header">
+                        <span>User Name</span>
+                        <span>Region</span>
+                        {campaignData.targetConfigs.map(config => (
+                          <span key={config.skuId}>{config.skuCode}</span>
+                        ))}
+                      </div>
+                      {csvData.slice(0, 5).map((row, index) => (
+                        <div key={index} className="preview-row">
+                          <span>{row.user_name}</span>
+                          <span>{row.region}</span>
+                          {campaignData.targetConfigs.map(config => (
+                            <span key={config.skuId}>{row[config.skuCode] || '0'}</span>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                    {csvData.length > 5 && (
+                      <p className="preview-footer">
+                        Showing first 5 rows. Total: {csvData.length} participants
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const getStepTitle = (step: number) => {
     switch (step) {
