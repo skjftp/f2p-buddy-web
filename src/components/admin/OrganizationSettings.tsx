@@ -28,11 +28,21 @@ interface Designation {
   description: string;
 }
 
+interface SKU {
+  id: string;
+  name: string;
+  code: string;
+  category: string;
+  description: string;
+  unitPrice?: number;
+  currency?: string;
+}
+
 const OrganizationSettings: React.FC = () => {
   const { organization } = useAuth();
   const [loading, setLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'basic' | 'hierarchy' | 'designations'>('basic');
+  const [activeTab, setActiveTab] = useState<'basic' | 'hierarchy' | 'designations' | 'skus'>('basic');
   
   const [basicInfo, setBasicInfo] = useState({
     name: organization?.name || '',
@@ -53,6 +63,16 @@ const OrganizationSettings: React.FC = () => {
     { id: '3', name: 'Distributor', category: 'distributor', description: 'Product distributor partner' },
     { id: '4', name: 'Retailer', category: 'retailer', description: 'Retail outlet partner' }
   ]);
+
+  const [skus, setSkus] = useState<SKU[]>([]);
+  const [newSku, setNewSku] = useState({
+    name: '',
+    code: '',
+    category: '',
+    description: '',
+    unitPrice: '',
+    currency: 'INR'
+  });
 
   const [newHierarchyItem, setNewHierarchyItem] = useState('');
   const [selectedLevel, setSelectedLevel] = useState(1);
@@ -82,6 +102,11 @@ const OrganizationSettings: React.FC = () => {
           // Load designations if they exist
           if (data.designations) {
             setDesignations(data.designations);
+          }
+          
+          // Load SKUs if they exist
+          if (data.skus) {
+            setSkus(data.skus);
           }
           
           // Update basic info
@@ -169,6 +194,43 @@ const OrganizationSettings: React.FC = () => {
     setDesignations(updatedDesignations);
   };
 
+  const addSku = () => {
+    if (!newSku.name.trim() || !newSku.code.trim()) {
+      toast.error('SKU name and code are required');
+      return;
+    }
+
+    // Check if SKU code already exists
+    if (skus.some(sku => sku.code.toLowerCase() === newSku.code.toLowerCase())) {
+      toast.error('SKU code already exists');
+      return;
+    }
+
+    const sku: SKU = {
+      id: `sku_${Date.now()}`,
+      name: newSku.name.trim(),
+      code: newSku.code.trim().toUpperCase(),
+      category: newSku.category.trim(),
+      description: newSku.description.trim(),
+      unitPrice: newSku.unitPrice ? parseFloat(newSku.unitPrice) : undefined,
+      currency: newSku.currency
+    };
+
+    setSkus(prev => [...prev, sku]);
+    setNewSku({
+      name: '',
+      code: '',
+      category: '',
+      description: '',
+      unitPrice: '',
+      currency: 'INR'
+    });
+  };
+
+  const removeSku = (skuId: string) => {
+    setSkus(prev => prev.filter(sku => sku.id !== skuId));
+  };
+
   const handleSave = async () => {
     if (!organization?.id) {
       toast.error('No organization found');
@@ -215,6 +277,16 @@ const OrganizationSettings: React.FC = () => {
         description: designation.description || ''
       }));
 
+      const cleanSkus = skus.map(sku => ({
+        id: sku.id,
+        name: sku.name,
+        code: sku.code,
+        category: sku.category,
+        description: sku.description,
+        ...(sku.unitPrice && { unitPrice: sku.unitPrice }),
+        currency: sku.currency
+      }));
+
       const updateData = {
         name: basicInfo.name,
         logo: logoUrl,
@@ -222,6 +294,7 @@ const OrganizationSettings: React.FC = () => {
         secondaryColor: basicInfo.secondaryColor,
         hierarchyLevels: cleanHierarchyLevels,
         designations: cleanDesignations,
+        skus: cleanSkus,
         updatedAt: serverTimestamp()
       };
 
@@ -325,6 +398,12 @@ const OrganizationSettings: React.FC = () => {
           onClick={() => setActiveTab('designations')}
         >
           👔 Designations
+        </button>
+        <button 
+          className={`settings-tab ${activeTab === 'skus' ? 'active' : ''}`}
+          onClick={() => setActiveTab('skus')}
+        >
+          📦 SKU Management
         </button>
       </div>
 
@@ -571,6 +650,128 @@ const OrganizationSettings: React.FC = () => {
                   ))}
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'skus' && (
+          <div className="skus-settings">
+            <div className="section-header">
+              <h3>SKU Management</h3>
+              <button className="btn" onClick={addSku} disabled={!newSku.name.trim() || !newSku.code.trim()}>
+                ➕ Add SKU
+              </button>
+            </div>
+            <p className="section-description">
+              Add products and services that will be used in your sales campaigns. Each SKU needs a unique code for tracking.
+            </p>
+
+            <div className="add-sku-form">
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">SKU Name *</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={newSku.name}
+                    onChange={(e) => setNewSku(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g., Premium Widget"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">SKU Code *</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={newSku.code}
+                    onChange={(e) => setNewSku(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
+                    placeholder="e.g., PWG001"
+                  />
+                </div>
+              </div>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">Category</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={newSku.category}
+                    onChange={(e) => setNewSku(prev => ({ ...prev, category: e.target.value }))}
+                    placeholder="e.g., Electronics"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Unit Price</label>
+                  <div style={{display: 'flex', gap: '8px'}}>
+                    <select
+                      className="form-input"
+                      value={newSku.currency}
+                      onChange={(e) => setNewSku(prev => ({ ...prev, currency: e.target.value }))}
+                      style={{maxWidth: '80px'}}
+                    >
+                      <option value="INR">₹</option>
+                      <option value="USD">$</option>
+                      <option value="EUR">€</option>
+                    </select>
+                    <input
+                      type="number"
+                      className="form-input"
+                      value={newSku.unitPrice}
+                      onChange={(e) => setNewSku(prev => ({ ...prev, unitPrice: e.target.value }))}
+                      placeholder="0.00"
+                      step="0.01"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Description</label>
+                <textarea
+                  className="form-input"
+                  rows={2}
+                  value={newSku.description}
+                  onChange={(e) => setNewSku(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Brief description of the product/service"
+                />
+              </div>
+            </div>
+
+            <div className="skus-grid">
+              {skus.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-icon">📦</div>
+                  <h4>No SKUs Added</h4>
+                  <p>Add your first product or service to get started with campaign creation.</p>
+                </div>
+              ) : (
+                skus.map((sku) => (
+                  <div key={sku.id} className="sku-card">
+                    <div className="sku-header">
+                      <div className="sku-code">{sku.code}</div>
+                      <button 
+                        className="btn-icon btn-danger"
+                        onClick={() => removeSku(sku.id)}
+                        title="Remove SKU"
+                      >
+                        ×
+                      </button>
+                    </div>
+                    <div className="sku-content">
+                      <h4 className="sku-name">{sku.name}</h4>
+                      {sku.category && <span className="sku-category">{sku.category}</span>}
+                      {sku.description && <p className="sku-description">{sku.description}</p>}
+                      {sku.unitPrice && (
+                        <div className="sku-price">
+                          {sku.currency === 'INR' ? '₹' : sku.currency === 'USD' ? '$' : '€'}
+                          {sku.unitPrice}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}

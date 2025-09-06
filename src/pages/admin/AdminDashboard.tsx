@@ -3,7 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { getFirestoreInstance } from '../../config/firebase';
 import { Campaign } from '../../store/slices/campaignSlice';
-import CampaignWizard from '../../components/campaigns/CampaignWizard/CampaignWizard';
+import NewCampaignWizard from '../../components/campaigns/CampaignWizard/NewCampaignWizard';
 import CampaignEditWizard from '../../components/campaigns/CampaignEditWizard';
 import CampaignCard from '../../components/campaigns/CampaignCard';
 import AnalyticsDashboard from '../../components/analytics/AnalyticsDashboard';
@@ -271,7 +271,7 @@ const AdminDashboard: React.FC = () => {
       {showCampaignWizard && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <CampaignWizard
+            <NewCampaignWizard
               onClose={() => setShowCampaignWizard(false)}
               onComplete={() => setShowCampaignWizard(false)}
             />
