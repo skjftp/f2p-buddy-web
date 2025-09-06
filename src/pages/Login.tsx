@@ -108,16 +108,20 @@ const Login: React.FC = () => {
           displayName: userData.displayName
         });
         
-        // Update the document with the actual Firebase UID
-        try {
-          console.log('📝 Updating document with Firebase UID...');
-          await updateDoc(phoneDocRef, {
-            uid: user.uid,
-            updatedAt: serverTimestamp()
-          });
-          console.log('✅ Document updated with Firebase UID');
-        } catch (updateError) {
-          console.error('❌ Failed to update with UID:', updateError);
+        // Update the document with the actual Firebase UID (only for phone-based documents)
+        if (phoneDoc.id === user.phoneNumber) {
+          try {
+            console.log('📝 Updating phone-based document with Firebase UID...');
+            await updateDoc(phoneDocRef, {
+              uid: user.uid,
+              updatedAt: serverTimestamp()
+            });
+            console.log('✅ Phone document updated with Firebase UID');
+          } catch (updateError) {
+            console.error('❌ Failed to update phone document with UID:', updateError);
+          }
+        } else {
+          console.log('🔄 Using UID-based document, no update needed');
         }
         
         // Save the final user state
