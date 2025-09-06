@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { getAuthInstance, getFirestoreInstance, setupRecaptcha } from '../config/firebase';
+import { saveAuthState } from '../utils/authPersistence';
 import { toast } from 'react-toastify';
 import PhoneInput from 'react-phone-input-2';
 import OtpInput from 'react-otp-input';
@@ -69,6 +70,17 @@ const Login: React.FC = () => {
       if (userDoc.exists()) {
         const userData = userDoc.data();
         
+        // IMMEDIATELY save auth state to localStorage
+        const userStateData = {
+          uid: user.uid,
+          phoneNumber: user.phoneNumber || `+${phoneNumber}`,
+          role: userData.role,
+          organizationId: userData.organizationId,
+          displayName: userData.displayName,
+          createdAt: userData.createdAt,
+        };
+        saveAuthState(userStateData);
+        
         if (userData.role === 'admin') {
           if (userData.organizationId) {
             navigate('/admin/dashboard');
@@ -98,13 +110,26 @@ const Login: React.FC = () => {
   const createUserWithRole = async (user: any, role: 'admin' | 'employee') => {
     try {
       const dbInstance = await getFirestoreInstance();
-      await setDoc(doc(dbInstance, 'users', user.uid), {
+      const userData = {
         uid: user.uid,
         phoneNumber: user.phoneNumber || `+${phoneNumber}`,
         role: role,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
-      });
+      };
+      
+      await setDoc(doc(dbInstance, 'users', user.uid), userData);
+      
+      // IMMEDIATELY save auth state to localStorage
+      const userStateData = {
+        uid: user.uid,
+        phoneNumber: user.phoneNumber || `+${phoneNumber}`,
+        role: role,
+        organizationId: '',
+        displayName: '',
+        createdAt: null,
+      };
+      saveAuthState(userStateData);
       
       if (role === 'admin') {
         navigate('/admin/setup');

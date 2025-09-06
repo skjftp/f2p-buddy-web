@@ -11,6 +11,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminSetup from './pages/admin/AdminSetup';
 import EmployeeDashboard from './pages/employee/EmployeeDashboard';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import AuthGuard from './components/common/AuthGuard';
 import './App.css';
 import 'react-toastify/dist/ReactToastify.css';
 import 'react-phone-input-2/lib/style.css';
@@ -21,7 +22,8 @@ function App() {
       <AuthProvider>
         <ThemeProvider>
           <Router>
-            <div className="App">
+            <AuthGuard>
+              <div className="App">
               <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<Login />} />
@@ -64,7 +66,8 @@ function App() {
                 draggable
                 pauseOnHover
               />
-            </div>
+              </div>
+            </AuthGuard>
           </Router>
         </ThemeProvider>
       </AuthProvider>

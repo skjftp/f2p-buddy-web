@@ -37,17 +37,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { current: organization } = useSelector((state: RootState) => state.organization);
 
   useEffect(() => {
-    dispatch(setLoading(true));
     let isSubscribed = true;
     let mounted = true;
     let unsubscribe: (() => void) | null = null;
     
-    // Try to restore auth state from localStorage first
+    // IMMEDIATELY restore auth state from localStorage to prevent logout
     const persistedAuth = getPersistedAuthState();
     const persistedOrg = getPersistedOrgState();
     
     if (persistedAuth && hasValidPersistedAuth()) {
-      console.log('🔄 Restoring auth state from localStorage');
+      console.log('✅ IMMEDIATELY restoring auth from localStorage');
       dispatch(setUser(persistedAuth));
       
       if (persistedOrg) {
@@ -55,8 +54,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       dispatch(setLoading(false));
+      
+      // Don't set loading=true if we have persisted auth
     } else {
-      console.log('🔍 No valid persisted auth, checking Firebase...');
+      console.log('🔍 No persisted auth, starting fresh login flow');
+      dispatch(setLoading(true));
     }
     
     // Add delay to ensure Firebase is fully initialized
@@ -159,11 +161,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               }));
             }
           } else {
-            // Only clear if we don't have persisted auth
-            if (!hasValidPersistedAuth()) {
+            // Only clear if we don't have persisted auth AND this is not just a temporary Firebase issue
+            const currentPersistedAuth = getPersistedAuthState();
+            if (!currentPersistedAuth || !hasValidPersistedAuth()) {
+              console.log('🚪 No valid auth found, clearing state');
               dispatch(clearUser());
               dispatch(clearOrganization());
               clearPersistedAuthState();
+            } else {
+              console.log('🔒 Keeping persisted auth despite Firebase state null');
+              // Keep the persisted auth active
             }
           }
         });
