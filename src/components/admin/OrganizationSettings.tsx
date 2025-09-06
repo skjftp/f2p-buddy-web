@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import React, { useState, useEffect } from 'react';
+import { doc, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFirestoreInstance, getStorageInstance } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -31,6 +31,7 @@ interface Designation {
 const OrganizationSettings: React.FC = () => {
   const { organization } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'basic' | 'hierarchy' | 'designations'>('basic');
   
   const [basicInfo, setBasicInfo] = useState({
@@ -57,6 +58,52 @@ const OrganizationSettings: React.FC = () => {
   const [selectedLevel, setSelectedLevel] = useState(1);
   const [selectedParent, setSelectedParent] = useState('');
   const [showDesignationManager, setShowDesignationManager] = useState(false);
+  
+  // Load existing organization data on component mount
+  useEffect(() => {
+    const loadOrganizationData = async () => {
+      if (!organization?.id) {
+        setDataLoading(false);
+        return;
+      }
+
+      try {
+        const dbInstance = await getFirestoreInstance();
+        const orgDoc = await getDoc(doc(dbInstance, 'organizations', organization.id));
+        
+        if (orgDoc.exists()) {
+          const data = orgDoc.data();
+          
+          // Load hierarchy levels if they exist
+          if (data.hierarchyLevels) {
+            setHierarchyLevels(data.hierarchyLevels);
+          }
+          
+          // Load designations if they exist
+          if (data.designations) {
+            setDesignations(data.designations);
+          }
+          
+          // Update basic info
+          setBasicInfo(prev => ({
+            ...prev,
+            name: data.name || prev.name,
+            primaryColor: data.primaryColor || prev.primaryColor,
+            secondaryColor: data.secondaryColor || prev.secondaryColor
+          }));
+          
+          setLogoPreview(data.logo || '');
+        }
+      } catch (error) {
+        console.error('Error loading organization data:', error);
+        toast.error('Failed to load organization settings');
+      } finally {
+        setDataLoading(false);
+      }
+    };
+
+    loadOrganizationData();
+  }, [organization?.id]);
   
   const onLogoDrop = (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -130,18 +177,25 @@ const OrganizationSettings: React.FC = () => {
 
     setLoading(true);
     try {
+      console.log('💾 Saving organization settings...', {
+        hierarchyLevels: hierarchyLevels.length,
+        designations: designations.length,
+        orgId: organization.id
+      });
+
       let logoUrl = organization.logo || '';
       
       if (basicInfo.logo) {
+        console.log('📷 Uploading new logo...');
         const storageInstance = await getStorageInstance();
         const fileName = `logo_${Date.now()}_${basicInfo.logo.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
         const logoRef = ref(storageInstance, `organizations/${fileName}`);
         const snapshot = await uploadBytes(logoRef, basicInfo.logo);
         logoUrl = await getDownloadURL(snapshot.ref);
+        console.log('✅ Logo uploaded:', logoUrl);
       }
 
-      const dbInstance = await getFirestoreInstance();
-      await updateDoc(doc(dbInstance, 'organizations', organization.id), {
+      const updateData = {
         name: basicInfo.name,
         logo: logoUrl,
         primaryColor: basicInfo.primaryColor,
@@ -149,12 +203,24 @@ const OrganizationSettings: React.FC = () => {
         hierarchyLevels: hierarchyLevels,
         designations: designations,
         updatedAt: serverTimestamp()
-      });
+      };
 
+      console.log('🔄 Updating organization document...', updateData);
+
+      const dbInstance = await getFirestoreInstance();
+      await updateDoc(doc(dbInstance, 'organizations', organization.id), updateData);
+
+      console.log('✅ Organization updated successfully');
       toast.success('Organization settings updated successfully!');
+      
+      // Refresh the page to load new data
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
     } catch (error: any) {
-      console.error('Error updating organization:', error);
-      toast.error('Failed to update settings');
+      console.error('❌ Error updating organization:', error);
+      toast.error(`Failed to update settings: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -165,6 +231,15 @@ const OrganizationSettings: React.FC = () => {
     const parentLevel = hierarchyLevels.find(l => l.level === level - 1);
     return parentLevel?.items || [];
   };
+
+  if (dataLoading) {
+    return (
+      <div className="loading-container">
+        <div className="spinner"></div>
+        <p>Loading organization settings...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="organization-settings">
