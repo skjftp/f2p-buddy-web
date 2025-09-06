@@ -73,75 +73,31 @@ const Login: React.FC = () => {
       console.log('✅ OTP confirmed, user:', user.uid);
       
       const dbInstance = await getFirestoreInstance();
-      const userDocRef = doc(dbInstance, 'users', user.uid);
-      const userDoc = await getDoc(userDocRef);
+      
+      // Look up user by phone number (which is now the document ID)
+      const phoneDocRef = doc(dbInstance, 'users', user.phoneNumber);
+      const phoneDoc = await getDoc(phoneDocRef);
       
       let userData: any = {};
       
-      if (userDoc.exists()) {
-        userData = userDoc.data();
-        console.log('📋 Found user document by UID:', {
+      if (phoneDoc.exists()) {
+        userData = phoneDoc.data();
+        console.log('✅ Found user by phone number:', {
           role: userData.role,
           organizationId: userData.organizationId,
           displayName: userData.displayName
         });
         
-        // If missing organization data, try phone number lookup
-        if (!userData.organizationId && user.phoneNumber) {
-          console.log('🔍 Missing organizationId, searching by phone:', user.phoneNumber);
-          
-          try {
-            const phoneQuery = query(
-              collection(dbInstance, 'users'),
-              where('phoneNumber', '==', user.phoneNumber)
-            );
-            
-            const phoneSnapshot = await getDocs(phoneQuery);
-            console.log('📞 Phone lookup returned:', phoneSnapshot.size, 'documents');
-            
-            for (const doc of phoneSnapshot.docs) {
-              const phoneData = doc.data();
-              console.log('👤 Phone document:', {
-                id: doc.id,
-                orgId: phoneData.organizationId,
-                name: phoneData.displayName
-              });
-              
-              if (phoneData.organizationId && !userData.organizationId) {
-                console.log('🔄 Merging organization data from phone lookup');
-                userData = {
-                  ...userData,
-                  organizationId: phoneData.organizationId,
-                  displayName: phoneData.displayName,
-                  role: phoneData.role || userData.role,
-                  designationName: phoneData.designationName,
-                  regionHierarchy: phoneData.regionHierarchy,
-                  finalRegionName: phoneData.finalRegionName
-                };
-                console.log('✅ Merged organizationId:', userData.organizationId);
-                
-                // Update the UID-based document with organization data
-                try {
-                  console.log('📝 Updating UID document with organization data...');
-                  await updateDoc(userDocRef, {
-                    organizationId: phoneData.organizationId,
-                    displayName: phoneData.displayName,
-                    role: phoneData.role,
-                    designationName: phoneData.designationName,
-                    regionHierarchy: phoneData.regionHierarchy,
-                    finalRegionName: phoneData.finalRegionName,
-                    updatedAt: serverTimestamp()
-                  });
-                  console.log('✅ UID document updated with organization data');
-                } catch (updateError) {
-                  console.error('❌ Failed to update UID document:', updateError);
-                }
-                break; // Only merge from the first document with organizationId
-              }
-            }
-          } catch (phoneError) {
-            console.error('❌ Phone lookup failed:', phoneError);
-          }
+        // Update the document with the actual Firebase UID
+        try {
+          console.log('📝 Updating document with Firebase UID...');
+          await updateDoc(phoneDocRef, {
+            uid: user.uid,
+            updatedAt: serverTimestamp()
+          });
+          console.log('✅ Document updated with Firebase UID');
+        } catch (updateError) {
+          console.error('❌ Failed to update with UID:', updateError);
         }
         
         // Save the final user state

@@ -23,6 +23,13 @@ const EmployeeDashboard: React.FC = () => {
   });
 
   useEffect(() => {
+    console.log('🔍 EmployeeDashboard useEffect - checking organization:', {
+      organizationId: organization?.id,
+      organizationExists: !!organization,
+      userRole: user?.role,
+      userId: user?.uid
+    });
+    
     if (!organization?.id) {
       console.log('❌ No organization ID, stopping campaign loading');
       setLoading(false);

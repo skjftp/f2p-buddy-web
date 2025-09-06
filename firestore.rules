@@ -12,14 +12,14 @@ service cloud.firestore {
     
     function hasRole(role) {
       return isAuthenticated() && 
-             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+             exists(/databases/$(database)/documents/users/$(request.auth.token.phone_number)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.token.phone_number)).data.role == role;
     }
     
     function belongsToOrg(orgId) {
       return isAuthenticated() && 
-             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationId == orgId;
+             exists(/databases/$(database)/documents/users/$(request.auth.token.phone_number)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.token.phone_number)).data.organizationId == orgId;
     }
     
     function isOrgAdmin(orgId) {
@@ -28,10 +28,10 @@ service cloud.firestore {
              get(/databases/$(database)/documents/organizations/$(orgId)).data.adminId == request.auth.uid;
     }
 
-    // Users collection
-    match /users/{userId} {
-      // Users can read and write their own document
-      allow read, write: if isOwner(userId);
+    // Users collection - now using phone number as document ID
+    match /users/{phoneNumber} {
+      // Users can read and write their own document (by phone number)
+      allow read, write: if isAuthenticated() && request.auth.token.phone_number == phoneNumber;
       // Admins can read all users in their organization
       allow read: if isAuthenticated() && hasRole('admin');
       // Allow listing users for admin dashboard
@@ -42,9 +42,6 @@ service cloud.firestore {
       allow update: if isAuthenticated() && hasRole('admin');
       // Admins can delete user documents in their organization
       allow delete: if isAuthenticated() && hasRole('admin');
-      // Allow authenticated users to query by phone number to find their own data
-      allow list: if isAuthenticated() && 
-                     resource.data.phoneNumber == request.auth.token.phone_number;
     }
 
     // Organizations collection

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc, serverTimestamp, getDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, getDoc, doc, setDoc } from 'firebase/firestore';
 import { getFirestoreInstance } from '../../config/firebase';
 import { toast } from 'react-toastify';
 
@@ -137,10 +137,13 @@ const AddUser: React.FC<AddUserProps> = ({ organizationId, onClose, onSuccess })
     try {
       const dbInstance = await getFirestoreInstance();
       
-      // Create user document
-      const userDocRef = await addDoc(collection(dbInstance, 'users'), {
-        uid: `user_${Date.now()}`, // Temporary UID until they login
-        phoneNumber: userData.phoneNumber,
+      // Create user document using phone number as document ID
+      const cleanPhoneNumber = userData.phoneNumber.startsWith('+') ? userData.phoneNumber : `+${userData.phoneNumber}`;
+      const userDocRef = doc(dbInstance, 'users', cleanPhoneNumber);
+      
+      await setDoc(userDocRef, {
+        uid: null, // Will be updated when they first login
+        phoneNumber: cleanPhoneNumber,
         role: designations.find(d => d.id === userData.designation)?.category || 'employee',
         displayName: userData.name,
         email: userData.email,

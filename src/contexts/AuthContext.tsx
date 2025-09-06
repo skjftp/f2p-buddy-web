@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect } from 'react';
 import { User, onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc, query, where, getDocs, collection } from 'firebase/firestore';
+import { doc, getDoc, query, where, getDocs, collection, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useDispatch, useSelector } from 'react-redux';
 import { getAuthInstance, getFirestoreInstance } from '../config/firebase';
 import { setUser, clearUser, setLoading } from '../store/slices/authSlice';
@@ -81,83 +81,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               isAnonymous: firebaseUser.isAnonymous
             });
             try {
-              // Get user data from Firestore - try by UID first, then by phone number
+              // Get user data from Firestore using phone number as document ID
               const dbInstance = await getFirestoreInstance();
               
-              let userDoc;
-              let retries = 3;
+              console.log('📞 Looking up user by phone number:', firebaseUser.phoneNumber);
+              const userDocRef = doc(dbInstance, 'users', firebaseUser.phoneNumber);
+              const userDoc = await getDoc(userDocRef);
               
-              // First try by UID (for admin users)
-              console.log('🔍 Attempting UID lookup for:', firebaseUser.uid);
-              while (retries > 0) {
-                try {
-                  const userDocRef = doc(dbInstance, 'users', firebaseUser.uid);
-                  userDoc = await getDoc(userDocRef);
-                  if (userDoc.exists()) {
-                    console.log('✅ Found user by UID:', userDoc.id);
-                  } else {
-                    console.log('❌ No document found for UID:', firebaseUser.uid);
-                  }
-                  break;
-                } catch (error) {
-                  console.log('❌ UID lookup error:', error);
-                  retries--;
-                  if (retries === 0) {
-                    console.log('UID lookup failed after retries, trying phone number lookup...');
-                    break;
-                  }
-                  await new Promise(resolve => setTimeout(resolve, 1000));
-                }
-              }
-              
-              // If UID lookup failed, try phone number lookup (for employees)
-              if (!userDoc || !userDoc.exists()) {
-                console.log('🔍 User not found by UID, searching by phone number:', firebaseUser.phoneNumber);
+              if (userDoc.exists()) {
+                console.log('✅ Found user by phone number:', userDoc.id);
                 
-                try {
-                  const usersQuery = query(
-                    collection(dbInstance, 'users'),
-                    where('phoneNumber', '==', firebaseUser.phoneNumber)
-                  );
-                  
-                  console.log('📞 Executing phone number query...');
-                  const querySnapshot = await getDocs(usersQuery);
-                  console.log('📊 Phone query returned', querySnapshot.size, 'documents');
-                  
-                  if (!querySnapshot.empty) {
-                    userDoc = querySnapshot.docs[0];
-                    const foundUserData = userDoc.data();
-                    console.log('✅ Found user by phone number:', {
-                      docId: userDoc.id,
-                      phoneNumber: foundUserData.phoneNumber,
-                      organizationId: foundUserData.organizationId,
-                      role: foundUserData.role,
-                      displayName: foundUserData.displayName
-                    });
-                  } else {
-                    console.log('❌ No user found by phone number - checking all users...');
-                    
-                    // Debug: List all users to see what's in the database
-                    try {
-                      const allUsersQuery = query(collection(dbInstance, 'users'));
-                      const allUsersSnapshot = await getDocs(allUsersQuery);
-                      console.log('🔍 Total users in database:', allUsersSnapshot.size);
-                      allUsersSnapshot.forEach(doc => {
-                        const userData = doc.data();
-                        console.log('👤 User:', {
-                          id: doc.id,
-                          phone: userData.phoneNumber,
-                          name: userData.displayName,
-                          orgId: userData.organizationId
-                        });
-                      });
-                    } catch (debugError) {
-                      console.error('Debug query failed:', debugError);
-                    }
-                  }
-                } catch (phoneError) {
-                  console.error('❌ Phone number lookup failed:', phoneError);
+                // Update the document with Firebase UID if not already set
+                const userData = userDoc.data();
+                if (!userData.uid) {
+                  console.log('📝 Updating document with Firebase UID...');
+                  await updateDoc(userDocRef, {
+                    uid: firebaseUser.uid,
+                    updatedAt: serverTimestamp()
+                  });
+                  console.log('✅ Document updated with Firebase UID');
                 }
+              } else {
+                console.log('❌ No user document found for phone:', firebaseUser.phoneNumber);
               }
               
               if (userDoc && userDoc.exists()) {
@@ -169,55 +114,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   organizationId: userData.organizationId,
                   displayName: userData.displayName
                 });
-                
-                // If user exists by UID but missing organizationId, try to find by phone number
-                if (!userData.organizationId && firebaseUser.phoneNumber) {
-                  console.log('⚠️ User found by UID but missing organizationId, searching by phone...');
-                  
-                  try {
-                    const phoneQuery = query(
-                      collection(dbInstance, 'users'),
-                      where('phoneNumber', '==', firebaseUser.phoneNumber)
-                    );
-                    
-                    const phoneSnapshot = await getDocs(phoneQuery);
-                    console.log('📞 Phone lookup for missing org data returned:', phoneSnapshot.size, 'documents');
-                    
-                    // Find the document with organizationId
-                    let userWithOrgId: any = null;
-                    phoneSnapshot.forEach(doc => {
-                      const docData = doc.data();
-                      console.log('👤 Found user by phone:', {
-                        id: doc.id,
-                        phone: docData.phoneNumber,
-                        orgId: docData.organizationId,
-                        name: docData.displayName
-                      });
-                      
-                      if (docData.organizationId) {
-                        userWithOrgId = { id: doc.id, ...docData };
-                      }
-                    });
-                    
-                    if (userWithOrgId) {
-                      console.log('🔄 Merging organization data from phone lookup');
-                      // Use the data from the phone lookup that has organizationId
-                      Object.assign(userData, {
-                        organizationId: userWithOrgId.organizationId,
-                        displayName: userWithOrgId.displayName,
-                        role: userWithOrgId.role,
-                        designationName: userWithOrgId.designationName,
-                        regionHierarchy: userWithOrgId.regionHierarchy,
-                        finalRegionName: userWithOrgId.finalRegionName
-                      });
-                      
-                      console.log('✅ Merged data - organizationId now:', userData.organizationId);
-                    }
-                  } catch (mergeError) {
-                    console.error('❌ Failed to merge organization data:', mergeError);
-                    console.log('🔄 Continuing with existing user data despite merge failure');
-                  }
-                }
                 
                 const userStateData = {
                   uid: firebaseUser.uid,
