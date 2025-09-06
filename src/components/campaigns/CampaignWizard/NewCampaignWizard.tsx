@@ -91,7 +91,6 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [organizationSkus, setOrganizationSkus] = useState<SKU[]>([]);
-  const [organizationUsers, setOrganizationUsers] = useState<any[]>([]);
   
   const [campaignData, setCampaignData] = useState<CampaignData>({
     name: '',
@@ -130,9 +129,7 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
           setOrganizationSkus(orgDoc.data().skus);
         }
 
-        // Load users for participant assignment
-        // This would be implemented to fetch users from the organization
-        // setOrganizationUsers(users);
+        // Load users for participant assignment would be implemented here
 
       } catch (error) {
         console.error('Error loading organization data:', error);
@@ -252,10 +249,6 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
     }));
   };
 
-  const computeUserTargets = () => {
-    // Auto-compute individual user targets based on regional distribution
-    console.log('Computing user targets...');
-  };
 
   const handleSubmit = async () => {
     setLoading(true);
