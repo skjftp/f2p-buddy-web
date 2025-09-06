@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect } from 'react';
 import { User, onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, query, where, getDocs, collection } from 'firebase/firestore';
 import { useDispatch, useSelector } from 'react-redux';
 import { getAuthInstance, getFirestoreInstance } from '../config/firebase';
 import { setUser, clearUser, setLoading } from '../store/slices/authSlice';
@@ -76,21 +76,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           if (firebaseUser) {
             try {
-              // Get user data from Firestore with retry logic
+              // Get user data from Firestore - try by UID first, then by phone number
               const dbInstance = await getFirestoreInstance();
-              const userDocRef = doc(dbInstance, 'users', firebaseUser.uid);
               
-              let retries = 3;
               let userDoc;
+              let retries = 3;
               
+              // First try by UID (for admin users)
               while (retries > 0) {
                 try {
+                  const userDocRef = doc(dbInstance, 'users', firebaseUser.uid);
                   userDoc = await getDoc(userDocRef);
                   break;
                 } catch (error) {
                   retries--;
-                  if (retries === 0) throw error;
-                  await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
+                  if (retries === 0) {
+                    console.log('UID lookup failed, trying phone number lookup...');
+                    break;
+                  }
+                  await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+              }
+              
+              // If UID lookup failed, try phone number lookup (for employees)
+              if (!userDoc || !userDoc.exists()) {
+                console.log('🔍 User not found by UID, searching by phone number:', firebaseUser.phoneNumber);
+                
+                try {
+                  const usersQuery = query(
+                    collection(dbInstance, 'users'),
+                    where('phoneNumber', '==', firebaseUser.phoneNumber)
+                  );
+                  
+                  const querySnapshot = await getDocs(usersQuery);
+                  if (!querySnapshot.empty) {
+                    userDoc = querySnapshot.docs[0];
+                    console.log('✅ Found user by phone number:', userDoc.id);
+                  } else {
+                    console.log('❌ No user found by phone number');
+                  }
+                } catch (phoneError) {
+                  console.error('❌ Phone number lookup failed:', phoneError);
                 }
               }
               
