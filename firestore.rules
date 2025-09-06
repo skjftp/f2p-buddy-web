@@ -36,6 +36,10 @@ service cloud.firestore {
       allow read: if isAuthenticated() && hasRole('admin');
       // Allow listing users for admin dashboard
       allow list: if isAuthenticated() && hasRole('admin');
+      // Admins can create user documents for their organization
+      allow create: if isAuthenticated() && hasRole('admin');
+      // Admins can update user documents in their organization
+      allow update: if isAuthenticated() && hasRole('admin');
     }
 
     // Organizations collection
