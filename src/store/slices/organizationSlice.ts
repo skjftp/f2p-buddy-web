@@ -21,8 +21,25 @@ interface OrganizationState {
   error: string | null;
 }
 
+// IMMEDIATELY restore organization from localStorage
+const restoreOrgFromStorage = (): Organization | null => {
+  try {
+    const stored = localStorage.getItem('f2p_org_state');
+    if (stored) {
+      const orgData = JSON.parse(stored);
+      console.log('🔄 IMMEDIATELY restored org from localStorage');
+      return orgData;
+    }
+  } catch (error) {
+    console.warn('Failed to restore org from localStorage:', error);
+  }
+  return null;
+};
+
+const restoredOrg = restoreOrgFromStorage();
+
 const initialState: OrganizationState = {
-  current: null,
+  current: restoredOrg,
   loading: false,
   error: null,
 };
