@@ -15,17 +15,17 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
   onEdit, 
   onView 
 }) => {
-  const { colors } = useTheme();
+  // const { colors } = useTheme();
   
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return '#28a745';
-      case 'completed': return '#6c757d';
-      case 'draft': return '#ffc107';
-      case 'cancelled': return '#dc3545';
-      default: return '#6c757d';
-    }
-  };
+  // const getStatusColor = (status: string) => {
+  //   switch (status) {
+  //     case 'active': return '#28a745';
+  //     case 'completed': return '#6c757d';
+  //     case 'draft': return '#ffc107';
+  //     case 'cancelled': return '#dc3545';
+  //     default: return '#6c757d';
+  //   }
+  // };
 
   // const calculateProgress = () => {
   //   const total = campaign.metrics.sales?.target || 0;
