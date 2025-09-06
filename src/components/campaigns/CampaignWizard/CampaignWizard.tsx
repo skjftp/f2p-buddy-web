@@ -12,25 +12,72 @@ interface CampaignWizardProps {
 }
 
 interface CampaignData {
+  // Step 1: Basic Info
   name: string;
-  description: string;
   startDate: string;
   endDate: string;
+  description: string;
   banner: File | null;
-  type: ('sales' | 'calls' | 'meetings' | 'referrals')[];
-  metrics: {
-    sales?: { target: number; unit: string; };
-    calls?: { target: number; unit: string; };
-    meetings?: { target: number; unit: string; };
-    referrals?: { target: number; unit: string; };
+  
+  // Step 2: Campaign Type
+  geographic: string[];
+  hierarchy: string[];
+  channel: string[];
+  
+  // Step 3: Target Metrics
+  volumeTargets: {
+    units?: number;
+    cases?: number;
   };
-  prizes: {
-    position: number;
-    title: string;
+  valueTargets: {
+    revenue?: number;
+    collection?: number;
+  };
+  productTargets: {
+    skuWise?: boolean;
+    categoryWise?: boolean;
+    brandWise?: boolean;
+  };
+  activityTargets: {
+    pc?: number;
+    orderEntry?: number;
+    primarySales?: number;
+    secondarySales?: number;
+    tertiarySales?: number;
+    clearSales?: number;
+    newOutlets?: number;
+    displayCompliance?: number;
+  };
+  
+  // Step 4: Contest Structure
+  contestType: 'points' | 'milestone' | 'percentage' | 'ranking' | 'slab';
+  pointValues: Record<string, number>;
+  milestones: Array<{name: string, target: number, reward: string}>;
+  
+  // Step 5: Prizes
+  individualPrizes: Array<{
+    rank: number;
+    type: 'cash' | 'voucher' | 'gadget' | 'trip';
+    value: string;
     description: string;
-    image?: File;
-  }[];
+  }>;
+  teamPrizes: Array<{
+    rank: number;
+    type: string;
+    value: string;
+    description: string;
+  }>;
+  recognition: Array<{
+    type: 'certificate' | 'trophy' | 'badge';
+    criteria: string;
+    description: string;
+  }>;
+  
+  // Step 6: Participants
+  participantType: 'bulk' | 'individual' | 'auto';
   participants: string[];
+  hierarchyFilter: string[];
+  geographyFilter: string[];
 }
 
 const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) => {
@@ -39,18 +86,27 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
   const [loading, setLoading] = useState(false);
   const [campaignData, setCampaignData] = useState<CampaignData>({
     name: '',
-    description: '',
     startDate: '',
     endDate: '',
+    description: '',
     banner: null,
-    type: [],
-    metrics: {},
-    prizes: [
-      { position: 1, title: 'First Prize', description: '' },
-      { position: 2, title: 'Second Prize', description: '' },
-      { position: 3, title: 'Third Prize', description: '' }
-    ],
-    participants: []
+    geographic: [],
+    hierarchy: [],
+    channel: [],
+    volumeTargets: {},
+    valueTargets: {},
+    productTargets: {},
+    activityTargets: {},
+    contestType: 'points',
+    pointValues: {},
+    milestones: [],
+    individualPrizes: [],
+    teamPrizes: [],
+    recognition: [],
+    participantType: 'individual',
+    participants: [],
+    hierarchyFilter: [],
+    geographyFilter: []
   });
 
   const [bannerPreview, setBannerPreview] = useState<string>('');
@@ -59,96 +115,21 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
     const file = acceptedFiles[0];
     if (file) {
       setCampaignData(prev => ({ ...prev, banner: file }));
-      
       const reader = new FileReader();
       reader.onload = () => setBannerPreview(reader.result as string);
       reader.readAsDataURL(file);
     }
   };
 
-  const { getRootProps: getBannerProps, getInputProps: getBannerInputProps, isDragActive: isBannerDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: onBannerDrop,
     accept: { 'image/*': ['.png', '.jpg', '.jpeg', '.gif'] },
     multiple: false,
-    maxSize: 10 * 1024 * 1024, // 10MB
+    maxSize: 10 * 1024 * 1024,
   });
 
-  const handleInputChange = (field: string, value: any) => {
-    setCampaignData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleTypeToggle = (type: 'sales' | 'calls' | 'meetings' | 'referrals') => {
-    setCampaignData(prev => ({
-      ...prev,
-      type: prev.type.includes(type) 
-        ? prev.type.filter(t => t !== type)
-        : [...prev.type, type]
-    }));
-  };
-
-  const handleMetricChange = (type: 'sales' | 'calls' | 'meetings' | 'referrals', field: 'target' | 'unit', value: any) => {
-    setCampaignData(prev => ({
-      ...prev,
-      metrics: {
-        ...prev.metrics,
-        [type]: {
-          ...prev.metrics[type],
-          [field]: value
-        }
-      }
-    }));
-  };
-
-  const handlePrizeChange = (index: number, field: string, value: any) => {
-    setCampaignData(prev => ({
-      ...prev,
-      prizes: prev.prizes.map((prize, i) => 
-        i === index ? { ...prize, [field]: value } : prize
-      )
-    }));
-  };
-
-  const nextStep = () => {
-    if (validateCurrentStep()) {
-      setCurrentStep(prev => Math.min(prev + 1, 4));
-    }
-  };
-
-  const prevStep = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1));
-  };
-
-  const validateCurrentStep = () => {
-    switch (currentStep) {
-      case 1:
-        if (!campaignData.name.trim()) {
-          toast.error('Campaign name is required');
-          return false;
-        }
-        if (!campaignData.description.trim()) {
-          toast.error('Campaign description is required');
-          return false;
-        }
-        break;
-      case 2:
-        if (!campaignData.startDate || !campaignData.endDate) {
-          toast.error('Start and end dates are required');
-          return false;
-        }
-        if (new Date(campaignData.startDate) >= new Date(campaignData.endDate)) {
-          toast.error('End date must be after start date');
-          return false;
-        }
-        break;
-      case 3:
-        if (campaignData.type.length === 0) {
-          toast.error('At least one campaign type must be selected');
-          return false;
-        }
-        break;
-    }
-    return true;
-  };
+  const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 6));
+  const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
 
   const handleSubmit = async () => {
     if (!user || !organization) {
@@ -157,7 +138,6 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
     }
 
     setLoading(true);
-    
     try {
       let bannerUrl = '';
       
@@ -168,28 +148,10 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
         bannerUrl = await getDownloadURL(snapshot.ref);
       }
 
-      // Process metrics to only include selected types
-      const processedMetrics: any = {};
-      campaignData.type.forEach(type => {
-        if (campaignData.metrics[type]) {
-          processedMetrics[type] = {
-            target: campaignData.metrics[type]!.target || 0,
-            achieved: 0
-          };
-        }
-      });
-
       const dbInstance = await getFirestoreInstance();
       await addDoc(collection(dbInstance, 'campaigns'), {
-        name: campaignData.name,
-        description: campaignData.description,
-        startDate: campaignData.startDate,
-        endDate: campaignData.endDate,
+        ...campaignData,
         banner: bannerUrl,
-        type: campaignData.type,
-        metrics: processedMetrics,
-        prizes: campaignData.prizes.filter(prize => prize.title && prize.description),
-        participants: [],
         orgId: organization.id,
         createdBy: user.uid,
         status: 'draft',
@@ -201,7 +163,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
       onComplete();
     } catch (error: any) {
       console.error('Error creating campaign:', error);
-      toast.error('Failed to create campaign. Please try again.');
+      toast.error('Failed to create campaign');
     } finally {
       setLoading(false);
     }
@@ -209,45 +171,67 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
 
   const renderStep1 = () => (
     <div className="wizard-step">
-      <h2>Campaign Details</h2>
-      <p className="step-description">Basic information about your campaign</p>
+      <h2>Campaign Information</h2>
+      <p className="step-description">Basic details about your sales incentive campaign</p>
       
       <div className="form-group">
-        <label className="form-label">Campaign Name *</label>
+        <label className="form-label">Campaign Name</label>
         <input
           type="text"
           className="form-input"
           value={campaignData.name}
-          onChange={(e) => handleInputChange('name', e.target.value)}
-          placeholder="e.g., Q4 Sales Challenge"
+          onChange={(e) => setCampaignData(prev => ({ ...prev, name: e.target.value }))}
+          placeholder="e.g., Q4 Sales Blitz, Diwali Bonanza"
         />
       </div>
 
+      <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px'}}>
+        <div className="form-group">
+          <label className="form-label">Start Date</label>
+          <input
+            type="date"
+            className="form-input"
+            value={campaignData.startDate}
+            onChange={(e) => setCampaignData(prev => ({ ...prev, startDate: e.target.value }))}
+          />
+        </div>
+        
+        <div className="form-group">
+          <label className="form-label">End Date</label>
+          <input
+            type="date"
+            className="form-input"
+            value={campaignData.endDate}
+            onChange={(e) => setCampaignData(prev => ({ ...prev, endDate: e.target.value }))}
+          />
+        </div>
+      </div>
+
       <div className="form-group">
-        <label className="form-label">Description *</label>
+        <label className="form-label">Description</label>
         <textarea
           className="form-input"
-          rows={4}
+          rows={3}
           value={campaignData.description}
-          onChange={(e) => handleInputChange('description', e.target.value)}
-          placeholder="Describe what this campaign is about and what participants need to do..."
+          onChange={(e) => setCampaignData(prev => ({ ...prev, description: e.target.value }))}
+          placeholder="Describe the campaign objectives and motivation for participants..."
         />
       </div>
 
       <div className="form-group">
         <label className="form-label">Campaign Banner</label>
-        <div {...getBannerProps()} className={`dropzone ${isBannerDragActive ? 'active' : ''}`}>
-          <input {...getBannerInputProps()} />
+        <div {...getRootProps()} className={`dropzone ${isDragActive ? 'active' : ''}`}>
+          <input {...getInputProps()} />
           {bannerPreview ? (
             <div className="banner-preview">
-              <img src={bannerPreview} alt="Campaign banner" className="preview-image" />
-              <p>Click or drag to replace</p>
+              <img src={bannerPreview} alt="Banner preview" style={{maxWidth: '200px', maxHeight: '120px', borderRadius: '8px'}} />
+              <p style={{marginTop: '8px', fontSize: '12px'}}>Click to replace</p>
             </div>
           ) : (
-            <div className="dropzone-content">
-              <div className="upload-icon">🖼️</div>
-              <p>Upload campaign banner</p>
-              <p className="upload-hint">PNG, JPG, GIF up to 10MB</p>
+            <div style={{textAlign: 'center', padding: '20px'}}>
+              <div style={{fontSize: '32px', marginBottom: '8px'}}>📸</div>
+              <p>Drop banner image here or click to select</p>
+              <p style={{fontSize: '12px', color: 'var(--gray-500)'}}>PNG, JPG, GIF up to 10MB</p>
             </div>
           )}
         </div>
@@ -257,131 +241,396 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
 
   const renderStep2 = () => (
     <div className="wizard-step">
-      <h2>Timeline</h2>
-      <p className="step-description">Set the duration for your campaign</p>
+      <h2>Campaign Type Selection</h2>
+      <p className="step-description">Define the scope and targeting for this campaign</p>
       
-      <div className="date-inputs">
-        <div className="form-group">
-          <label className="form-label">Start Date *</label>
-          <input
-            type="date"
-            className="form-input"
-            value={campaignData.startDate}
-            onChange={(e) => handleInputChange('startDate', e.target.value)}
-            min={new Date().toISOString().split('T')[0]}
-          />
+      <div className="campaign-types">
+        <div className="type-section">
+          <h4>Geographic Scope</h4>
+          <div className="checkbox-group">
+            {['Zonal', 'Regional', 'District', 'Territory', 'City-wise'].map(option => (
+              <label key={option} className="checkbox-item">
+                <input
+                  type="checkbox"
+                  checked={campaignData.geographic.includes(option)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setCampaignData(prev => ({
+                        ...prev,
+                        geographic: [...prev.geographic, option]
+                      }));
+                    } else {
+                      setCampaignData(prev => ({
+                        ...prev,
+                        geographic: prev.geographic.filter(item => item !== option)
+                      }));
+                    }
+                  }}
+                />
+                <span>{option}</span>
+              </label>
+            ))}
+          </div>
         </div>
 
-        <div className="form-group">
-          <label className="form-label">End Date *</label>
-          <input
-            type="date"
-            className="form-input"
-            value={campaignData.endDate}
-            onChange={(e) => handleInputChange('endDate', e.target.value)}
-            min={campaignData.startDate || new Date().toISOString().split('T')[0]}
-          />
+        <div className="type-section">
+          <h4>Hierarchy Level</h4>
+          <div className="checkbox-group">
+            {['Individual Sales Person', 'Sales Team', 'ASM Level', 'RSM Level'].map(option => (
+              <label key={option} className="checkbox-item">
+                <input
+                  type="checkbox"
+                  checked={campaignData.hierarchy.includes(option)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setCampaignData(prev => ({
+                        ...prev,
+                        hierarchy: [...prev.hierarchy, option]
+                      }));
+                    } else {
+                      setCampaignData(prev => ({
+                        ...prev,
+                        hierarchy: prev.hierarchy.filter(item => item !== option)
+                      }));
+                    }
+                  }}
+                />
+                <span>{option}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="type-section">
+          <h4>Channel Type</h4>
+          <div className="checkbox-group">
+            {['Distributor', 'Retailer', 'Dealer', 'Direct Sales'].map(option => (
+              <label key={option} className="checkbox-item">
+                <input
+                  type="checkbox"
+                  checked={campaignData.channel.includes(option)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setCampaignData(prev => ({
+                        ...prev,
+                        channel: [...prev.channel, option]
+                      }));
+                    } else {
+                      setCampaignData(prev => ({
+                        ...prev,
+                        channel: prev.channel.filter(item => item !== option)
+                      }));
+                    }
+                  }}
+                />
+                <span>{option}</span>
+              </label>
+            ))}
+          </div>
         </div>
       </div>
-
-      {campaignData.startDate && campaignData.endDate && (
-        <div className="campaign-duration">
-          <h4>Campaign Duration</h4>
-          <p>
-            {Math.ceil((new Date(campaignData.endDate).getTime() - new Date(campaignData.startDate).getTime()) / (1000 * 60 * 60 * 24))} days
-          </p>
-        </div>
-      )}
     </div>
   );
 
   const renderStep3 = () => (
     <div className="wizard-step">
-      <h2>Campaign Types & Metrics</h2>
-      <p className="step-description">Choose what activities to track</p>
+      <h2>Target Metrics Configuration</h2>
+      <p className="step-description">Set targets for different sales metrics</p>
       
-      <div className="campaign-types">
-        {[
-          { type: 'sales', icon: '💰', label: 'Sales', unit: 'Amount (₹)' },
-          { type: 'calls', icon: '📞', label: 'Calls', unit: 'Number of calls' },
-          { type: 'meetings', icon: '🤝', label: 'Meetings', unit: 'Number of meetings' },
-          { type: 'referrals', icon: '👥', label: 'Referrals', unit: 'Number of referrals' }
-        ].map(({ type, icon, label, unit }) => (
-          <div key={type} className="campaign-type-card">
-            <div className="type-header">
-              <label className="type-checkbox">
-                <input
-                  type="checkbox"
-                  checked={campaignData.type.includes(type as any)}
-                  onChange={() => handleTypeToggle(type as any)}
-                />
-                <span className="type-icon">{icon}</span>
-                <span className="type-label">{label}</span>
-              </label>
+      <div className="metrics-configuration">
+        <div className="metric-section">
+          <h4>📦 Volume-based Targets</h4>
+          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px'}}>
+            <div className="form-group">
+              <label className="form-label">Units Sold</label>
+              <input
+                type="number"
+                className="form-input"
+                value={campaignData.volumeTargets.units || ''}
+                onChange={(e) => setCampaignData(prev => ({
+                  ...prev,
+                  volumeTargets: { ...prev.volumeTargets, units: parseInt(e.target.value) || 0 }
+                }))}
+                placeholder="Target units"
+              />
             </div>
-            
-            {campaignData.type.includes(type as any) && (
-              <div className="type-metrics">
-                <div className="form-group">
-                  <label className="form-label">Target</label>
-                  <input
-                    type="number"
-                    className="form-input"
-                    value={campaignData.metrics[type as keyof typeof campaignData.metrics]?.target || ''}
-                    onChange={(e) => handleMetricChange(type as any, 'target', Number(e.target.value))}
-                    placeholder={`Enter target ${unit.toLowerCase()}`}
-                  />
-                </div>
-              </div>
-            )}
+            <div className="form-group">
+              <label className="form-label">Cases Moved</label>
+              <input
+                type="number"
+                className="form-input"
+                value={campaignData.volumeTargets.cases || ''}
+                onChange={(e) => setCampaignData(prev => ({
+                  ...prev,
+                  volumeTargets: { ...prev.volumeTargets, cases: parseInt(e.target.value) || 0 }
+                }))}
+                placeholder="Target cases"
+              />
+            </div>
           </div>
-        ))}
+        </div>
+
+        <div className="metric-section">
+          <h4>💰 Value-based Targets</h4>
+          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px'}}>
+            <div className="form-group">
+              <label className="form-label">Revenue Target (₹)</label>
+              <input
+                type="number"
+                className="form-input"
+                value={campaignData.valueTargets.revenue || ''}
+                onChange={(e) => setCampaignData(prev => ({
+                  ...prev,
+                  valueTargets: { ...prev.valueTargets, revenue: parseInt(e.target.value) || 0 }
+                }))}
+                placeholder="Revenue target"
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Collection Target (₹)</label>
+              <input
+                type="number"
+                className="form-input"
+                value={campaignData.valueTargets.collection || ''}
+                onChange={(e) => setCampaignData(prev => ({
+                  ...prev,
+                  valueTargets: { ...prev.valueTargets, collection: parseInt(e.target.value) || 0 }
+                }))}
+                placeholder="Collection target"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="metric-section">
+          <h4>🎯 Activity-based Targets</h4>
+          <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px'}}>
+            <div className="form-group">
+              <label className="form-label">PC Achievement</label>
+              <input
+                type="number"
+                className="form-input"
+                value={campaignData.activityTargets.pc || ''}
+                onChange={(e) => setCampaignData(prev => ({
+                  ...prev,
+                  activityTargets: { ...prev.activityTargets, pc: parseInt(e.target.value) || 0 }
+                }))}
+                placeholder="Productive calls"
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Order Entry %</label>
+              <input
+                type="number"
+                className="form-input"
+                value={campaignData.activityTargets.orderEntry || ''}
+                onChange={(e) => setCampaignData(prev => ({
+                  ...prev,
+                  activityTargets: { ...prev.activityTargets, orderEntry: parseInt(e.target.value) || 0 }
+                }))}
+                placeholder="Order percentage"
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">New Outlets</label>
+              <input
+                type="number"
+                className="form-input"
+                value={campaignData.activityTargets.newOutlets || ''}
+                onChange={(e) => setCampaignData(prev => ({
+                  ...prev,
+                  activityTargets: { ...prev.activityTargets, newOutlets: parseInt(e.target.value) || 0 }
+                }))}
+                placeholder="New outlet targets"
+              />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Display Compliance %</label>
+              <input
+                type="number"
+                className="form-input"
+                value={campaignData.activityTargets.displayCompliance || ''}
+                onChange={(e) => setCampaignData(prev => ({
+                  ...prev,
+                  activityTargets: { ...prev.activityTargets, displayCompliance: parseInt(e.target.value) || 0 }
+                }))}
+                placeholder="Display compliance"
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 
   const renderStep4 = () => (
     <div className="wizard-step">
-      <h2>Prizes & Rewards</h2>
-      <p className="step-description">Define rewards for top performers</p>
+      <h2>Contest Structure</h2>
+      <p className="step-description">Configure how participants earn points and rewards</p>
       
-      <div className="prizes-section">
-        {campaignData.prizes.map((prize, index) => (
-          <div key={index} className="prize-card">
-            <div className="prize-header">
-              <span className="prize-position">
-                {prize.position === 1 && '🥇'}
-                {prize.position === 2 && '🥈'}
-                {prize.position === 3 && '🥉'}
-                {prize.position} Place
-              </span>
-            </div>
-            
-            <div className="prize-form">
-              <div className="form-group">
-                <label className="form-label">Prize Title</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={prize.title}
-                  onChange={(e) => handlePrizeChange(index, 'title', e.target.value)}
-                  placeholder="e.g., Gold Medal + ₹10,000"
-                />
+      <div className="contest-types">
+        <h4>Contest Type</h4>
+        <div className="radio-group">
+          {[
+            { value: 'points', label: 'Point-based System', desc: 'Earn points for each achievement' },
+            { value: 'milestone', label: 'Milestone-based', desc: 'Unlock rewards at specific targets' },
+            { value: 'percentage', label: 'Percentage Achievement', desc: 'Rewards based on target completion %' },
+            { value: 'ranking', label: 'Leaderboard Ranking', desc: 'Top performers win prizes' },
+            { value: 'slab', label: 'Slab-based', desc: 'Different rewards for different achievement levels' }
+          ].map(option => (
+            <label key={option.value} className="radio-item">
+              <input
+                type="radio"
+                name="contestType"
+                value={option.value}
+                checked={campaignData.contestType === option.value}
+                onChange={(e) => setCampaignData(prev => ({ ...prev, contestType: e.target.value as any }))}
+              />
+              <div className="radio-content">
+                <strong>{option.label}</strong>
+                <p>{option.desc}</p>
               </div>
-              
-              <div className="form-group">
-                <label className="form-label">Description</label>
-                <textarea
-                  className="form-input"
-                  rows={2}
-                  value={prize.description}
-                  onChange={(e) => handlePrizeChange(index, 'description', e.target.value)}
-                  placeholder="Detailed description of the prize..."
-                />
+            </label>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderStep5 = () => (
+    <div className="wizard-step">
+      <h2>Prize & Reward Structure</h2>
+      <p className="step-description">Configure rewards to motivate your team</p>
+      
+      <div className="prize-sections">
+        <div className="prize-section">
+          <h4>🏆 Individual Prizes</h4>
+          <div className="prize-grid">
+            {[1, 2, 3].map(rank => (
+              <div key={rank} className="prize-card">
+                <h5>#{rank} Position</h5>
+                <div className="form-group">
+                  <select 
+                    className="form-input"
+                    value={campaignData.individualPrizes.find(p => p.rank === rank)?.type || ''}
+                    onChange={(e) => {
+                      const newPrizes = [...campaignData.individualPrizes];
+                      const existingIndex = newPrizes.findIndex(p => p.rank === rank);
+                      if (existingIndex >= 0) {
+                        newPrizes[existingIndex].type = e.target.value as any;
+                      } else {
+                        newPrizes.push({ rank, type: e.target.value as any, value: '', description: '' });
+                      }
+                      setCampaignData(prev => ({ ...prev, individualPrizes: newPrizes }));
+                    }}
+                  >
+                    <option value="">Select prize type</option>
+                    <option value="cash">💰 Cash</option>
+                    <option value="voucher">🎫 Voucher</option>
+                    <option value="gadget">📱 Gadget</option>
+                    <option value="trip">✈️ Trip</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <input
+                    className="form-input"
+                    placeholder="Prize value/description"
+                    value={campaignData.individualPrizes.find(p => p.rank === rank)?.description || ''}
+                    onChange={(e) => {
+                      const newPrizes = [...campaignData.individualPrizes];
+                      const existingIndex = newPrizes.findIndex(p => p.rank === rank);
+                      if (existingIndex >= 0) {
+                        newPrizes[existingIndex].description = e.target.value;
+                      }
+                      setCampaignData(prev => ({ ...prev, individualPrizes: newPrizes }));
+                    }}
+                  />
+                </div>
               </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderStep6 = () => (
+    <div className="wizard-step">
+      <h2>Participant Management</h2>
+      <p className="step-description">Add participants to this campaign</p>
+      
+      <div className="participant-options">
+        <h4>How do you want to add participants?</h4>
+        <div className="radio-group">
+          {[
+            { value: 'individual', label: '👤 Individual Addition', desc: 'Add participants one by one via mobile number' },
+            { value: 'bulk', label: '📊 Bulk Upload', desc: 'Upload Excel file with participant details' },
+            { value: 'auto', label: '🎯 Auto-assign', desc: 'Automatically assign based on hierarchy/geography' }
+          ].map(option => (
+            <label key={option.value} className="radio-item">
+              <input
+                type="radio"
+                name="participantType"
+                value={option.value}
+                checked={campaignData.participantType === option.value}
+                onChange={(e) => setCampaignData(prev => ({ ...prev, participantType: e.target.value as any }))}
+              />
+              <div className="radio-content">
+                <strong>{option.label}</strong>
+                <p>{option.desc}</p>
+              </div>
+            </label>
+          ))}
+        </div>
+        
+        {campaignData.participantType === 'individual' && (
+          <div className="form-group">
+            <label className="form-label">Mobile Numbers (one per line)</label>
+            <textarea
+              className="form-input"
+              rows={5}
+              placeholder="+919876543210&#10;+919876543211&#10;+919876543212"
+              onChange={(e) => {
+                const phones = e.target.value.split('\n').filter(phone => phone.trim());
+                setCampaignData(prev => ({ ...prev, participants: phones }));
+              }}
+            />
+          </div>
+        )}
+        
+        {campaignData.participantType === 'bulk' && (
+          <div className="upload-section">
+            <div style={{background: 'var(--gray-100)', padding: '16px', borderRadius: 'var(--radius-md)', textAlign: 'center'}}>
+              <div style={{fontSize: '24px', marginBottom: '8px'}}>📊</div>
+              <p>Upload Excel file with columns: Name, Mobile, Territory, Team</p>
+              <button className="btn" style={{marginTop: '12px'}}>
+                📁 Choose File
+              </button>
             </div>
           </div>
-        ))}
+        )}
+        
+        {campaignData.participantType === 'auto' && (
+          <div>
+            <div className="form-group">
+              <label className="form-label">Hierarchy Filter</label>
+              <select multiple className="form-input" style={{height: '100px'}}>
+                <option value="asm">ASM Level</option>
+                <option value="rsm">RSM Level</option>
+                <option value="sales-team">Sales Team</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Geography Filter</label>
+              <select multiple className="form-input" style={{height: '100px'}}>
+                <option value="north">North Zone</option>
+                <option value="south">South Zone</option>
+                <option value="east">East Zone</option>
+                <option value="west">West Zone</option>
+              </select>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -389,23 +638,15 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
   return (
     <div className="campaign-wizard">
       <div className="wizard-header">
-        <h1>Create New Campaign</h1>
+        <h1>Create Sales Campaign</h1>
         <button className="close-btn" onClick={onClose}>×</button>
         
-        <div className="wizard-progress">
-          <div className="progress-steps">
-            {[1, 2, 3, 4].map((step) => (
-              <div key={step} className={`progress-step ${currentStep >= step ? 'active' : ''}`}>
-                {step}
-              </div>
-            ))}
-          </div>
-          <div className="progress-line">
-            <div 
-              className="progress-fill" 
-              style={{ width: `${((currentStep - 1) / 3) * 100}%` }}
-            />
-          </div>
+        <div className="progress-steps">
+          {[1, 2, 3, 4, 5, 6].map((step) => (
+            <div key={step} className={`step ${currentStep >= step ? 'active' : ''}`}>
+              {step}
+            </div>
+          ))}
         </div>
       </div>
 
@@ -414,29 +655,26 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
         {currentStep === 2 && renderStep2()}
         {currentStep === 3 && renderStep3()}
         {currentStep === 4 && renderStep4()}
+        {currentStep === 5 && renderStep5()}
+        {currentStep === 6 && renderStep6()}
       </div>
 
       <div className="wizard-actions">
-        <div className="actions-left">
+        <div>
           {currentStep > 1 && (
-            <button className="btn btn-secondary" onClick={prevStep}>
+            <button className="btn-secondary" onClick={prevStep}>
               ← Back
             </button>
           )}
         </div>
-        
-        <div className="actions-right">
-          {currentStep < 4 ? (
+        <div>
+          {currentStep < 6 ? (
             <button className="btn" onClick={nextStep}>
               Next →
             </button>
           ) : (
-            <button 
-              className="btn" 
-              onClick={handleSubmit}
-              disabled={loading}
-            >
-              {loading ? 'Creating...' : 'Create Campaign'}
+            <button className="btn" onClick={handleSubmit} disabled={loading}>
+              {loading ? 'Creating...' : '🚀 Create Campaign'}
             </button>
           )}
         </div>

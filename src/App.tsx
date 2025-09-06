@@ -5,6 +5,7 @@ import { ToastContainer } from 'react-toastify';
 import { store } from './store/store';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminSetup from './pages/admin/AdminSetup';
@@ -22,8 +23,8 @@ function App() {
           <Router>
             <div className="App">
               <Routes>
+                <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<Login />} />
-                <Route path="/" element={<Navigate to="/login" replace />} />
                 
                 <Route 
                   path="/admin/setup" 

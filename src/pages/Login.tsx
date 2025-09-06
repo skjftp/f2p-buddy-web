@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { getAuthInstance, getFirestoreInstance, setupRecaptcha } from '../config/firebase';
@@ -8,12 +8,21 @@ import PhoneInput from 'react-phone-input-2';
 import OtpInput from 'react-otp-input';
 
 const Login: React.FC = () => {
-  const [step, setStep] = useState<'phone' | 'otp' | 'role'>('phone');
+  const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otp, setOtp] = useState('');
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<'admin' | 'employee' | null>(null);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const role = searchParams.get('role');
+    if (role === 'admin' || role === 'employee') {
+      setSelectedRole(role);
+    }
+  }, [searchParams]);
 
   const sendOTP = async () => {
     if (!phoneNumber) {
@@ -70,13 +79,43 @@ const Login: React.FC = () => {
           navigate('/employee/dashboard');
         }
       } else {
-        setStep('role');
+        // New user - create with selected role from URL
+        if (selectedRole) {
+          await createUserWithRole(user, selectedRole);
+        } else {
+          toast.error('Role not specified');
+          navigate('/');
+        }
       }
     } catch (error: any) {
       console.error('Error verifying OTP:', error);
       toast.error('Invalid code');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const createUserWithRole = async (user: any, role: 'admin' | 'employee') => {
+    try {
+      const dbInstance = await getFirestoreInstance();
+      await setDoc(doc(dbInstance, 'users', user.uid), {
+        uid: user.uid,
+        phoneNumber: user.phoneNumber || `+${phoneNumber}`,
+        role: role,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      
+      if (role === 'admin') {
+        navigate('/admin/setup');
+      } else {
+        navigate('/employee/dashboard');
+      }
+      
+      toast.success('Registration complete');
+    } catch (error: any) {
+      console.error('Error creating user:', error);
+      toast.error('Registration failed');
     }
   };
 
@@ -116,7 +155,7 @@ const Login: React.FC = () => {
 
   const renderPhone = () => (
     <div>
-      <h2 className="login-title">F2P Buddy</h2>
+      <h2 className="login-title">{selectedRole === 'admin' ? 'Admin Login' : selectedRole === 'employee' ? 'Employee Login' : 'F2P Buddy'}</h2>
       <p className="login-subtitle">Enter your phone number</p>
       
       <div className="form-group">
@@ -200,30 +239,11 @@ const Login: React.FC = () => {
     </div>
   );
 
-  const renderRole = () => (
-    <div>
-      <h2 className="login-title">Select Role</h2>
-      
-      <div className="role-selection">
-        <div className="role-btn" onClick={() => selectRole('admin')}>
-          <div className="role-icon">👨‍💼</div>
-          <h3>Admin</h3>
-        </div>
-        
-        <div className="role-btn" onClick={() => selectRole('employee')}>
-          <div className="role-icon">👥</div>
-          <h3>Employee</h3>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div className="login-container">
       <div className="login-card">
         {step === 'phone' && renderPhone()}
         {step === 'otp' && renderOTP()}
-        {step === 'role' && renderRole()}
       </div>
     </div>
   );
