@@ -99,7 +99,7 @@ const Login: React.FC = () => {
             const phoneSnapshot = await getDocs(phoneQuery);
             console.log('📞 Phone lookup returned:', phoneSnapshot.size, 'documents');
             
-            phoneSnapshot.forEach(doc => {
+            for (const doc of phoneSnapshot.docs) {
               const phoneData = doc.data();
               console.log('👤 Phone document:', {
                 id: doc.id,
@@ -136,8 +136,9 @@ const Login: React.FC = () => {
                 } catch (updateError) {
                   console.error('❌ Failed to update UID document:', updateError);
                 }
+                break; // Only merge from the first document with organizationId
               }
-            });
+            }
           } catch (phoneError) {
             console.error('❌ Phone lookup failed:', phoneError);
           }
