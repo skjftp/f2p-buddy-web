@@ -102,7 +102,7 @@ const CampaignEdit: React.FC<CampaignEditProps> = ({ campaign, onClose, onUpdate
   };
 
   const handleStatusChange = (newStatus: string) => {
-    setCampaignData(prev => ({ ...prev, status: newStatus }));
+    setCampaignData(prev => ({ ...prev, status: newStatus as 'draft' | 'active' | 'completed' | 'cancelled' }));
   };
 
   return (
