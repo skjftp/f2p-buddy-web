@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { collection, addDoc, serverTimestamp, doc, getDoc, query, where, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFirestoreInstance, getStorageInstance } from '../../../config/firebase';
@@ -306,7 +306,7 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
   };
 
   // Compute user targets from regional distribution
-  const computeUserTargets = () => {
+  const computeUserTargets = useCallback(() => {
     const userTargets: UserTarget[] = [];
     
     // Get eligible users based on region and designation selection
@@ -356,14 +356,14 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
     });
 
     setCampaignData(prev => ({ ...prev, userTargets }));
-  };
+  }, [campaignData.selectedDesignations, campaignData.selectedRegions, campaignData.targetConfigs, campaignData.regionalDistribution, organizationUsers, designations, hierarchyLevels]);
 
   // Auto-compute when switching to computed mode
   useEffect(() => {
     if (!campaignData.customTargetsEnabled && Object.keys(campaignData.regionalDistribution).length > 0) {
       computeUserTargets();
     }
-  }, [campaignData.customTargetsEnabled, campaignData.regionalDistribution]);
+  }, [campaignData.customTargetsEnabled, campaignData.regionalDistribution, computeUserTargets]);
 
   const onBannerDrop = (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
