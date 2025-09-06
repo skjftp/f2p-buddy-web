@@ -108,12 +108,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     where('phoneNumber', '==', firebaseUser.phoneNumber)
                   );
                   
+                  console.log('📞 Executing phone number query...');
                   const querySnapshot = await getDocs(usersQuery);
+                  console.log('📊 Phone query returned', querySnapshot.size, 'documents');
+                  
                   if (!querySnapshot.empty) {
                     userDoc = querySnapshot.docs[0];
-                    console.log('✅ Found user by phone number:', userDoc.id);
+                    const foundUserData = userDoc.data();
+                    console.log('✅ Found user by phone number:', {
+                      docId: userDoc.id,
+                      phoneNumber: foundUserData.phoneNumber,
+                      organizationId: foundUserData.organizationId,
+                      role: foundUserData.role,
+                      displayName: foundUserData.displayName
+                    });
                   } else {
-                    console.log('❌ No user found by phone number');
+                    console.log('❌ No user found by phone number - checking all users...');
+                    
+                    // Debug: List all users to see what's in the database
+                    try {
+                      const allUsersQuery = query(collection(dbInstance, 'users'));
+                      const allUsersSnapshot = await getDocs(allUsersQuery);
+                      console.log('🔍 Total users in database:', allUsersSnapshot.size);
+                      allUsersSnapshot.forEach(doc => {
+                        const userData = doc.data();
+                        console.log('👤 User:', {
+                          id: doc.id,
+                          phone: userData.phoneNumber,
+                          name: userData.displayName,
+                          orgId: userData.organizationId
+                        });
+                      });
+                    } catch (debugError) {
+                      console.error('Debug query failed:', debugError);
+                    }
                   }
                 } catch (phoneError) {
                   console.error('❌ Phone number lookup failed:', phoneError);
