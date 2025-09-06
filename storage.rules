@@ -33,9 +33,9 @@ service firebase.storage {
                               isValidImageType();
     }
     
-    // Campaign banners
-    match /campaigns/{campaignId}/{fileName} {
-      allow read: if isAuthenticated(); // Authenticated read
+    // Campaign banners - allow timestamp-based uploads
+    match /campaigns/{allPaths=**} {
+      allow read: if isAuthenticated();
       allow write, delete: if isAuthenticated() && 
                               isValidSize() && 
                               isValidImageType();

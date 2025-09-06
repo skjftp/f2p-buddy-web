@@ -155,6 +155,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
       if (campaignData.banner) {
         console.log('Uploading banner...');
         const storageInstance = await getStorageInstance();
+        // Use timestamp-based naming which is now allowed by storage rules
         const bannerRef = ref(storageInstance, `campaigns/${Date.now()}_${campaignData.banner.name}`);
         const snapshot = await uploadBytes(bannerRef, campaignData.banner);
         bannerUrl = await getDownloadURL(snapshot.ref);
