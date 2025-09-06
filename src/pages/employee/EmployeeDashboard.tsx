@@ -23,46 +23,99 @@ const EmployeeDashboard: React.FC = () => {
   });
 
   useEffect(() => {
-    if (!organization?.id) return;
+    if (!organization?.id) {
+      console.log('❌ No organization ID, stopping campaign loading');
+      setLoading(false);
+      return;
+    }
+
+    console.log('🔄 Setting up campaign listener for org:', organization.id);
+
+    // Immediate fallback - load dashboard even if campaigns fail
+    const immediateLoadTimeout = setTimeout(() => {
+      console.log('🚀 Loading dashboard immediately to prevent infinite loading');
+      setLoading(false);
+    }, 3000); // Show dashboard after 3 seconds regardless
 
     // Listen to campaigns in real-time
     const setupCampaignListener = async (): Promise<(() => void) | undefined> => {
       try {
         const dbInstance = await getFirestoreInstance();
+        console.log('📊 Firestore instance ready, creating query...');
+        
+        // Simplified query to avoid potential issues with 'in' operator
         const campaignsQuery = query(
           collection(dbInstance, 'campaigns'),
-          where('orgId', '==', organization.id),
-          where('status', 'in', ['active', 'completed'])
+          where('orgId', '==', organization.id)
         );
 
-        const unsubscribe = onSnapshot(campaignsQuery, (snapshot) => {
-      const campaignList: Campaign[] = [];
-      snapshot.forEach((doc) => {
-        campaignList.push({ id: doc.id, ...doc.data() } as Campaign);
-      });
-      
-          setCampaigns(campaignList);
-          setActiveCampaigns(campaignList.filter(c => c.status === 'active'));
-          setLoading(false);
-        });
+        console.log('👂 Setting up campaigns listener...');
+        const unsubscribe = onSnapshot(
+          campaignsQuery, 
+          (snapshot) => {
+            console.log('📥 Received campaigns snapshot with', snapshot.size, 'documents');
+            clearTimeout(immediateLoadTimeout); // Clear immediate timeout since we got data
+            
+            const campaignList: Campaign[] = [];
+            
+            snapshot.forEach((doc) => {
+              const campaignData = { id: doc.id, ...doc.data() } as Campaign;
+              campaignList.push(campaignData);
+            });
+            
+            console.log('📋 Total campaigns:', campaignList.length);
+            console.log('🎯 Active campaigns:', campaignList.filter(c => c.status === 'active').length);
+            
+            setCampaigns(campaignList);
+            setActiveCampaigns(campaignList.filter(c => c.status === 'active'));
+            setLoading(false);
+            
+            console.log('✅ Employee dashboard data loaded successfully');
+          },
+          (error) => {
+            console.error('❌ Firestore listener error:', error);
+            clearTimeout(immediateLoadTimeout);
+            setLoading(false);
+          }
+        );
         
         return unsubscribe;
       } catch (error) {
-        console.error('Failed to setup campaign listener:', error);
+        console.error('❌ Failed to setup campaign listener:', error);
         setLoading(false);
         return undefined;
       }
     };
+
+    // Add timeout to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      console.log('⏰ Loading timeout reached, stopping loading state');
+      setLoading(false);
+    }, 5000); // 5 second timeout - shorter for better UX
     
     let unsubscribe: (() => void) | null = null;
     setupCampaignListener().then(unsub => {
+      clearTimeout(loadingTimeout);
+      clearTimeout(immediateLoadTimeout);
       if (unsub) {
         unsubscribe = unsub;
+        console.log('✅ Campaign listener setup complete');
+      } else {
+        console.log('❌ Failed to setup campaign listener');
+        setLoading(false);
       }
+    }).catch(error => {
+      console.error('❌ Setup campaign listener failed:', error);
+      clearTimeout(loadingTimeout);
+      clearTimeout(immediateLoadTimeout);
+      setLoading(false);
     });
     
     return () => {
+      clearTimeout(loadingTimeout);
+      clearTimeout(immediateLoadTimeout);
       if (unsubscribe) {
+        console.log('🛑 Cleaning up campaign listener');
         unsubscribe();
       }
     };
