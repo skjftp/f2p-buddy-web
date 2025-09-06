@@ -1,0 +1,92 @@
+{
+  "users": {
+    "7sms9eDsMuUt8IjjoggDsX6J75y2": {
+      "uid": "7sms9eDsMuUt8IjjoggDsX6J75y2",
+      "phoneNumber": "+918422994352",
+      "role": "admin",
+      "displayName": "Admin User",
+      "createdAt": "2025-09-06T06:20:00.000Z",
+      "updatedAt": "2025-09-06T06:20:00.000Z"
+    },
+    "emp1_sample": {
+      "uid": "emp1_sample",
+      "phoneNumber": "+918422994353", 
+      "role": "employee",
+      "displayName": "John Smith",
+      "createdAt": "2025-09-06T06:20:00.000Z",
+      "updatedAt": "2025-09-06T06:20:00.000Z"
+    },
+    "emp2_sample": {
+      "uid": "emp2_sample",
+      "phoneNumber": "+918422994354",
+      "role": "employee", 
+      "displayName": "Sarah Johnson",
+      "createdAt": "2025-09-06T06:20:00.000Z",
+      "updatedAt": "2025-09-06T06:20:00.000Z"
+    }
+  },
+  "organizations": {
+    "demo_org_001": {
+      "name": "Demo Organization",
+      "primaryColor": "#667eea",
+      "secondaryColor": "#764ba2",
+      "adminId": "7sms9eDsMuUt8IjjoggDsX6J75y2",
+      "settings": {
+        "allowSelfRegistration": true,
+        "requireApproval": false,
+        "timezone": "Asia/Kolkata"
+      },
+      "createdAt": "2025-09-06T06:20:00.000Z",
+      "updatedAt": "2025-09-06T06:20:00.000Z"
+    }
+  },
+  "campaigns": {
+    "demo_campaign_001": {
+      "name": "Q4 Sales Challenge",
+      "description": "Boost your sales performance this quarter and win exciting prizes!",
+      "startDate": "2025-09-06",
+      "endDate": "2025-10-06",
+      "type": ["sales", "calls"],
+      "metrics": {
+        "sales": {"target": 100000, "achieved": 15000},
+        "calls": {"target": 200, "achieved": 45}
+      },
+      "prizes": [
+        {"position": 1, "title": "Gold Prize", "description": "₹50,000 cash reward"},
+        {"position": 2, "title": "Silver Prize", "description": "₹30,000 cash reward"},
+        {"position": 3, "title": "Bronze Prize", "description": "₹20,000 cash reward"}
+      ],
+      "participants": ["emp1_sample", "emp2_sample"],
+      "orgId": "demo_org_001",
+      "createdBy": "7sms9eDsMuUt8IjjoggDsX6J75y2",
+      "status": "active",
+      "createdAt": "2025-09-06T06:20:00.000Z",
+      "updatedAt": "2025-09-06T06:20:00.000Z"
+    }
+  },
+  "achievements": {
+    "ach_001": {
+      "userId": "emp1_sample",
+      "campaignId": "demo_campaign_001", 
+      "type": "sales",
+      "value": 15000,
+      "description": "Closed ₹15,000 in sales",
+      "dateAchieved": "2025-09-06T06:00:00.000Z",
+      "verified": true,
+      "verifiedBy": "7sms9eDsMuUt8IjjoggDsX6J75y2",
+      "createdAt": "2025-09-06T06:20:00.000Z",
+      "updatedAt": "2025-09-06T06:20:00.000Z"
+    },
+    "ach_002": {
+      "userId": "emp2_sample",
+      "campaignId": "demo_campaign_001",
+      "type": "calls", 
+      "value": 45,
+      "description": "Made 45 client calls",
+      "dateAchieved": "2025-09-06T05:30:00.000Z",
+      "verified": false,
+      "createdAt": "2025-09-06T06:20:00.000Z",
+      "updatedAt": "2025-09-06T06:20:00.000Z"
+    }
+  }
+}
