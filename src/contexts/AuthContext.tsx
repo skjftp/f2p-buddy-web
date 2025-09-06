@@ -31,10 +31,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     dispatch(setLoading(true));
+    let isSubscribed = true;
 
     // Initialize auth listener after Firebase is ready
     const initializeAuthListener = async (): Promise<(() => void) | undefined> => {
       try {
+        if (!isSubscribed) return undefined;
+        
         const authInstance = await getAuthInstance();
         
         const unsubscribe = onAuthStateChanged(authInstance, async (firebaseUser: User | null) => {
@@ -94,6 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
     
     return () => {
+      isSubscribed = false;
       if (unsubscribe) {
         unsubscribe();
       }

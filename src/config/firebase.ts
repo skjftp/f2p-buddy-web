@@ -47,9 +47,7 @@ async function initializeFirebase(): Promise<void> {
 
 // Get Firebase Auth instance (initializes if needed)
 export async function getAuthInstance(): Promise<Auth> {
-  if (!auth) {
-    await initializeFirebase();
-  }
+  await ensureFirebaseInitialized();
   if (!auth) {
     throw new Error('Failed to initialize Firebase Auth');
   }
@@ -58,9 +56,7 @@ export async function getAuthInstance(): Promise<Auth> {
 
 // Get Firestore instance (initializes if needed)
 export async function getFirestoreInstance(): Promise<Firestore> {
-  if (!db) {
-    await initializeFirebase();
-  }
+  await ensureFirebaseInitialized();
   if (!db) {
     throw new Error('Failed to initialize Firestore');
   }
@@ -69,9 +65,7 @@ export async function getFirestoreInstance(): Promise<Firestore> {
 
 // Get Storage instance (initializes if needed)
 export async function getStorageInstance(): Promise<FirebaseStorage> {
-  if (!storage) {
-    await initializeFirebase();
-  }
+  await ensureFirebaseInitialized();
   if (!storage) {
     throw new Error('Failed to initialize Firebase Storage');
   }
@@ -80,9 +74,7 @@ export async function getStorageInstance(): Promise<FirebaseStorage> {
 
 // Get Firebase app instance (initializes if needed)
 export async function getFirebaseApp(): Promise<FirebaseApp> {
-  if (!app) {
-    await initializeFirebase();
-  }
+  await ensureFirebaseInitialized();
   if (!app) {
     throw new Error('Failed to initialize Firebase App');
   }
@@ -117,6 +109,20 @@ export const sendOTP = async (phoneNumber: string, recaptchaVerifier: RecaptchaV
     throw error;
   }
 };
+
+// Initialize Firebase when this module loads (but only once)
+let initializationPromise: Promise<void> | null = null;
+
+// Ensure Firebase is initialized only once
+export const ensureFirebaseInitialized = async (): Promise<void> => {
+  if (!initializationPromise) {
+    initializationPromise = initializeFirebase();
+  }
+  return initializationPromise;
+};
+
+// Auto-initialize when module loads
+ensureFirebaseInitialized().catch(console.error);
 
 // Export instances (will be null until initialized - use getters instead)
 export { auth, db, storage };
