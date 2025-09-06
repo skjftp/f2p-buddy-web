@@ -122,12 +122,13 @@ const AdminDashboard: React.FC = () => {
 
         <div className="recent-activities">
           <div className="section-header">
-            <h3 className="gradient-text">Recent Campaigns</h3>
+            <h3>Campaigns</h3>
             <button 
-              className="btn hover-scale"
+              className="btn-icon hover-glow"
               onClick={() => setShowCampaignWizard(true)}
+              title="Create Campaign"
             >
-              ✨ Create Campaign
+              +
             </button>
           </div>
           
@@ -147,13 +148,13 @@ const AdminDashboard: React.FC = () => {
           {campaigns.length === 0 && (
             <div className="empty-state glass-effect animate-fade-in">
               <div className="empty-icon float-animation">🎯</div>
-              <h3>No Campaigns Yet</h3>
-              <p>Create your first campaign to get started with the sales incentive program.</p>
+              <h3>No Campaigns</h3>
               <button 
-                className="btn hover-scale"
+                className="btn-icon hover-glow"
                 onClick={() => setShowCampaignWizard(true)}
+                title="Create Campaign"
               >
-                ✨ Create Your First Campaign
+                +
               </button>
             </div>
           )}
@@ -164,12 +165,13 @@ const AdminDashboard: React.FC = () => {
     campaigns: (
       <div className="campaigns-content animate-fade-in">
         <div className="content-header">
-          <h2 className="gradient-text">Campaign Management</h2>
+          <h2>Campaigns</h2>
           <button 
-            className="btn hover-scale"
+            className="btn-icon hover-glow"
             onClick={() => setShowCampaignWizard(true)}
+            title="Create Campaign"
           >
-            🚀 Create Campaign
+            +
           </button>
         </div>
         
@@ -198,13 +200,13 @@ const AdminDashboard: React.FC = () => {
         {campaigns.length === 0 && (
           <div className="empty-state glass-effect animate-fade-in">
             <div className="empty-icon float-animation">🎯</div>
-            <h3>No Campaigns Created</h3>
-            <p>Start building your sales incentive program by creating your first campaign.</p>
+            <h3>No Campaigns</h3>
             <button 
-              className="btn hover-scale"
+              className="btn-icon hover-glow"
               onClick={() => setShowCampaignWizard(true)}
+              title="Create Campaign"
             >
-              🚀 Create Your First Campaign
+              +
             </button>
           </div>
         )}
@@ -246,8 +248,7 @@ const AdminDashboard: React.FC = () => {
               )}
             </div>
             <div className="header-text">
-              <h1 className="gradient-text">{organization?.name || 'Organization'} Dashboard</h1>
-              <p>🛡️ Admin Control Center</p>
+              <h1>{organization?.name || 'Organization'}</h1>
             </div>
           </div>
           <div className="header-actions">
@@ -269,26 +270,30 @@ const AdminDashboard: React.FC = () => {
           <button 
             className={`nav-tab hover-glow ${activeTab === 'overview' ? 'active' : ''}`}
             onClick={() => setActiveTab('overview')}
+            title="Overview"
           >
-            📊 Overview
+            📊
           </button>
           <button 
             className={`nav-tab hover-glow ${activeTab === 'campaigns' ? 'active' : ''}`}
             onClick={() => setActiveTab('campaigns')}
+            title="Campaigns"
           >
-            🎯 Campaigns
+            🎯
           </button>
           <button 
             className={`nav-tab hover-glow ${activeTab === 'employees' ? 'active' : ''}`}
             onClick={() => setActiveTab('employees')}
+            title="Employees"
           >
-            👥 Team
+            👥
           </button>
           <button 
             className={`nav-tab hover-glow ${activeTab === 'analytics' ? 'active' : ''}`}
             onClick={() => setActiveTab('analytics')}
+            title="Analytics"
           >
-            📈 Analytics
+            📈
           </button>
         </div>
       </nav>

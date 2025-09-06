@@ -191,8 +191,8 @@ body {
 }
 
 .login-title {
-  font-size: 2.5rem;
-  font-weight: 800;
+  font-size: 1.75rem;
+  font-weight: 700;
   background: var(--gradient-primary);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -205,8 +205,8 @@ body {
 .login-subtitle {
   color: var(--color-text-secondary);
   text-align: center;
-  font-size: 1.1rem;
-  margin-bottom: var(--space-2xl);
+  font-size: 0.95rem;
+  margin-bottom: var(--space-xl);
   font-weight: 500;
 }
 
@@ -227,12 +227,12 @@ body {
 
 .form-input {
   width: 100%;
-  padding: var(--space-lg);
+  padding: var(--space-md) var(--space-lg);
   background: var(--glass-bg);
   backdrop-filter: var(--glass-backdrop);
   border: 2px solid transparent;
   border-radius: var(--radius-lg);
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 500;
   color: var(--color-text);
   transition: all var(--transition-normal);
@@ -257,18 +257,17 @@ body {
   background: var(--gradient-primary);
   color: white;
   border: none;
-  padding: var(--space-lg) var(--space-2xl);
+  padding: var(--space-md) var(--space-xl);
   border-radius: var(--radius-lg);
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-normal);
   position: relative;
   overflow: hidden;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.25px;
   box-shadow: var(--shadow-lg);
-  min-height: 56px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -361,7 +360,7 @@ body {
   backdrop-filter: var(--glass-backdrop);
   border: 2px solid var(--glass-border);
   border-radius: var(--radius-xl);
-  padding: var(--space-2xl);
+  padding: var(--space-xl);
   cursor: pointer;
   transition: all var(--transition-normal);
   text-align: center;
@@ -394,22 +393,17 @@ body {
 }
 
 .role-icon {
-  font-size: 3.5rem;
-  margin-bottom: var(--space-lg);
+  font-size: 2.5rem;
+  margin-bottom: var(--space-md);
   display: block;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
 }
 
 .role-btn h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 1.1rem;
+  font-weight: 600;
   color: var(--color-text);
-  margin-bottom: var(--space-sm);
-}
-
-.role-btn p {
-  color: var(--color-text-secondary);
-  font-weight: 500;
+  margin: 0;
 }
 
 /* Loading Animation - Modern Spinner */
@@ -507,14 +501,10 @@ body {
 }
 
 .header-text h1 {
-  font-size: 1.75rem;
-  font-weight: 800;
+  font-size: 1.25rem;
+  font-weight: 700;
   color: var(--color-text);
   margin: 0;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .header-text p {
@@ -628,7 +618,7 @@ body {
 
 /* Dashboard Main Content */
 .dashboard-main {
-  padding: var(--space-3xl) var(--space-2xl);
+  padding: var(--space-xl) var(--space-lg);
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -636,21 +626,21 @@ body {
 /* Grid Systems - Advanced Layout */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: var(--space-2xl);
-  margin-bottom: var(--space-3xl);
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-lg);
+  margin-bottom: var(--space-xl);
 }
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--space-xl);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-md);
 }
 
 .campaigns-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: var(--space-xl);
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-lg);
 }
 
 /* Cards - Glassmorphism Premium */
@@ -669,7 +659,7 @@ body {
 }
 
 .dashboard-section {
-  padding: var(--space-2xl);
+  padding: var(--space-lg);
 }
 
 .dashboard-section.full-width {
@@ -693,13 +683,9 @@ body {
 }
 
 .section-header h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 1.1rem;
+  font-weight: 600;
   color: var(--color-text);
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .section-badge {
@@ -717,10 +703,10 @@ body {
 
 /* Stats Cards - Premium Design */
 .stat-card {
-  padding: var(--space-xl);
+  padding: var(--space-lg);
   display: flex;
   align-items: center;
-  gap: var(--space-lg);
+  gap: var(--space-md);
   position: relative;
   overflow: hidden;
 }
@@ -739,13 +725,13 @@ body {
 }
 
 .stat-icon {
-  width: 64px;
-  height: 64px;
+  width: 48px;
+  height: 48px;
   border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.75rem;
+  font-size: 1.25rem;
   background: var(--gradient-primary);
   color: white;
   box-shadow: var(--shadow-lg);
@@ -758,20 +744,18 @@ body {
 }
 
 .stat-value {
-  font-size: 2.5rem;
-  font-weight: 900;
+  font-size: 1.75rem;
+  font-weight: 700;
   color: var(--color-text);
   margin: 0;
   line-height: 1;
 }
 
 .stat-title {
-  font-size: 1rem;
+  font-size: 0.85rem;
   color: var(--color-text-secondary);
-  font-weight: 600;
+  font-weight: 500;
   margin: var(--space-sm) 0 0;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 /* Campaign Cards - Ultra Premium */
@@ -816,8 +800,8 @@ body {
 }
 
 .campaign-title {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 1.1rem;
+  font-weight: 600;
   color: var(--color-text);
   margin: 0;
   line-height: 1.3;

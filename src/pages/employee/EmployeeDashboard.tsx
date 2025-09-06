@@ -145,8 +145,8 @@ const EmployeeDashboard: React.FC = () => {
           {/* Stats Overview */}
           <section className="dashboard-section glass-effect hover-lift animate-fade-in">
             <div className="section-header">
-              <h2 className="gradient-text">Your Performance</h2>
-              <div className="section-badge">⚡ Live Stats</div>
+              <h2>Performance</h2>
+              <div className="section-badge">⚡</div>
             </div>
             <StatsOverview stats={userStats} />
           </section>
@@ -154,8 +154,8 @@ const EmployeeDashboard: React.FC = () => {
           {/* Active Campaigns */}
           <section className="dashboard-section glass-effect hover-lift animate-fade-in">
             <div className="section-header">
-              <h2 className="gradient-text">Active Campaigns</h2>
-              <div className="section-badge">🔥 {activeCampaigns.length} Live</div>
+              <h2>Active Campaigns</h2>
+              <div className="section-badge">{activeCampaigns.length}</div>
             </div>
             
             {activeCampaigns.length === 0 ? (
@@ -181,8 +181,8 @@ const EmployeeDashboard: React.FC = () => {
           {/* Leaderboard */}
           <section className="dashboard-section glass-effect hover-lift animate-fade-in">
             <div className="section-header">
-              <h2 className="gradient-text">🏆 Leaderboard</h2>
-              <button className="btn-text hover-glow">View All Rankings</button>
+              <h2>🏆 Leaderboard</h2>
+              <button className="btn-icon" title="View All">📋</button>
             </div>
             <LeaderboardWidget organizationId={organization.id} />
           </section>
@@ -190,8 +190,8 @@ const EmployeeDashboard: React.FC = () => {
           {/* Recent Achievements */}
           <section className="dashboard-section glass-effect hover-lift animate-fade-in">
             <div className="section-header">
-              <h2 className="gradient-text">✨ Your Achievements</h2>
-              <button className="btn-text hover-glow">View All Rewards</button>
+              <h2>Achievements</h2>
+              <button className="btn-icon" title="View All">📋</button>
             </div>
             <AchievementTracker userId={user?.uid} />
           </section>
@@ -199,11 +199,11 @@ const EmployeeDashboard: React.FC = () => {
           {/* All Campaigns History */}
           <section className="dashboard-section full-width glass-effect animate-fade-in">
             <div className="section-header">
-              <h2 className="gradient-text">📚 Campaign History</h2>
+              <h2>History</h2>
               <div className="filter-tabs glass-effect">
-                <button className="filter-tab active">📋 All</button>
-                <button className="filter-tab">✅ Completed</button>
-                <button className="filter-tab">🏃 Participated</button>
+                <button className="filter-tab active">All</button>
+                <button className="filter-tab">✅</button>
+                <button className="filter-tab">🏃</button>
               </div>
             </div>
             

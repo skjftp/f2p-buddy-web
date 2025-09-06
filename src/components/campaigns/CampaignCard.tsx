@@ -108,16 +108,16 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
         <div className="campaign-actions">
           {userRole === 'admin' ? (
             <>
-              <button className="btn-secondary hover-scale" onClick={onEdit}>
-                ✏️ Edit Campaign
+              <button className="btn-icon" onClick={onEdit} title="Edit">
+                ✏️
               </button>
-              <button className="btn hover-scale" onClick={onView}>
-                📊 View Analytics
+              <button className="btn-icon" onClick={onView} title="Analytics">
+                📊
               </button>
             </>
           ) : (
-            <button className="btn hover-scale" onClick={onView}>
-              🎯 Join Campaign
+            <button className="btn-icon" onClick={onView} title="View Campaign">
+              →
             </button>
           )}
         </div>

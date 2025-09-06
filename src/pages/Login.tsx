@@ -33,8 +33,8 @@ const LoginStep: React.FC<LoginStepProps> = ({
   if (step === 'phone') {
     return (
       <div className="login-step animate-fade-in">
-        <h2 className="login-title gradient-text">Welcome to F2P Buddy</h2>
-        <p className="login-subtitle">✨ Enter your phone number to continue your journey</p>
+        <h2 className="login-title gradient-text">F2P Buddy</h2>
+        <p className="login-subtitle">Enter your phone number</p>
         
         <div className="form-group">
           <label className="form-label">Phone Number</label>
@@ -62,7 +62,7 @@ const LoginStep: React.FC<LoginStepProps> = ({
           onClick={onSendOTP}
           disabled={!phoneNumber || loading}
         >
-          {loading ? '🚀 Sending Magic Code...' : '✨ Send OTP'}
+          {loading ? 'Sending...' : 'Send Code'}
         </button>
         
         <div id="recaptcha-container"></div>
@@ -73,8 +73,8 @@ const LoginStep: React.FC<LoginStepProps> = ({
   if (step === 'otp') {
     return (
       <div className="login-step animate-fade-in">
-        <h2 className="login-title gradient-text">Verify Phone Number</h2>
-        <p className="login-subtitle">🔐 Enter the 6-digit magic code sent to +{phoneNumber}</p>
+        <h2 className="login-title gradient-text">Verify</h2>
+        <p className="login-subtitle">Enter code sent to +{phoneNumber}</p>
         
         <div className="form-group">
           <div className="otp-container">
@@ -102,7 +102,7 @@ const LoginStep: React.FC<LoginStepProps> = ({
           onClick={onVerifyOTP}
           disabled={otp.length !== 6 || loading}
         >
-          {loading ? '🔍 Verifying Magic Code...' : '🎉 Verify & Continue'}
+          {loading ? 'Verifying...' : 'Verify'}
         </button>
         
         <button 
@@ -110,7 +110,7 @@ const LoginStep: React.FC<LoginStepProps> = ({
           onClick={() => window.location.reload()}
           style={{ marginTop: 'var(--space-lg)' }}
         >
-          🔄 Change Phone Number
+          Change Number
         </button>
       </div>
     );
@@ -119,8 +119,7 @@ const LoginStep: React.FC<LoginStepProps> = ({
   if (step === 'role') {
     return (
       <div className="login-step animate-fade-in">
-        <h2 className="login-title gradient-text">Select Your Role</h2>
-        <p className="login-subtitle">🎭 Choose how you want to engage with F2P Buddy</p>
+        <h2 className="login-title gradient-text">Select Role</h2>
         
         <div className="role-selection stagger-animation">
           <div 
@@ -129,8 +128,7 @@ const LoginStep: React.FC<LoginStepProps> = ({
             style={{animationDelay: '0.1s'}}
           >
             <div className="role-icon">👨‍💼</div>
-            <h3 className="gradient-text">Admin</h3>
-            <p>Manage campaigns and lead your team to success</p>
+            <h3>Admin</h3>
           </div>
           
           <div 
@@ -139,8 +137,7 @@ const LoginStep: React.FC<LoginStepProps> = ({
             style={{animationDelay: '0.2s'}}
           >
             <div className="role-icon">👥</div>
-            <h3 className="gradient-text">Employee</h3>
-            <p>Participate in campaigns and earn amazing rewards</p>
+            <h3>Employee</h3>
           </div>
         </div>
       </div>
