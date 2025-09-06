@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect } from 'react';
 import { User, onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc, query, where, getDocs, collection, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useDispatch, useSelector } from 'react-redux';
 import { getAuthInstance, getFirestoreInstance } from '../config/firebase';
 import { setUser, clearUser, setLoading } from '../store/slices/authSlice';

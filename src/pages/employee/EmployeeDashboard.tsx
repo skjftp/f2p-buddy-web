@@ -126,7 +126,7 @@ const EmployeeDashboard: React.FC = () => {
         unsubscribe();
       }
     };
-  }, [organization?.id]);
+  }, [organization?.id, user?.role, user?.uid]);
 
   useEffect(() => {
     // Calculate user stats

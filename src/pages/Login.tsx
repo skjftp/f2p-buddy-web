@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp, query, where, collection, getDocs, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { getAuthInstance, getFirestoreInstance, setupRecaptcha } from '../config/firebase';
 import { saveAuthState } from '../utils/authPersistence';
 import { toast } from 'react-toastify';

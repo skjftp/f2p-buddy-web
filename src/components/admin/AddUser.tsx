@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc, serverTimestamp, getDoc, doc, setDoc } from 'firebase/firestore';
+import { serverTimestamp, getDoc, doc, setDoc } from 'firebase/firestore';
 import { getFirestoreInstance } from '../../config/firebase';
 import { toast } from 'react-toastify';
 
