@@ -108,6 +108,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }
               } else {
                 console.log('❌ No user document found for phone:', firebaseUser.phoneNumber);
+                
+                // Debug: Check if there's a user document with UID as ID (old system)
+                try {
+                  console.log('🔍 Checking for user with UID as document ID...');
+                  const uidDocRef = doc(dbInstance, 'users', firebaseUser.uid);
+                  const uidDoc = await getDoc(uidDocRef);
+                  
+                  if (uidDoc.exists()) {
+                    console.log('✅ Found user by UID (old system):', uidDoc.id);
+                    const uidUserData = uidDoc.data();
+                    console.log('📋 UID document data:', {
+                      role: uidUserData.role,
+                      organizationId: uidUserData.organizationId,
+                      displayName: uidUserData.displayName
+                    });
+                    
+                    // Use the UID document data temporarily
+                    userDoc = uidDoc;
+                  }
+                } catch (uidError) {
+                  console.error('❌ UID lookup failed:', uidError);
+                }
               }
               
               if (userDoc && userDoc.exists()) {
