@@ -6,6 +6,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import { useDropzone } from 'react-dropzone';
 import CampaignTargeting from '../CampaignTargeting';
+import SkuTargeting from '../SkuTargeting';
 
 interface CampaignWizardProps {
   onClose: () => void;
@@ -85,6 +86,9 @@ interface CampaignData {
   selectedDesignations: string[];
   regionTargets: any[];
   totalTarget: number;
+  
+  // SKU Targeting
+  skuTargets: any[];
 }
 
 const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) => {
@@ -117,7 +121,8 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
     selectedRegions: [],
     selectedDesignations: [],
     regionTargets: [],
-    totalTarget: 0
+    totalTarget: 0,
+    skuTargets: []
   });
 
   const [bannerPreview, setBannerPreview] = useState<string>('');
@@ -149,6 +154,13 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
       selectedDesignations: targetingData.selectedDesignations,
       regionTargets: targetingData.regionTargets,
       totalTarget: targetingData.totalTarget
+    }));
+  };
+
+  const handleSkuTargetsChange = (skuTargets: any[]) => {
+    setCampaignData(prev => ({
+      ...prev,
+      skuTargets: skuTargets
     }));
   };
 
@@ -670,10 +682,16 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
             onTargetingChange={handleTargetingChange}
           />
         )}
-        {currentStep === 3 && renderStep3()}
-        {currentStep === 4 && renderStep4()}
-        {currentStep === 5 && renderStep5()}
-        {currentStep === 6 && renderStep6()}
+        {currentStep === 3 && (
+          <SkuTargeting
+            organizationId={organization?.id || ''}
+            selectedRegions={campaignData.selectedRegions}
+            onSkuTargetsChange={handleSkuTargetsChange}
+          />
+        )}
+        {currentStep === 4 && renderStep3()}
+        {currentStep === 5 && renderStep4()}
+        {currentStep === 6 && renderStep5()}
       </div>
 
       <div className="wizard-actions">
