@@ -184,7 +184,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     console.log('📞 Phone lookup for missing org data returned:', phoneSnapshot.size, 'documents');
                     
                     // Find the document with organizationId
-                    let userWithOrgId = null;
+                    let userWithOrgId: any = null;
                     phoneSnapshot.forEach(doc => {
                       const docData = doc.data();
                       console.log('👤 Found user by phone:', {
