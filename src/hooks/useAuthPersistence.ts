@@ -5,8 +5,7 @@ import { setOrganization } from '../store/slices/organizationSlice';
 import { 
   getPersistedAuthState, 
   getPersistedOrgState, 
-  hasValidPersistedAuth,
-  saveAuthState 
+  hasValidPersistedAuth
 } from '../utils/authPersistence';
 
 // Hook to aggressively maintain auth persistence
