@@ -153,13 +153,28 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
       let bannerUrl = '';
       
       if (campaignData.banner) {
-        console.log('Uploading banner...');
-        const storageInstance = await getStorageInstance();
-        // Use timestamp-based naming which is now allowed by storage rules
-        const bannerRef = ref(storageInstance, `campaigns/${Date.now()}_${campaignData.banner.name}`);
-        const snapshot = await uploadBytes(bannerRef, campaignData.banner);
-        bannerUrl = await getDownloadURL(snapshot.ref);
-        console.log('Banner uploaded:', bannerUrl);
+        console.log('Uploading banner...', {
+          user: user.uid,
+          fileName: campaignData.banner.name,
+          fileSize: campaignData.banner.size
+        });
+        
+        try {
+          const storageInstance = await getStorageInstance();
+          // Simplified path that matches storage rules
+          const fileName = `${Date.now()}_${campaignData.banner.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+          const bannerRef = ref(storageInstance, `campaigns/${fileName}`);
+          
+          console.log('Uploading to path:', `campaigns/${fileName}`);
+          const snapshot = await uploadBytes(bannerRef, campaignData.banner);
+          bannerUrl = await getDownloadURL(snapshot.ref);
+          console.log('✅ Banner uploaded successfully:', bannerUrl);
+        } catch (storageError: any) {
+          console.error('❌ Storage upload failed:', storageError);
+          console.log('⚠️ Continuing without banner image...');
+          toast.warning('Banner upload failed, creating campaign without image');
+          bannerUrl = ''; // Continue without banner
+        }
       }
 
       console.log('Creating campaign document...');
