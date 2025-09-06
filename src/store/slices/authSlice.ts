@@ -66,7 +66,13 @@ const authSlice = createSlice({
           ...action.payload,
           timestamp: Date.now()
         }));
-        console.log('✅ Auth state saved to localStorage');
+        
+        // Only log save once per session to reduce noise
+        const lastSaveLog = sessionStorage.getItem('f2p_last_save_log');
+        if (!lastSaveLog) {
+          console.log('✅ Auth state saved to localStorage');
+          sessionStorage.setItem('f2p_last_save_log', Date.now().toString());
+        }
       } catch (error) {
         console.warn('Failed to save auth state:', error);
       }

@@ -19,7 +19,15 @@ export const useAuthPersistence = () => {
       const persistedOrg = getPersistedOrgState();
       
       if (persistedAuth && hasValidPersistedAuth()) {
-        console.log('🔄 useAuthPersistence: Restoring auth state');
+        // Only log once per session to reduce console noise
+        const lastLogTime = parseInt(sessionStorage.getItem('f2p_last_restore_log') || '0');
+        const currentTime = Date.now();
+        
+        if (currentTime - lastLogTime > 60000) { // Log once per minute max
+          console.log('🔄 useAuthPersistence: Restoring auth state');
+          sessionStorage.setItem('f2p_last_restore_log', currentTime.toString());
+        }
+        
         dispatch(setUser(persistedAuth));
         
         if (persistedOrg) {
@@ -35,10 +43,17 @@ export const useAuthPersistence = () => {
     // Initial restore
     restoreAuthIfNeeded();
 
-    // Set up interval to check and restore auth every 2 seconds
+    // Set up interval to check and restore auth every 30 seconds (much less frequent)
     const authCheckInterval = setInterval(() => {
-      restoreAuthIfNeeded();
-    }, 2000);
+      const currentTime = Date.now();
+      const lastCheck = parseInt(localStorage.getItem('f2p_last_auth_check') || '0');
+      
+      // Only run if 30 seconds have passed
+      if (currentTime - lastCheck > 30000) {
+        restoreAuthIfNeeded();
+        localStorage.setItem('f2p_last_auth_check', currentTime.toString());
+      }
+    }, 30000);
 
     // Restore on visibility change (tab focus)
     const handleVisibilityChange = () => {
