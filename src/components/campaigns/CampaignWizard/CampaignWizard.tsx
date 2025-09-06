@@ -690,7 +690,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
           />
         )}
         {currentStep === 4 && renderStep3()}
-        {currentStep === 5 && renderStep4()}
+        {currentStep === 5 && renderStep5()}
         {currentStep === 6 && renderStep6()}
       </div>
 
