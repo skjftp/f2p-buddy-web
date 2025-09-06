@@ -1196,10 +1196,39 @@ body {
 .wizard-actions {
   display: flex;
   justify-content: space-between;
-  padding: 16px 24px;
+  padding: 20px 24px;
   border-top: 1px solid var(--gray-200);
   background: var(--gray-50);
   flex-shrink: 0;
+}
+
+.wizard-actions > div {
+  display: flex;
+  gap: 16px;
+}
+
+.wizard-actions .btn-secondary {
+  background: var(--white);
+  color: var(--gray-700);
+  border: 2px solid var(--gray-300);
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  min-width: 100px;
+}
+
+.wizard-actions .btn-secondary:hover {
+  background: var(--gray-50);
+  border-color: var(--gray-400);
+}
+
+.wizard-actions .btn {
+  padding: 12px 24px;
+  font-size: 14px;
+  min-width: 120px;
 }
 
 /* Responsive */
@@ -1533,7 +1562,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
+  padding: 20px 24px;
   border-top: 1px solid var(--gray-200);
   background: var(--gray-50);
   flex-shrink: 0;
@@ -1541,7 +1570,31 @@ body {
 
 .action-group {
   display: flex;
-  gap: 12px;
+  gap: 16px;
+}
+
+.action-group .btn-secondary {
+  background: var(--white);
+  color: var(--gray-700);
+  border: 2px solid var(--gray-300);
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  min-width: 100px;
+}
+
+.action-group .btn-secondary:hover {
+  background: var(--gray-50);
+  border-color: var(--gray-400);
+}
+
+.action-group .btn {
+  padding: 12px 24px;
+  font-size: 14px;
+  min-width: 120px;
 }
 
 .danger-zone {
@@ -2848,10 +2901,35 @@ body {
 
 .add-user-actions {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
+  gap: 16px;
   padding: 20px 24px;
   border-top: 1px solid var(--gray-200);
   background: var(--gray-50);
   flex-shrink: 0;
+}
+
+.add-user-actions .btn-secondary {
+  background: var(--white);
+  color: var(--gray-700);
+  border: 2px solid var(--gray-300);
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  min-width: 100px;
+}
+
+.add-user-actions .btn-secondary:hover {
+  background: var(--gray-50);
+  border-color: var(--gray-400);
+}
+
+.add-user-actions .btn {
+  padding: 12px 24px;
+  font-size: 14px;
+  min-width: 120px;
 }
