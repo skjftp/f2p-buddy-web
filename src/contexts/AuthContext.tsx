@@ -170,6 +170,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   displayName: userData.displayName
                 });
                 
+                // If user exists by UID but missing organizationId, try to find by phone number
+                if (!userData.organizationId && firebaseUser.phoneNumber) {
+                  console.log('⚠️ User found by UID but missing organizationId, searching by phone...');
+                  
+                  try {
+                    const phoneQuery = query(
+                      collection(dbInstance, 'users'),
+                      where('phoneNumber', '==', firebaseUser.phoneNumber)
+                    );
+                    
+                    const phoneSnapshot = await getDocs(phoneQuery);
+                    console.log('📞 Phone lookup for missing org data returned:', phoneSnapshot.size, 'documents');
+                    
+                    // Find the document with organizationId
+                    let userWithOrgId = null;
+                    phoneSnapshot.forEach(doc => {
+                      const docData = doc.data();
+                      console.log('👤 Found user by phone:', {
+                        id: doc.id,
+                        phone: docData.phoneNumber,
+                        orgId: docData.organizationId,
+                        name: docData.displayName
+                      });
+                      
+                      if (docData.organizationId) {
+                        userWithOrgId = { id: doc.id, ...docData };
+                      }
+                    });
+                    
+                    if (userWithOrgId) {
+                      console.log('🔄 Merging organization data from phone lookup');
+                      // Use the data from the phone lookup that has organizationId
+                      Object.assign(userData, {
+                        organizationId: userWithOrgId.organizationId,
+                        displayName: userWithOrgId.displayName,
+                        role: userWithOrgId.role,
+                        designationName: userWithOrgId.designationName,
+                        regionHierarchy: userWithOrgId.regionHierarchy,
+                        finalRegionName: userWithOrgId.finalRegionName
+                      });
+                      
+                      console.log('✅ Merged data - organizationId now:', userData.organizationId);
+                    }
+                  } catch (mergeError) {
+                    console.error('❌ Failed to merge organization data:', mergeError);
+                  }
+                }
+                
                 const userStateData = {
                   uid: firebaseUser.uid,
                   phoneNumber: firebaseUser.phoneNumber || userData.phoneNumber,
