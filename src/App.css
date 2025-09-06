@@ -358,6 +358,8 @@ body {
   min-height: 100vh;
   background: var(--gray-50);
   padding-bottom: 80px; /* Space for bottom nav */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Header */
@@ -484,6 +486,8 @@ body {
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .dashboard-grid {
@@ -744,6 +748,12 @@ body {
 }
 
 /* Leaderboard */
+.leaderboard-widget {
+  max-height: 400px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .leaderboard-list {
   display: flex;
   flex-direction: column;
@@ -817,6 +827,12 @@ body {
 }
 
 /* Achievement Tracker */
+.achievement-tracker {
+  max-height: 400px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .achievements-list {
   display: flex;
   flex-direction: column;
@@ -905,6 +921,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  max-height: 500px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .campaign-list-item {
@@ -1065,6 +1084,7 @@ body {
   justify-content: center;
   z-index: 1000;
   padding: 20px;
+  overflow-y: auto;
 }
 
 .modal-content {
@@ -1072,9 +1092,11 @@ body {
   border-radius: var(--radius-xl);
   width: 100%;
   max-width: 600px;
-  max-height: 90vh;
-  overflow: hidden;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
   box-shadow: var(--shadow-lg);
+  margin: auto;
 }
 
 /* Campaign Wizard */
@@ -1082,13 +1104,15 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
+  max-height: 85vh;
 }
 
 .wizard-header {
   background: linear-gradient(135deg, var(--primary), var(--secondary));
   color: var(--white);
-  padding: 24px;
+  padding: 20px 24px;
   position: relative;
+  flex-shrink: 0;
 }
 
 .wizard-header h1 {
@@ -1136,9 +1160,10 @@ body {
 }
 
 .wizard-content {
-  padding: 24px;
+  padding: 20px 24px;
   flex: 1;
   overflow-y: auto;
+  min-height: 0;
 }
 
 .wizard-step h2 {
@@ -1160,6 +1185,7 @@ body {
   padding: 16px 24px;
   border-top: 1px solid var(--gray-200);
   background: var(--gray-50);
+  flex-shrink: 0;
 }
 
 /* Responsive */

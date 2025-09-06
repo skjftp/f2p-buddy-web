@@ -24,10 +24,13 @@ async function initializeFirebase(): Promise<void> {
     // Initialize services
     auth = getAuth(app);
     
-    // Enable auth persistence for browser sessions
+    // Enable auth persistence for browser sessions - this is critical
     try {
       await setPersistence(auth, browserLocalPersistence);
       console.log('✅ Auth persistence enabled');
+      
+      // Also set in localStorage for extra persistence
+      localStorage.setItem('f2p-auth-persistence', 'enabled');
     } catch (error) {
       console.warn('⚠️ Auth persistence failed:', error);
     }

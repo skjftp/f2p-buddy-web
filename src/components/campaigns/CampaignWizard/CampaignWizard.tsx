@@ -223,9 +223,19 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
         <div {...getRootProps()} className={`dropzone ${isDragActive ? 'active' : ''}`}>
           <input {...getInputProps()} />
           {bannerPreview ? (
-            <div className="banner-preview">
-              <img src={bannerPreview} alt="Banner preview" style={{maxWidth: '200px', maxHeight: '120px', borderRadius: '8px'}} />
-              <p style={{marginTop: '8px', fontSize: '12px'}}>Click to replace</p>
+            <div className="banner-preview" style={{textAlign: 'center'}}>
+              <img 
+                src={bannerPreview} 
+                alt="Banner preview" 
+                style={{
+                  width: '200px', 
+                  height: '100px', 
+                  objectFit: 'cover',
+                  borderRadius: '8px',
+                  border: '2px solid var(--gray-200)'
+                }} 
+              />
+              <p style={{marginTop: '8px', fontSize: '12px', color: 'var(--gray-500)'}}>Click to replace</p>
             </div>
           ) : (
             <div style={{textAlign: 'center', padding: '20px'}}>

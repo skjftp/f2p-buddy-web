@@ -93,12 +93,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }
               } else {
                 // User exists in auth but not in Firestore - this is OK during registration
-                console.log('User authenticated but no Firestore document yet');
+              console.log('User authenticated but no Firestore document yet');
+              
+              // Set basic user data to prevent logout
+              dispatch(setUser({
+                uid: firebaseUser.uid,
+                phoneNumber: firebaseUser.phoneNumber || '',
+                role: 'employee', // Default role
+                organizationId: '',
+                displayName: '',
+                createdAt: null,
+              }));
               }
             } catch (error) {
               console.error('Error loading user data:', error);
               // Don't clear user on Firestore errors - keep them authenticated
               console.log('Keeping user authenticated despite Firestore error');
+              
+              // Set minimal user data to prevent logout
+              dispatch(setUser({
+                uid: firebaseUser.uid,
+                phoneNumber: firebaseUser.phoneNumber || '',
+                role: 'employee', // Default role to prevent routing issues
+                organizationId: '',
+                displayName: '',
+                createdAt: null,
+              }));
             }
           } else {
             dispatch(clearUser());
