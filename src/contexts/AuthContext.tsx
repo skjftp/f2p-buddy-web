@@ -40,6 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     dispatch(setLoading(true));
     let isSubscribed = true;
     let mounted = true;
+    let unsubscribe: (() => void) | null = null;
     
     // Try to restore auth state from localStorage first
     const persistedAuth = getPersistedAuthState();
@@ -54,8 +55,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       dispatch(setLoading(false));
-      
-      // Still set up the listener for real-time updates, but don't clear user if Firebase fails
     } else {
       console.log('🔍 No valid persisted auth, checking Firebase...');
     }
@@ -177,9 +176,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
     
-    let unsubscribe: (() => void) | null = null;
     initializeAuthListener().then(unsub => {
-      if (unsub) {
+      if (unsub && mounted) {
         unsubscribe = unsub;
       }
     });
