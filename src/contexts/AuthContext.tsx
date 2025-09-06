@@ -91,7 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               
               console.log('📞 Looking up user by phone number:', firebaseUser.phoneNumber);
               const userDocRef = doc(dbInstance, 'users', firebaseUser.phoneNumber);
-              const userDoc = await getDoc(userDocRef);
+              let userDoc = await getDoc(userDocRef);
               
               if (userDoc.exists()) {
                 console.log('✅ Found user by phone number:', userDoc.id);
