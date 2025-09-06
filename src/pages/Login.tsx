@@ -82,7 +82,21 @@ const Login: React.FC = () => {
       }
       
       const phoneDocRef = doc(dbInstance, 'users', user.phoneNumber);
-      const phoneDoc = await getDoc(phoneDocRef);
+      let phoneDoc = await getDoc(phoneDocRef);
+      
+      // If phone-based document doesn't exist, try UID-based (old system)
+      if (!phoneDoc.exists()) {
+        console.log('📞 No document found by phone, trying UID fallback...');
+        const uidDocRef = doc(dbInstance, 'users', user.uid);
+        const uidDoc = await getDoc(uidDocRef);
+        
+        if (uidDoc.exists()) {
+          console.log('✅ Found user by UID (old system):', user.uid);
+          phoneDoc = uidDoc; // Use UID document as fallback
+        } else {
+          console.log('❌ No user document found by UID either');
+        }
+      }
       
       let userData: any = {};
       
