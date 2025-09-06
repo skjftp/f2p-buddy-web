@@ -1765,6 +1765,129 @@ body {
   gap: 8px;
 }
 
+/* Compact Employee Card */
+.employee-card-compact {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.employee-card-compact:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.employee-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.employee-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.employee-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: 4px;
+}
+
+.employee-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.employee-phone {
+  font-size: 13px;
+  color: var(--gray-600);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot.active {
+  background: var(--success);
+}
+
+.status-dot.inactive {
+  background: var(--error);
+}
+
+.employee-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.designation-tag {
+  background: var(--primary);
+  color: var(--white);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.region-tag {
+  background: var(--success);
+  color: var(--white);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.employee-actions-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-icon-small {
+  width: 32px;
+  height: 32px;
+  background: var(--gray-100);
+  border: none;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 14px;
+}
+
+.btn-icon-small:hover {
+  background: var(--gray-200);
+}
+
+.btn-icon-small.btn-danger {
+  background: var(--error);
+  color: var(--white);
+}
+
+.btn-icon-small.btn-danger:hover {
+  background: #e53e3e;
+}
+
+.btn-icon-small.confirm {
+  background: #c53030;
+  animation: pulse 1s infinite;
+}
+
 /* Invite Employee Modal */
 .invite-employee {
   background: var(--white);

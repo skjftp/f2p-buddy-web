@@ -139,7 +139,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
     maxSize: 10 * 1024 * 1024,
   });
 
-  const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 7));
+  const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 6));
   const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
 
   const handleTargetingChange = (targetingData: any) => {
@@ -746,7 +746,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
         )}
         
         <div className="progress-steps">
-          {[1, 2, 3, 4, 5, 6, 7].map((step) => (
+          {[1, 2, 3, 4, 5, 6].map((step) => (
             <div key={step} className={`step ${currentStep >= step ? 'active' : ''}`}>
               {step}
             </div>
@@ -756,17 +756,16 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
 
       <div className="wizard-content">
         {currentStep === 1 && renderStep1()}
-        {currentStep === 2 && renderStep2()}
-        {currentStep === 3 && (
+        {currentStep === 2 && (
           <CampaignTargeting
             organizationId={organization?.id || ''}
             onTargetingChange={handleTargetingChange}
           />
         )}
-        {currentStep === 4 && renderStep3()}
-        {currentStep === 5 && renderStep4()}
-        {currentStep === 6 && renderStep5()}
-        {currentStep === 7 && renderStep6()}
+        {currentStep === 3 && renderStep3()}
+        {currentStep === 4 && renderStep4()}
+        {currentStep === 5 && renderStep5()}
+        {currentStep === 6 && renderStep6()}
       </div>
 
       <div className="wizard-actions">
@@ -778,7 +777,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
           )}
         </div>
         <div>
-          {currentStep < 7 ? (
+          {currentStep < 6 ? (
             <button className="btn" onClick={nextStep}>
               Next →
             </button>

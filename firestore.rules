@@ -40,6 +40,8 @@ service cloud.firestore {
       allow create: if isAuthenticated() && hasRole('admin');
       // Admins can update user documents in their organization
       allow update: if isAuthenticated() && hasRole('admin');
+      // Admins can delete user documents in their organization
+      allow delete: if isAuthenticated() && hasRole('admin');
     }
 
     // Organizations collection

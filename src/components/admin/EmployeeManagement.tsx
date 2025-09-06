@@ -12,6 +12,9 @@ interface Employee {
   status: 'active' | 'inactive';
   totalAchievements: number;
   currentRank: number;
+  designationName?: string;
+  finalRegionName?: string;
+  regionHierarchy?: Record<number, string>;
 }
 
 interface EmployeeManagementProps {
@@ -67,9 +70,12 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ organizationId 
               displayName: data.displayName || 'Unknown User',
               phoneNumber: data.phoneNumber || '',
               joinedAt: data.createdAt?.toDate()?.toISOString() || new Date().toISOString(),
-              status: 'active',
+              status: data.status || 'active',
               totalAchievements: 0,
-              currentRank: 0
+              currentRank: 0,
+              designationName: data.designationName || '',
+              finalRegionName: data.finalRegionName || '',
+              regionHierarchy: data.regionHierarchy || {}
             });
           });
           
@@ -149,51 +155,36 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ organizationId 
 
       <div className="employee-grid">
         {filteredEmployees.map((employee) => (
-          <div key={employee.id} className="employee-card">
-            <div className="employee-header">
+          <div key={employee.id} className="employee-card-compact">
+            <div className="employee-main">
               <div className="employee-avatar">
                 {employee.displayName.charAt(0)}
               </div>
-              <div className="employee-info">
-                <h3 className="employee-name">{employee.displayName}</h3>
-                <p className="employee-phone">{employee.phoneNumber}</p>
+              <div className="employee-details">
+                <div className="employee-name">{employee.displayName}</div>
+                <div className="employee-meta">
+                  <span className="employee-phone">{employee.phoneNumber}</span>
+                  <span className={`status-dot ${employee.status}`}></span>
+                </div>
+                <div className="employee-tags">
+                  {employee.designationName && (
+                    <span className="designation-tag">{employee.designationName}</span>
+                  )}
+                  {employee.finalRegionName && (
+                    <span className="region-tag">{employee.finalRegionName}</span>
+                  )}
+                </div>
               </div>
-              <div className="employee-status">
-                <span className={`status-badge ${employee.status}`}>
-                  {employee.status === 'active' ? '🟢' : '🔴'} {employee.status}
-                </span>
+              <div className="employee-actions-compact">
+                <button className="btn-icon-small" title="View Profile">👤</button>
+                <button 
+                  className={`btn-icon-small btn-danger ${deleteConfirm === employee.id ? 'confirm' : ''}`}
+                  onClick={() => handleDeleteUser(employee.id, employee.displayName)}
+                  title={deleteConfirm === employee.id ? "Click again to delete" : "Delete user"}
+                >
+                  {deleteConfirm === employee.id ? '⚠️' : '🗑️'}
+                </button>
               </div>
-            </div>
-            
-            <div className="employee-stats">
-              <div className="stat-row">
-                <span className="stat-label">Achievements</span>
-                <span className="stat-value">{employee.totalAchievements}</span>
-              </div>
-              <div className="stat-row">
-                <span className="stat-label">Current Rank</span>
-                <span className="stat-value">
-                  {employee.currentRank > 0 ? `#${employee.currentRank}` : 'Unranked'}
-                </span>
-              </div>
-              <div className="stat-row">
-                <span className="stat-label">Joined</span>
-                <span className="stat-value">
-                  {new Date(employee.joinedAt).toLocaleDateString()}
-                </span>
-              </div>
-            </div>
-            
-            <div className="employee-actions">
-              <button className="btn-icon" title="View Profile">👤</button>
-              <button className="btn-icon" title="Send Message">💬</button>
-              <button 
-                className={`btn-icon btn-danger ${deleteConfirm === employee.id ? 'confirm' : ''}`}
-                onClick={() => handleDeleteUser(employee.id, employee.displayName)}
-                title={deleteConfirm === employee.id ? "Click again to delete" : "Delete user"}
-              >
-                {deleteConfirm === employee.id ? '⚠️' : '🗑️'}
-              </button>
             </div>
           </div>
         ))}
