@@ -30,7 +30,7 @@ const SkuTargeting: React.FC<SkuTargetingProps> = ({
   selectedRegions, 
   onSkuTargetsChange 
 }) => {
-  const [skus, setSkus] = useState<Sku[]>([
+  const [skus] = useState<Sku[]>([
     { id: '1', name: 'Product A Premium', code: 'PA-001', category: 'Premium', brand: 'Brand X', unitPrice: 250 },
     { id: '2', name: 'Product A Standard', code: 'PA-002', category: 'Standard', brand: 'Brand X', unitPrice: 150 },
     { id: '3', name: 'Product B Premium', code: 'PB-001', category: 'Premium', brand: 'Brand Y', unitPrice: 300 },
@@ -38,7 +38,6 @@ const SkuTargeting: React.FC<SkuTargetingProps> = ({
   ]);
   
   const [skuTargets, setSkuTargets] = useState<SkuTarget[]>([]);
-  const [showSkuManager, setShowSkuManager] = useState(false);
 
   const addSkuTarget = (sku: Sku) => {
     const newTarget: SkuTarget = {
@@ -118,12 +117,6 @@ const SkuTargeting: React.FC<SkuTargetingProps> = ({
     <div className="sku-targeting">
       <div className="sku-header">
         <h3>📦 SKU-wise Target Setting</h3>
-        <button 
-          className="btn-secondary"
-          onClick={() => setShowSkuManager(true)}
-        >
-          ⚙️ Manage SKUs
-        </button>
       </div>
       
       <p className="section-description">
