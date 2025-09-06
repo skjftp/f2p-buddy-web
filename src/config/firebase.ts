@@ -100,17 +100,33 @@ export async function getFirebaseApp(): Promise<FirebaseApp> {
 export const setupRecaptcha = async (elementId: string) => {
   const authInstance = await getAuthInstance();
   
-  if (!(window as any).recaptchaVerifier) {
-    (window as any).recaptchaVerifier = new RecaptchaVerifier(authInstance, elementId, {
-      size: 'invisible',
-      callback: () => {
-        console.log('Recaptcha verified');
-      },
-      'expired-callback': () => {
-        console.log('Recaptcha expired');
-      }
-    });
+  // Clear any existing reCAPTCHA to prevent auth state conflicts
+  if ((window as any).recaptchaVerifier) {
+    try {
+      (window as any).recaptchaVerifier.clear();
+    } catch (e) {
+      console.log('Could not clear existing reCAPTCHA');
+    }
   }
+  
+  (window as any).recaptchaVerifier = new RecaptchaVerifier(authInstance, elementId, {
+    size: 'invisible',
+    callback: () => {
+      console.log('Recaptcha verified - preserving auth state');
+      // Preserve auth state after reCAPTCHA verification
+      import('../utils/authPersistence').then(({ getPersistedAuthState, saveAuthState }) => {
+        const persistedAuth = getPersistedAuthState();
+        if (persistedAuth) {
+          console.log('Re-saving auth state after reCAPTCHA');
+          saveAuthState(persistedAuth);
+        }
+      });
+    },
+    'expired-callback': () => {
+      console.log('Recaptcha expired - auth state preserved');
+    }
+  });
+  
   return (window as any).recaptchaVerifier;
 };
 

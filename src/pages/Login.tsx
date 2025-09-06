@@ -33,8 +33,13 @@ const Login: React.FC = () => {
 
     setLoading(true);
     try {
+      // Preserve any existing auth state before reCAPTCHA
+      console.log('🔐 Preserving auth state before OTP send');
+      
       const authInstance = await getAuthInstance();
       const recaptchaVerifier = await setupRecaptcha('recaptcha-container');
+      
+      console.log('📱 Sending OTP to:', `+${phoneNumber}`);
       const confirmation = await signInWithPhoneNumber(
         authInstance, 
         `+${phoneNumber}`, 
@@ -44,8 +49,10 @@ const Login: React.FC = () => {
       setConfirmationResult(confirmation);
       setStep('otp');
       toast.success('Code sent!');
+      
+      console.log('✅ OTP sent successfully');
     } catch (error: any) {
-      console.error('Error sending OTP:', error);
+      console.error('❌ Error sending OTP:', error);
       toast.error('Failed to send code');
     } finally {
       setLoading(false);
