@@ -11,7 +11,6 @@ import AdminSetup from './pages/admin/AdminSetup';
 import EmployeeDashboard from './pages/employee/EmployeeDashboard';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import './App.css';
-import './components/premium-dashboard.css';
 import 'react-toastify/dist/ReactToastify.css';
 import 'react-phone-input-2/lib/style.css';
 

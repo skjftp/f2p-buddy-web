@@ -7,146 +7,6 @@ import { toast } from 'react-toastify';
 import PhoneInput from 'react-phone-input-2';
 import OtpInput from 'react-otp-input';
 
-interface LoginStepProps {
-  step: 'phone' | 'otp' | 'role';
-  phoneNumber: string;
-  otp: string;
-  onPhoneChange: (value: string) => void;
-  onOtpChange: (value: string) => void;
-  onSendOTP: () => void;
-  onVerifyOTP: () => void;
-  onRoleSelect: (role: 'admin' | 'employee') => void;
-  loading: boolean;
-}
-
-const LoginStep: React.FC<LoginStepProps> = ({
-  step,
-  phoneNumber,
-  otp,
-  onPhoneChange,
-  onOtpChange,
-  onSendOTP,
-  onVerifyOTP,
-  onRoleSelect,
-  loading
-}) => {
-  if (step === 'phone') {
-    return (
-      <div className="login-step animate-fade-in">
-        <h2 className="login-title gradient-text">F2P Buddy</h2>
-        <p className="login-subtitle">Enter your phone number</p>
-        
-        <div className="form-group">
-          <label className="form-label">Phone Number</label>
-          <PhoneInput
-            country={'in'}
-            value={phoneNumber}
-            onChange={onPhoneChange}
-            inputStyle={{ 
-              width: '100%', 
-              height: '48px',
-              fontSize: '16px',
-              border: '2px solid #e1e5e9',
-              borderRadius: '8px'
-            }}
-            containerStyle={{ width: '100%' }}
-            buttonStyle={{
-              border: '2px solid #e1e5e9',
-              borderRadius: '8px 0 0 8px'
-            }}
-          />
-        </div>
-        
-        <button 
-          className="btn hover-scale" 
-          onClick={onSendOTP}
-          disabled={!phoneNumber || loading}
-        >
-          {loading ? 'Sending...' : 'Send Code'}
-        </button>
-        
-        <div id="recaptcha-container"></div>
-      </div>
-    );
-  }
-
-  if (step === 'otp') {
-    return (
-      <div className="login-step animate-fade-in">
-        <h2 className="login-title gradient-text">Verify</h2>
-        <p className="login-subtitle">Enter code sent to +{phoneNumber}</p>
-        
-        <div className="form-group">
-          <div className="otp-container">
-            <OtpInput
-              value={otp}
-              onChange={onOtpChange}
-              numInputs={6}
-              renderSeparator={<span>-</span>}
-              renderInput={(props) => <input {...props} />}
-              inputStyle={{
-                width: '45px',
-                height: '45px',
-                fontSize: '18px',
-                borderRadius: '8px',
-                border: '2px solid #e1e5e9',
-                textAlign: 'center',
-                margin: '0 4px'
-              }}
-            />
-          </div>
-        </div>
-        
-        <button 
-          className="btn hover-scale" 
-          onClick={onVerifyOTP}
-          disabled={otp.length !== 6 || loading}
-        >
-          {loading ? 'Verifying...' : 'Verify'}
-        </button>
-        
-        <button 
-          className="btn-secondary hover-scale" 
-          onClick={() => window.location.reload()}
-          style={{ marginTop: 'var(--space-lg)' }}
-        >
-          Change Number
-        </button>
-      </div>
-    );
-  }
-
-  if (step === 'role') {
-    return (
-      <div className="login-step animate-fade-in">
-        <h2 className="login-title gradient-text">Select Role</h2>
-        
-        <div className="role-selection stagger-animation">
-          <div 
-            className="role-btn glass-effect hover-lift"
-            onClick={() => onRoleSelect('admin')}
-            style={{animationDelay: '0.1s'}}
-          >
-            <div className="role-icon">👨‍💼</div>
-            <h3>Admin</h3>
-          </div>
-          
-          <div 
-            className="role-btn glass-effect hover-lift"
-            onClick={() => onRoleSelect('employee')}
-            style={{animationDelay: '0.2s'}}
-          >
-            <div className="role-icon">👥</div>
-            <h3>Employee</h3>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return null;
-};
-
 const Login: React.FC = () => {
   const [step, setStep] = useState<'phone' | 'otp' | 'role'>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -173,10 +33,10 @@ const Login: React.FC = () => {
       
       setConfirmationResult(confirmation);
       setStep('otp');
-      toast.success('OTP sent successfully!');
+      toast.success('Code sent!');
     } catch (error: any) {
       console.error('Error sending OTP:', error);
-      toast.error(error.message || 'Failed to send OTP. Please try again.');
+      toast.error('Failed to send code');
     } finally {
       setLoading(false);
     }
@@ -184,7 +44,7 @@ const Login: React.FC = () => {
 
   const verifyOTP = async () => {
     if (!confirmationResult || !otp) {
-      toast.error('Please enter the OTP');
+      toast.error('Please enter the code');
       return;
     }
 
@@ -193,7 +53,6 @@ const Login: React.FC = () => {
       const result = await confirmationResult.confirm(otp);
       const user = result.user;
       
-      // Check if user exists in Firestore
       const dbInstance = await getFirestoreInstance();
       const userDocRef = doc(dbInstance, 'users', user.uid);
       const userDoc = await getDoc(userDocRef);
@@ -215,7 +74,7 @@ const Login: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Error verifying OTP:', error);
-      toast.error('Invalid OTP. Please try again.');
+      toast.error('Invalid code');
     } finally {
       setLoading(false);
     }
@@ -225,7 +84,7 @@ const Login: React.FC = () => {
     const authInstance = await getAuthInstance();
     const user = authInstance.currentUser;
     if (!user) {
-      toast.error('Authentication error. Please try again.');
+      toast.error('Authentication error');
       return;
     }
 
@@ -246,29 +105,111 @@ const Login: React.FC = () => {
         navigate('/employee/dashboard');
       }
       
-      toast.success(`Welcome! You've been registered as ${role}.`);
+      toast.success('Registration complete');
     } catch (error: any) {
       console.error('Error creating user:', error);
-      toast.error('Failed to complete registration. Please try again.');
+      toast.error('Registration failed');
     } finally {
       setLoading(false);
     }
   };
 
+  const renderPhone = () => (
+    <div>
+      <h2 className="login-title">F2P Buddy</h2>
+      <p className="login-subtitle">Enter your phone number</p>
+      
+      <div className="form-group">
+        <label className="form-label">Phone Number</label>
+        <PhoneInput
+          country={'in'}
+          value={phoneNumber}
+          onChange={setPhoneNumber}
+          inputStyle={{ 
+            width: '100%', 
+            height: '44px',
+            fontSize: '14px',
+            border: '1px solid #cbd5e0',
+            borderRadius: '8px'
+          }}
+          containerStyle={{ width: '100%' }}
+          buttonStyle={{
+            border: '1px solid #cbd5e0',
+            borderRadius: '8px 0 0 8px'
+          }}
+        />
+      </div>
+      
+      <button 
+        className="btn" 
+        onClick={sendOTP}
+        disabled={!phoneNumber || loading}
+      >
+        {loading ? 'Sending...' : 'Send Code'}
+      </button>
+      
+      <div id="recaptcha-container"></div>
+    </div>
+  );
+
+  const renderOTP = () => (
+    <div>
+      <h2 className="login-title">Verify</h2>
+      <p className="login-subtitle">Enter code sent to +{phoneNumber}</p>
+      
+      <div className="form-group">
+        <div className="otp-container">
+          <OtpInput
+            value={otp}
+            onChange={setOtp}
+            numInputs={6}
+            renderInput={(props) => <input {...props} />}
+          />
+        </div>
+      </div>
+      
+      <button 
+        className="btn" 
+        onClick={verifyOTP}
+        disabled={otp.length !== 6 || loading}
+      >
+        {loading ? 'Verifying...' : 'Verify'}
+      </button>
+      
+      <button 
+        className="btn-secondary" 
+        onClick={() => window.location.reload()}
+        style={{ marginTop: '12px' }}
+      >
+        Change Number
+      </button>
+    </div>
+  );
+
+  const renderRole = () => (
+    <div>
+      <h2 className="login-title">Select Role</h2>
+      
+      <div className="role-selection">
+        <div className="role-btn" onClick={() => selectRole('admin')}>
+          <div className="role-icon">👨‍💼</div>
+          <h3>Admin</h3>
+        </div>
+        
+        <div className="role-btn" onClick={() => selectRole('employee')}>
+          <div className="role-icon">👥</div>
+          <h3>Employee</h3>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="login-container">
       <div className="login-card">
-        <LoginStep
-          step={step}
-          phoneNumber={phoneNumber}
-          otp={otp}
-          onPhoneChange={setPhoneNumber}
-          onOtpChange={setOtp}
-          onSendOTP={sendOTP}
-          onVerifyOTP={verifyOTP}
-          onRoleSelect={selectRole}
-          loading={loading}
-        />
+        {step === 'phone' && renderPhone()}
+        {step === 'otp' && renderOTP()}
+        {step === 'role' && renderRole()}
       </div>
     </div>
   );
