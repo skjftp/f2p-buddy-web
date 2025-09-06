@@ -198,22 +198,19 @@ const AdminDashboard: React.FC = () => {
     <div className="admin-dashboard-container">
       <header className="dashboard-header">
         <div className="header-content">
-          <div className="header-left">
-            <div className="org-logo">
-              {organization?.logo ? (
-                <img src={organization.logo} alt={organization.name} />
-              ) : (
+          <div className="header-center">
+            {organization?.logo ? (
+              <img src={organization.logo} alt={organization.name} className="org-logo-image" />
+            ) : (
+              <div className="org-logo-text">
                 <div className="logo-placeholder">
                   {organization?.name?.charAt(0) || 'O'}
                 </div>
-              )}
-            </div>
-            <div className="header-text">
-              <h1>{organization?.name || 'Organization'}</h1>
-            </div>
+                <h1>{organization?.name || 'Organization'}</h1>
+              </div>
+            )}
           </div>
           <div className="header-actions">
-            <button className="btn-icon" title="Settings">⚙️</button>
             <button className="btn-icon" title="Notifications">🔔</button>
             <button className="btn-icon" onClick={logout} title="Sign Out">🚪</button>
           </div>
