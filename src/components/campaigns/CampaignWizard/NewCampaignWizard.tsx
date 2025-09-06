@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, getDoc, query, where, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFirestoreInstance, getStorageInstance } from '../../../config/firebase';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -19,6 +19,36 @@ interface SKU {
   description: string;
   unitPrice?: number;
   currency?: string;
+}
+
+interface HierarchyItem {
+  id: string;
+  name: string;
+  parentId?: string;
+  level: number;
+}
+
+interface HierarchyLevel {
+  id: string;
+  name: string;
+  level: number;
+  items: HierarchyItem[];
+}
+
+interface Designation {
+  id: string;
+  name: string;
+  category: 'employee' | 'distributor' | 'retailer' | 'other';
+  description: string;
+}
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  designationName: string;
+  regionHierarchy: Record<string, string>;
+  finalRegionName: string;
 }
 
 interface TargetConfig {
@@ -91,6 +121,9 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [organizationSkus, setOrganizationSkus] = useState<SKU[]>([]);
+  const [hierarchyLevels, setHierarchyLevels] = useState<HierarchyLevel[]>([]);
+  const [designations, setDesignations] = useState<Designation[]>([]);
+  const [organizationUsers, setOrganizationUsers] = useState<User[]>([]);
   
   const [campaignData, setCampaignData] = useState<CampaignData>({
     name: '',
@@ -123,13 +156,35 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
       try {
         const dbInstance = await getFirestoreInstance();
         
-        // Load organization settings to get SKUs
+        // Load organization settings to get SKUs, hierarchy, and designations
         const orgDoc = await getDoc(doc(dbInstance, 'organizations', organization.id));
-        if (orgDoc.exists() && orgDoc.data().skus) {
-          setOrganizationSkus(orgDoc.data().skus);
+        if (orgDoc.exists()) {
+          const data = orgDoc.data();
+          
+          if (data.skus) {
+            setOrganizationSkus(data.skus);
+          }
+          
+          if (data.hierarchyLevels) {
+            setHierarchyLevels(data.hierarchyLevels);
+          }
+          
+          if (data.designations) {
+            setDesignations(data.designations);
+          }
         }
 
-        // Load users for participant assignment would be implemented here
+        // Load users for participant assignment
+        const usersQuery = query(
+          collection(dbInstance, 'users'),
+          where('orgId', '==', organization.id)
+        );
+        const usersSnapshot = await getDocs(usersQuery);
+        const users: User[] = [];
+        usersSnapshot.forEach((doc) => {
+          users.push({ id: doc.id, ...doc.data() } as User);
+        });
+        setOrganizationUsers(users);
 
       } catch (error) {
         console.error('Error loading organization data:', error);
@@ -204,41 +259,67 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
   };
 
   const computeRegionalDistribution = (algorithm: 'equal' | 'territory' | 'performance' | 'custom' = 'equal') => {
-    // Auto-compute regional distribution based on selected regions and target configs
     const newDistribution: Record<string, RegionalDistribution[]> = {};
 
     campaignData.targetConfigs.forEach(config => {
       const distributions: RegionalDistribution[] = [];
       const totalTarget = config.target;
-      const regionCount = campaignData.selectedRegions.length;
+      const selectedRegionItems = campaignData.selectedRegions.map(regionId => 
+        hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId)
+      ).filter(Boolean) as HierarchyItem[];
 
-      campaignData.selectedRegions.forEach((regionId, index) => {
+      selectedRegionItems.forEach((regionItem, index) => {
+        // Get users in this region
+        const usersInRegion = organizationUsers.filter(user => {
+          // Check if user belongs to this region
+          const userRegionIds = Object.values(user.regionHierarchy || {});
+          return userRegionIds.includes(regionItem.id) || 
+                 user.finalRegionName === regionItem.name;
+        });
+
+        const userCount = Math.max(1, usersInRegion.length); // At least 1 for calculation
         let regionTarget = 0;
         
         switch (algorithm) {
           case 'equal':
-            regionTarget = Math.round(totalTarget / regionCount);
+            regionTarget = Math.round(totalTarget / selectedRegionItems.length);
             break;
           case 'territory':
-            // Larger territories get proportionally more targets
-            regionTarget = Math.round(totalTarget * (index + 1) / (regionCount * (regionCount + 1) / 2));
+            // Territory size factor (deeper levels = smaller territories)
+            const sizeFactor = 1 / (regionItem.level || 1);
+            const totalSizeFactor = selectedRegionItems.reduce((sum, item) => sum + (1 / (item.level || 1)), 0);
+            regionTarget = Math.round(totalTarget * sizeFactor / totalSizeFactor);
             break;
           case 'performance':
-            // Mock performance-based distribution
-            regionTarget = Math.round(totalTarget * (0.8 + Math.random() * 0.4) / regionCount);
+            // Performance-based with some randomization for demo
+            const performanceFactor = 0.7 + Math.random() * 0.6; // 0.7 to 1.3 multiplier
+            const avgTarget = totalTarget / selectedRegionItems.length;
+            regionTarget = Math.round(avgTarget * performanceFactor);
             break;
           default:
             regionTarget = 0;
         }
 
+        const individualTarget = userCount > 0 ? Math.round(regionTarget / userCount) : regionTarget;
+
         distributions.push({
-          regionId,
-          regionName: `Region ${regionId}`,
+          regionId: regionItem.id,
+          regionName: regionItem.name,
           target: regionTarget,
-          userCount: 1, // Mock user count
-          individualTarget: regionTarget
+          userCount,
+          individualTarget
         });
       });
+
+      // Adjust for rounding discrepancies
+      const totalDistributed = distributions.reduce((sum, dist) => sum + dist.target, 0);
+      if (totalDistributed !== totalTarget && distributions.length > 0) {
+        const difference = totalTarget - totalDistributed;
+        distributions[0].target += difference;
+        distributions[0].individualTarget = distributions[0].userCount > 0 
+          ? Math.round(distributions[0].target / distributions[0].userCount)
+          : distributions[0].target;
+      }
 
       newDistribution[config.skuId] = distributions;
     });
@@ -508,196 +589,673 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
   );
 
   // Step 4: Regional & Designation Targeting
-  const renderStep4 = () => (
-    <div className="step-content">
-      <div className="step-header">
-        <h3>🗺️ Regional & Designation Targeting</h3>
-        <p>Auto-computed regional distribution based on your target metrics</p>
-      </div>
+  const renderStep4 = () => {
+    const handleRegionToggle = (itemId: string, level: number) => {
+      const newSelected = new Set(campaignData.selectedRegions);
+      if (newSelected.has(itemId)) {
+        newSelected.delete(itemId);
+        // Remove children
+        removeAllChildren(itemId, newSelected);
+      } else {
+        newSelected.add(itemId);
+        // Auto-select parents if not already selected
+        autoSelectParents(itemId, newSelected);
+      }
+      setCampaignData(prev => ({ ...prev, selectedRegions: Array.from(newSelected) }));
+    };
 
-      {campaignData.targetConfigs.length === 0 ? (
-        <div className="empty-state">
-          <p>Please configure target metrics in the previous step first.</p>
+    const removeAllChildren = (parentId: string, selectedSet: Set<string>) => {
+      hierarchyLevels.forEach(level => {
+        level.items.forEach(item => {
+          if (item.parentId === parentId) {
+            selectedSet.delete(item.id);
+            removeAllChildren(item.id, selectedSet);
+          }
+        });
+      });
+    };
+
+    const autoSelectParents = (childId: string, selectedSet: Set<string>) => {
+      const childItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === childId);
+      if (childItem?.parentId) {
+        selectedSet.add(childItem.parentId);
+        autoSelectParents(childItem.parentId, selectedSet);
+      }
+    };
+
+    const getPartialState = (itemId: string): 'none' | 'partial' | 'all' => {
+      const children = hierarchyLevels.flatMap(l => l.items).filter(item => item.parentId === itemId);
+      if (children.length === 0) return 'none';
+      
+      const selectedChildren = children.filter(child => campaignData.selectedRegions.includes(child.id));
+      if (selectedChildren.length === 0) return 'none';
+      if (selectedChildren.length === children.length) return 'all';
+      return 'partial';
+    };
+
+    const handleDesignationToggle = (designationId: string) => {
+      const newSelected = campaignData.selectedDesignations.includes(designationId)
+        ? campaignData.selectedDesignations.filter(id => id !== designationId)
+        : [...campaignData.selectedDesignations, designationId];
+      setCampaignData(prev => ({ ...prev, selectedDesignations: newSelected }));
+    };
+
+    return (
+      <div className="step-content">
+        <div className="step-header">
+          <h3>🗺️ Regional & Designation Targeting</h3>
+          <p>Select regions and designations for your campaign</p>
         </div>
-      ) : (
-        <div className="targeting-config">
-          <div className="distribution-controls">
-            <h4>Distribution Algorithm</h4>
-            <div className="algorithm-options">
-              <label className="algorithm-option">
-                <input 
-                  type="radio" 
-                  name="algorithm" 
-                  value="equal"
-                  onChange={() => computeRegionalDistribution('equal')}
-                />
-                <div>
-                  <strong>Equal Distribution</strong>
-                  <p>Divide targets equally across all regions</p>
-                </div>
-              </label>
-              <label className="algorithm-option">
-                <input 
-                  type="radio" 
-                  name="algorithm" 
-                  value="territory"
-                  onChange={() => computeRegionalDistribution('territory')}
-                />
-                <div>
-                  <strong>Territory-based</strong>
-                  <p>Larger territories get higher targets</p>
-                </div>
-              </label>
-              <label className="algorithm-option">
-                <input 
-                  type="radio" 
-                  name="algorithm" 
-                  value="performance"
-                  onChange={() => computeRegionalDistribution('performance')}
-                />
-                <div>
-                  <strong>Performance-based</strong>
-                  <p>Based on historical performance</p>
-                </div>
-              </label>
-            </div>
-          </div>
 
-          <div className="mock-regions">
-            <h4>Mock Region Selection</h4>
-            <p>In actual implementation, this would show your organization's hierarchy</p>
-            <div className="region-checkboxes">
-              {['North Zone', 'South Zone', 'East Zone', 'West Zone'].map(region => (
-                <label key={region} className="region-checkbox">
-                  <input
-                    type="checkbox"
-                    checked={campaignData.selectedRegions.includes(region)}
-                    onChange={(e) => {
-                      const newRegions = e.target.checked
-                        ? [...campaignData.selectedRegions, region]
-                        : campaignData.selectedRegions.filter(r => r !== region);
-                      setCampaignData(prev => ({ ...prev, selectedRegions: newRegions }));
-                    }}
-                  />
-                  {region}
-                </label>
-              ))}
-            </div>
+        {campaignData.targetConfigs.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">🎯</div>
+            <h4>Configure Target Metrics First</h4>
+            <p>Please configure target metrics in the previous step to enable regional targeting.</p>
           </div>
+        ) : (
+          <div className="targeting-sections">
+            {/* Regional Targeting Section */}
+            <div className="targeting-section">
+              <div className="section-header">
+                <h4>🗺️ Regional Targeting</h4>
+                <div className="selected-count">
+                  {campaignData.selectedRegions.length} region(s) selected
+                </div>
+              </div>
 
-          {campaignData.selectedRegions.length > 0 && Object.keys(campaignData.regionalDistribution).length > 0 && (
-            <div className="distribution-preview">
-              <h4>Computed Regional Distribution</h4>
-              {campaignData.targetConfigs.map(config => (
-                <div key={config.skuId} className="sku-distribution">
-                  <h5>{config.skuCode} - Total Target: {config.target} {config.unit}</h5>
-                  <div className="distribution-table">
-                    {campaignData.regionalDistribution[config.skuId]?.map(dist => (
-                      <div key={dist.regionId} className="distribution-row">
-                        <span className="region-name">{dist.regionName}</span>
-                        <span className="region-target">{dist.target} {config.unit}</span>
-                        <span className="user-count">{dist.userCount} user(s)</span>
-                        <span className="individual-target">
-                          {dist.individualTarget} {config.unit}/user
+              {hierarchyLevels.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-icon">🏗️</div>
+                  <h4>No Hierarchy Configured</h4>
+                  <p>Please configure your organization hierarchy in Settings first.</p>
+                </div>
+              ) : (
+                <div className="hierarchy-selection">
+                  {hierarchyLevels.map(level => (
+                    <div key={level.id} className="hierarchy-level-section">
+                      <h5 className="level-title">{level.name}</h5>
+                      <div className="hierarchy-items">
+                        {level.items.map(item => {
+                          const isSelected = campaignData.selectedRegions.includes(item.id);
+                          const partialState = getPartialState(item.id);
+                          
+                          return (
+                            <label 
+                              key={item.id} 
+                              className={`hierarchy-item ${isSelected ? 'selected' : ''} ${partialState === 'partial' ? 'partial' : ''}`}
+                            >
+                              <div className="checkbox-wrapper">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => handleRegionToggle(item.id, item.level)}
+                                />
+                                {partialState === 'partial' && <span className="partial-indicator">~</span>}
+                              </div>
+                              <div className="item-info">
+                                <span className="item-name">{item.name}</span>
+                                {item.parentId && (
+                                  <span className="parent-info">
+                                    under {hierarchyLevels.flatMap(l => l.items).find(p => p.id === item.parentId)?.name}
+                                  </span>
+                                )}
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Designation Targeting Section */}
+            <div className="targeting-section">
+              <div className="section-header">
+                <h4>👔 Designation Targeting</h4>
+                <div className="selected-count">
+                  {campaignData.selectedDesignations.length} designation(s) selected
+                </div>
+              </div>
+
+              {designations.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-icon">👥</div>
+                  <h4>No Designations Configured</h4>
+                  <p>Please configure user designations in Settings first.</p>
+                </div>
+              ) : (
+                <div className="designations-grid">
+                  {designations.map(designation => (
+                    <label 
+                      key={designation.id}
+                      className={`designation-item ${campaignData.selectedDesignations.includes(designation.id) ? 'selected' : ''}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={campaignData.selectedDesignations.includes(designation.id)}
+                        onChange={() => handleDesignationToggle(designation.id)}
+                      />
+                      <div className="designation-info">
+                        <span className={`category-badge ${designation.category}`}>
+                          {designation.category}
                         </span>
+                        <span className="designation-name">{designation.name}</span>
+                        {designation.description && (
+                          <span className="designation-desc">{designation.description}</span>
+                        )}
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Distribution Algorithm Selection */}
+            {campaignData.selectedRegions.length > 0 && (
+              <div className="targeting-section">
+                <div className="section-header">
+                  <h4>📊 Distribution Algorithm</h4>
+                  <p>Choose how to distribute targets across selected regions</p>
+                </div>
+
+                <div className="algorithm-options">
+                  <label className="algorithm-option">
+                    <input 
+                      type="radio" 
+                      name="algorithm" 
+                      value="equal"
+                      onChange={() => computeRegionalDistribution('equal')}
+                    />
+                    <div className="option-content">
+                      <div className="option-icon">⚖️</div>
+                      <div className="option-text">
+                        <strong>Equal Distribution</strong>
+                        <p>Divide targets equally across all selected regions</p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className="algorithm-option">
+                    <input 
+                      type="radio" 
+                      name="algorithm" 
+                      value="territory"
+                      onChange={() => computeRegionalDistribution('territory')}
+                    />
+                    <div className="option-content">
+                      <div className="option-icon">🗺️</div>
+                      <div className="option-text">
+                        <strong>Territory-based</strong>
+                        <p>Larger territories get proportionally higher targets</p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className="algorithm-option">
+                    <input 
+                      type="radio" 
+                      name="algorithm" 
+                      value="performance"
+                      onChange={() => computeRegionalDistribution('performance')}
+                    />
+                    <div className="option-content">
+                      <div className="option-icon">📈</div>
+                      <div className="option-text">
+                        <strong>Performance-based</strong>
+                        <p>Higher performers get higher targets based on historical data</p>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+
+                {Object.keys(campaignData.regionalDistribution).length > 0 && (
+                  <div className="distribution-preview">
+                    <h5>📋 Computed Regional Distribution</h5>
+                    {campaignData.targetConfigs.map(config => {
+                      const distributions = campaignData.regionalDistribution[config.skuId] || [];
+                      const totalDistributed = distributions.reduce((sum, dist) => sum + dist.target, 0);
+                      
+                      return (
+                        <div key={config.skuId} className="sku-distribution-card">
+                          <div className="sku-header">
+                            <span className="sku-code">{config.skuCode}</span>
+                            <span className="sku-name">{config.skuName}</span>
+                            <span className="total-target">
+                              {config.target} {config.unit} total
+                            </span>
+                          </div>
+                          
+                          <div className="distribution-table">
+                            <div className="table-header">
+                              <span>Region</span>
+                              <span>Target</span>
+                              <span>Users</span>
+                              <span>Per User</span>
+                            </div>
+                            {distributions.map(dist => (
+                              <div key={dist.regionId} className="distribution-row">
+                                <span className="region-name">{dist.regionName}</span>
+                                <span className="region-target">
+                                  {dist.target} {config.unit}
+                                </span>
+                                <span className="user-count">{dist.userCount}</span>
+                                <span className="individual-target">
+                                  {dist.individualTarget} {config.unit}
+                                </span>
+                              </div>
+                            ))}
+                            <div className="distribution-footer">
+                              <span>Total Distributed:</span>
+                              <span className="total-distributed">
+                                {totalDistributed} {config.unit}
+                              </span>
+                              {totalDistributed !== config.target && (
+                                <span className="variance">
+                                  (±{Math.abs(config.target - totalDistributed)})
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Step 5: Contest Structure
+  const renderStep5 = () => {
+    const updatePointSystem = (skuId: string, points: number) => {
+      setCampaignData(prev => ({
+        ...prev,
+        pointSystem: {
+          ...prev.pointSystem,
+          basePointsPerUnit: {
+            ...prev.pointSystem?.basePointsPerUnit,
+            [skuId]: points
+          }
+        }
+      }));
+    };
+
+    const addBonusMultiplier = () => {
+      const threshold = 100; // Default 100% target
+      const multiplier = 1.5; // Default 1.5x multiplier
+      
+      setCampaignData(prev => ({
+        ...prev,
+        pointSystem: {
+          ...prev.pointSystem,
+          basePointsPerUnit: prev.pointSystem?.basePointsPerUnit || {},
+          bonusMultipliers: [
+            ...(prev.pointSystem?.bonusMultipliers || []),
+            { threshold, multiplier }
+          ]
+        }
+      }));
+    };
+
+    const updateBonusMultiplier = (index: number, field: 'threshold' | 'multiplier', value: number) => {
+      setCampaignData(prev => ({
+        ...prev,
+        pointSystem: {
+          ...prev.pointSystem,
+          basePointsPerUnit: prev.pointSystem?.basePointsPerUnit || {},
+          bonusMultipliers: prev.pointSystem?.bonusMultipliers?.map((bonus, i) => 
+            i === index ? { ...bonus, [field]: value } : bonus
+          ) || []
+        }
+      }));
+    };
+
+    const removeBonusMultiplier = (index: number) => {
+      setCampaignData(prev => ({
+        ...prev,
+        pointSystem: {
+          ...prev.pointSystem,
+          basePointsPerUnit: prev.pointSystem?.basePointsPerUnit || {},
+          bonusMultipliers: prev.pointSystem?.bonusMultipliers?.filter((_, i) => i !== index) || []
+        }
+      }));
+    };
+
+    const addMilestone = () => {
+      const newMilestone = {
+        name: 'New Milestone',
+        target: 50, // 50% of target
+        points: 100
+      };
+      
+      setCampaignData(prev => ({
+        ...prev,
+        milestoneSystem: {
+          milestones: [
+            ...(prev.milestoneSystem?.milestones || []),
+            newMilestone
+          ]
+        }
+      }));
+    };
+
+    const updateMilestone = (index: number, field: 'name' | 'target' | 'points', value: string | number) => {
+      setCampaignData(prev => ({
+        ...prev,
+        milestoneSystem: {
+          milestones: prev.milestoneSystem?.milestones?.map((milestone, i) => 
+            i === index ? { ...milestone, [field]: value } : milestone
+          ) || []
+        }
+      }));
+    };
+
+    const removeMilestone = (index: number) => {
+      setCampaignData(prev => ({
+        ...prev,
+        milestoneSystem: {
+          milestones: prev.milestoneSystem?.milestones?.filter((_, i) => i !== index) || []
+        }
+      }));
+    };
+
+    return (
+      <div className="step-content">
+        <div className="step-header">
+          <h3>🏆 Contest Structure</h3>
+          <p>Configure how participants earn points and achieve milestones</p>
+        </div>
+
+        {campaignData.targetConfigs.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">🎯</div>
+            <h4>Configure Target Metrics First</h4>
+            <p>Please configure target metrics to enable contest structure configuration.</p>
+          </div>
+        ) : (
+          <div className="contest-structure">
+            {/* Contest Type Selection */}
+            <div className="structure-section">
+              <h4>📋 Contest Type</h4>
+              <div className="contest-types">
+                <label className="contest-type-card">
+                  <input
+                    type="radio"
+                    name="contestType"
+                    value="points"
+                    checked={campaignData.contestType === 'points'}
+                    onChange={(e) => setCampaignData(prev => ({ ...prev, contestType: e.target.value as any }))}
+                  />
+                  <div className="card-content">
+                    <div className="card-icon">⭐</div>
+                    <div className="card-text">
+                      <strong>Point System</strong>
+                      <p>Participants earn points for every unit/value achieved</p>
+                      <div className="card-features">
+                        <span>• Base points per SKU</span>
+                        <span>• Bonus multipliers</span>
+                        <span>• Achievement tracking</span>
+                      </div>
+                    </div>
+                  </div>
+                </label>
+
+                <label className="contest-type-card">
+                  <input
+                    type="radio"
+                    name="contestType"
+                    value="milestone"
+                    checked={campaignData.contestType === 'milestone'}
+                    onChange={(e) => setCampaignData(prev => ({ ...prev, contestType: e.target.value as any }))}
+                  />
+                  <div className="card-content">
+                    <div className="card-icon">🏁</div>
+                    <div className="card-text">
+                      <strong>Milestone System</strong>
+                      <p>Participants unlock rewards at specific achievement levels</p>
+                      <div className="card-features">
+                        <span>• Achievement levels</span>
+                        <span>• Milestone rewards</span>
+                        <span>• Progressive unlocking</span>
+                      </div>
+                    </div>
+                  </div>
+                </label>
+
+                <label className="contest-type-card">
+                  <input
+                    type="radio"
+                    name="contestType"
+                    value="ranking"
+                    checked={campaignData.contestType === 'ranking'}
+                    onChange={(e) => setCampaignData(prev => ({ ...prev, contestType: e.target.value as any }))}
+                  />
+                  <div className="card-content">
+                    <div className="card-icon">🏆</div>
+                    <div className="card-text">
+                      <strong>Ranking System</strong>
+                      <p>Top performers compete for rank-based prizes</p>
+                      <div className="card-features">
+                        <span>• Leaderboard rankings</span>
+                        <span>• Competitive environment</span>
+                        <span>• Top performer rewards</span>
+                      </div>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Point System Configuration */}
+            {campaignData.contestType === 'points' && (
+              <div className="structure-section">
+                <h4>⭐ Point System Configuration</h4>
+                
+                {/* Base Points per SKU */}
+                <div className="config-subsection">
+                  <h5>Base Points per Unit</h5>
+                  <p>Configure how many points participants earn for each unit/value achieved</p>
+                  <div className="sku-points-grid">
+                    {campaignData.targetConfigs.map(config => (
+                      <div key={config.skuId} className="sku-points-card">
+                        <div className="sku-info">
+                          <span className="sku-code">{config.skuCode}</span>
+                          <span className="sku-name">{config.skuName}</span>
+                          <span className="sku-unit">per {config.unit}</span>
+                        </div>
+                        <div className="points-input">
+                          <input
+                            type="number"
+                            className="form-input"
+                            placeholder="10"
+                            min="1"
+                            value={campaignData.pointSystem?.basePointsPerUnit?.[config.skuId] || ''}
+                            onChange={(e) => updatePointSystem(config.skuId, parseInt(e.target.value) || 0)}
+                          />
+                          <span className="input-suffix">points</span>
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
 
-  // Step 5: Contest Structure
-  const renderStep5 = () => (
-    <div className="step-content">
-      <div className="step-header">
-        <h3>🏆 Contest Structure</h3>
-        <p>Configure how participants earn points/rewards</p>
+                {/* Bonus Multipliers */}
+                <div className="config-subsection">
+                  <div className="subsection-header">
+                    <h5>Bonus Multipliers</h5>
+                    <button className="btn-secondary" onClick={addBonusMultiplier}>
+                      + Add Bonus
+                    </button>
+                  </div>
+                  <p>Reward overachievers with bonus point multipliers</p>
+                  
+                  {campaignData.pointSystem?.bonusMultipliers?.length === 0 || !campaignData.pointSystem?.bonusMultipliers ? (
+                    <div className="empty-bonus">
+                      <p>No bonus multipliers configured. Add bonuses to reward overachievement.</p>
+                    </div>
+                  ) : (
+                    <div className="bonus-multipliers">
+                      {campaignData.pointSystem.bonusMultipliers.map((bonus, index) => (
+                        <div key={index} className="bonus-multiplier-card">
+                          <div className="bonus-config">
+                            <div className="bonus-field">
+                              <label>Achievement Level</label>
+                              <div className="input-with-suffix">
+                                <input
+                                  type="number"
+                                  className="form-input"
+                                  value={bonus.threshold}
+                                  onChange={(e) => updateBonusMultiplier(index, 'threshold', parseFloat(e.target.value) || 0)}
+                                  min="1"
+                                />
+                                <span className="input-suffix">% of target</span>
+                              </div>
+                            </div>
+                            <div className="bonus-field">
+                              <label>Multiplier</label>
+                              <div className="input-with-suffix">
+                                <input
+                                  type="number"
+                                  className="form-input"
+                                  value={bonus.multiplier}
+                                  onChange={(e) => updateBonusMultiplier(index, 'multiplier', parseFloat(e.target.value) || 0)}
+                                  min="1"
+                                  step="0.1"
+                                />
+                                <span className="input-suffix">× points</span>
+                              </div>
+                            </div>
+                          </div>
+                          <button 
+                            className="btn-icon btn-danger"
+                            onClick={() => removeBonusMultiplier(index)}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Milestone System Configuration */}
+            {campaignData.contestType === 'milestone' && (
+              <div className="structure-section">
+                <div className="subsection-header">
+                  <h4>🏁 Milestone Configuration</h4>
+                  <button className="btn-secondary" onClick={addMilestone}>
+                    + Add Milestone
+                  </button>
+                </div>
+                <p>Create achievement milestones that participants can unlock</p>
+
+                {campaignData.milestoneSystem?.milestones?.length === 0 || !campaignData.milestoneSystem?.milestones ? (
+                  <div className="empty-milestones">
+                    <div className="empty-icon">🏁</div>
+                    <h5>No Milestones Configured</h5>
+                    <p>Add milestones to create achievement levels for participants</p>
+                  </div>
+                ) : (
+                  <div className="milestones-list">
+                    {campaignData.milestoneSystem.milestones
+                      .sort((a, b) => a.target - b.target)
+                      .map((milestone, index) => (
+                      <div key={index} className="milestone-card">
+                        <div className="milestone-config">
+                          <div className="milestone-field">
+                            <label>Milestone Name</label>
+                            <input
+                              type="text"
+                              className="form-input"
+                              value={milestone.name}
+                              onChange={(e) => updateMilestone(index, 'name', e.target.value)}
+                              placeholder="e.g., Bronze Achievement"
+                            />
+                          </div>
+                          <div className="milestone-field">
+                            <label>Target Level</label>
+                            <div className="input-with-suffix">
+                              <input
+                                type="number"
+                                className="form-input"
+                                value={milestone.target}
+                                onChange={(e) => updateMilestone(index, 'target', parseFloat(e.target.value) || 0)}
+                                min="1"
+                                max="200"
+                              />
+                              <span className="input-suffix">% of target</span>
+                            </div>
+                          </div>
+                          <div className="milestone-field">
+                            <label>Points Reward</label>
+                            <div className="input-with-suffix">
+                              <input
+                                type="number"
+                                className="form-input"
+                                value={milestone.points}
+                                onChange={(e) => updateMilestone(index, 'points', parseFloat(e.target.value) || 0)}
+                                min="1"
+                              />
+                              <span className="input-suffix">points</span>
+                            </div>
+                          </div>
+                        </div>
+                        <button 
+                          className="btn-icon btn-danger"
+                          onClick={() => removeMilestone(index)}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Ranking System Info */}
+            {campaignData.contestType === 'ranking' && (
+              <div className="structure-section">
+                <h4>🏆 Ranking System</h4>
+                <div className="ranking-info">
+                  <div className="info-card">
+                    <div className="info-icon">📊</div>
+                    <div className="info-content">
+                      <h5>Automatic Leaderboards</h5>
+                      <p>Participants will be ranked based on their achievement percentage against individual targets. Real-time leaderboards will be generated at regional and pan-India levels.</p>
+                    </div>
+                  </div>
+                  <div className="info-card">
+                    <div className="info-icon">🏅</div>
+                    <div className="info-content">
+                      <h5>Rank-Based Rewards</h5>
+                      <p>Prizes will be awarded to top performers based on their final rankings. Configure specific prizes for different ranks in the next step.</p>
+                    </div>
+                  </div>
+                  <div className="info-card">
+                    <div className="info-icon">📈</div>
+                    <div className="info-content">
+                      <h5>Performance Tracking</h5>
+                      <p>Individual and team performance will be tracked throughout the campaign duration, with regular updates to maintain competitive engagement.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
-
-      <div className="contest-types">
-        <label className="contest-type-option">
-          <input
-            type="radio"
-            name="contestType"
-            value="points"
-            checked={campaignData.contestType === 'points'}
-            onChange={(e) => setCampaignData(prev => ({ ...prev, contestType: e.target.value as any }))}
-          />
-          <div>
-            <strong>Point System</strong>
-            <p>Participants earn points for achieving targets</p>
-          </div>
-        </label>
-
-        <label className="contest-type-option">
-          <input
-            type="radio"
-            name="contestType"
-            value="milestone"
-            checked={campaignData.contestType === 'milestone'}
-            onChange={(e) => setCampaignData(prev => ({ ...prev, contestType: e.target.value as any }))}
-          />
-          <div>
-            <strong>Milestone System</strong>
-            <p>Specific milestones unlock rewards</p>
-          </div>
-        </label>
-
-        <label className="contest-type-option">
-          <input
-            type="radio"
-            name="contestType"
-            value="ranking"
-            checked={campaignData.contestType === 'ranking'}
-            onChange={(e) => setCampaignData(prev => ({ ...prev, contestType: e.target.value as any }))}
-          />
-          <div>
-            <strong>Ranking System</strong>
-            <p>Top performers get rewards by rank</p>
-          </div>
-        </label>
-      </div>
-
-      {campaignData.contestType === 'points' && (
-        <div className="point-system-config">
-          <h4>Point System Configuration</h4>
-          <p>Based on your SKU targets:</p>
-          {campaignData.targetConfigs.map(config => (
-            <div key={config.skuId} className="sku-points">
-              <label>
-                Points per {config.unit} of {config.skuCode}:
-                <input
-                  type="number"
-                  className="form-input"
-                  placeholder="10"
-                  style={{marginLeft: '8px', width: '80px'}}
-                />
-              </label>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {campaignData.contestType === 'milestone' && (
-        <div className="milestone-system-config">
-          <h4>Milestone Configuration</h4>
-          <p>Create achievement milestones based on your targets</p>
-          <div className="milestone-creator">
-            <input type="text" placeholder="Milestone name" className="form-input" />
-            <input type="number" placeholder="Target %" className="form-input" />
-            <input type="number" placeholder="Points" className="form-input" />
-            <button className="btn-icon">+</button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+    );
+  };
 
   // Step 6: Prize Structure
   const renderStep6 = () => (
