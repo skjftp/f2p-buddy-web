@@ -77,65 +77,83 @@ const AdminDashboard: React.FC = () => {
 
   const tabContent = {
     overview: (
-      <div className="overview-content">
-        <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-icon">👥</div>
-            <div className="stat-info">
-              <h3>{organizationStats.totalEmployees}</h3>
-              <p>Total Employees</p>
+      <div className="overview-content animate-fade-in">
+        <div className="stats-grid stagger-animation">
+          <div className="stat-card hover-lift glow-animation">
+            <div className="stat-icon" style={{background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'}}>
+              👥
+            </div>
+            <div className="stat-content">
+              <div className="stat-value">{organizationStats.totalEmployees}</div>
+              <div className="stat-title">Total Employees</div>
             </div>
           </div>
           
-          <div className="stat-card">
-            <div className="stat-icon">🎯</div>
-            <div className="stat-info">
-              <h3>{organizationStats.activeCampaigns}</h3>
-              <p>Active Campaigns</p>
+          <div className="stat-card hover-lift glow-animation">
+            <div className="stat-icon" style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}>
+              🎯
+            </div>
+            <div className="stat-content">
+              <div className="stat-value">{organizationStats.activeCampaigns}</div>
+              <div className="stat-title">Active Campaigns</div>
             </div>
           </div>
           
-          <div className="stat-card">
-            <div className="stat-icon">🏆</div>
-            <div className="stat-info">
-              <h3>{organizationStats.totalAchievements}</h3>
-              <p>Total Achievements</p>
+          <div className="stat-card hover-lift glow-animation">
+            <div className="stat-icon" style={{background: 'linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%)'}}>
+              🏆
+            </div>
+            <div className="stat-content">
+              <div className="stat-value">{organizationStats.totalAchievements}</div>
+              <div className="stat-title">Total Achievements</div>
             </div>
           </div>
           
-          <div className="stat-card">
-            <div className="stat-icon">📈</div>
-            <div className="stat-info">
-              <h3>{organizationStats.completionRate}%</h3>
-              <p>Completion Rate</p>
+          <div className="stat-card hover-lift glow-animation">
+            <div className="stat-icon" style={{background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'}}>
+              📈
+            </div>
+            <div className="stat-content">
+              <div className="stat-value">{organizationStats.completionRate.toFixed(1)}%</div>
+              <div className="stat-title">Completion Rate</div>
             </div>
           </div>
         </div>
 
         <div className="recent-activities">
-          <h3>Recent Campaigns</h3>
-          <div className="campaigns-grid">
-            {campaigns.slice(0, 4).map((campaign) => (
-              <CampaignCard
-                key={campaign.id}
-                campaign={campaign}
-                userRole="admin"
-                onEdit={() => {/* Handle edit */}}
-                onView={() => {/* Handle view */}}
-              />
+          <div className="section-header">
+            <h3 className="gradient-text">Recent Campaigns</h3>
+            <button 
+              className="btn hover-scale"
+              onClick={() => setShowCampaignWizard(true)}
+            >
+              ✨ Create Campaign
+            </button>
+          </div>
+          
+          <div className="campaigns-grid stagger-animation">
+            {campaigns.slice(0, 4).map((campaign, index) => (
+              <div key={campaign.id} style={{animationDelay: `${index * 0.1}s`}}>
+                <CampaignCard
+                  campaign={campaign}
+                  userRole="admin"
+                  onEdit={() => {/* Handle edit */}}
+                  onView={() => {/* Handle view */}}
+                />
+              </div>
             ))}
           </div>
           
           {campaigns.length === 0 && (
-            <div className="empty-state">
-              <div className="empty-icon">🎯</div>
+            <div className="empty-state glass-effect animate-fade-in">
+              <div className="empty-icon float-animation">🎯</div>
               <h3>No Campaigns Yet</h3>
-              <p>Create your first campaign to get started.</p>
+              <p>Create your first campaign to get started with the sales incentive program.</p>
               <button 
-                className="btn"
+                className="btn hover-scale"
                 onClick={() => setShowCampaignWizard(true)}
               >
-                Create Campaign
+                ✨ Create Your First Campaign
               </button>
             </div>
           )}
@@ -144,37 +162,52 @@ const AdminDashboard: React.FC = () => {
     ),
     
     campaigns: (
-      <div className="campaigns-content">
+      <div className="campaigns-content animate-fade-in">
         <div className="content-header">
-          <h2>Campaign Management</h2>
+          <h2 className="gradient-text">Campaign Management</h2>
           <button 
-            className="btn"
+            className="btn hover-scale"
             onClick={() => setShowCampaignWizard(true)}
           >
-            + Create Campaign
+            🚀 Create Campaign
           </button>
         </div>
         
         <div className="campaign-filters">
-          <div className="filter-tabs">
-            <button className="filter-tab active">All</button>
-            <button className="filter-tab">Active</button>
-            <button className="filter-tab">Draft</button>
-            <button className="filter-tab">Completed</button>
+          <div className="filter-tabs glass-effect">
+            <button className="filter-tab active">All Campaigns</button>
+            <button className="filter-tab">🟢 Active</button>
+            <button className="filter-tab">📝 Draft</button>
+            <button className="filter-tab">✅ Completed</button>
           </div>
         </div>
         
-        <div className="campaigns-grid">
-          {campaigns.map((campaign) => (
-            <CampaignCard
-              key={campaign.id}
-              campaign={campaign}
-              userRole="admin"
-              onEdit={() => {/* Handle edit */}}
-              onView={() => {/* Handle view */}}
-            />
+        <div className="campaigns-grid stagger-animation">
+          {campaigns.map((campaign, index) => (
+            <div key={campaign.id} style={{animationDelay: `${index * 0.1}s`}} className="hover-lift">
+              <CampaignCard
+                campaign={campaign}
+                userRole="admin"
+                onEdit={() => {/* Handle edit */}}
+                onView={() => {/* Handle view */}}
+              />
+            </div>
           ))}
         </div>
+        
+        {campaigns.length === 0 && (
+          <div className="empty-state glass-effect animate-fade-in">
+            <div className="empty-icon float-animation">🎯</div>
+            <h3>No Campaigns Created</h3>
+            <p>Start building your sales incentive program by creating your first campaign.</p>
+            <button 
+              className="btn hover-scale"
+              onClick={() => setShowCampaignWizard(true)}
+            >
+              🚀 Create Your First Campaign
+            </button>
+          </div>
+        )}
       </div>
     ),
     
@@ -200,59 +233,59 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="admin-dashboard-container">
-      <header className="dashboard-header">
+      <header className="dashboard-header glass-effect">
         <div className="header-content">
           <div className="header-left">
-            <div className="org-logo">
+            <div className="org-logo hover-scale">
               {organization?.logo ? (
                 <img src={organization.logo} alt={organization.name} />
               ) : (
-                <div className="logo-placeholder">
+                <div className="logo-placeholder glow-animation">
                   {organization?.name?.charAt(0) || 'O'}
                 </div>
               )}
             </div>
             <div className="header-text">
-              <h1>{organization?.name} Dashboard</h1>
-              <p>Admin Panel</p>
+              <h1 className="gradient-text">{organization?.name || 'Organization'} Dashboard</h1>
+              <p>🛡️ Admin Control Center</p>
             </div>
           </div>
           <div className="header-actions">
-            <button className="btn-icon" title="Settings">
+            <button className="btn-icon hover-glow" title="Settings">
               ⚙️
             </button>
-            <button className="btn-icon" title="Notifications">
+            <button className="btn-icon hover-glow" title="Notifications">
               🔔
             </button>
-            <button className="btn-icon" onClick={logout} title="Sign Out">
+            <button className="btn-icon hover-glow" onClick={logout} title="Sign Out">
               🚪
             </button>
           </div>
         </div>
       </header>
 
-      <nav className="dashboard-nav">
+      <nav className="dashboard-nav glass-effect">
         <div className="nav-tabs">
           <button 
-            className={`nav-tab ${activeTab === 'overview' ? 'active' : ''}`}
+            className={`nav-tab hover-glow ${activeTab === 'overview' ? 'active' : ''}`}
             onClick={() => setActiveTab('overview')}
           >
             📊 Overview
           </button>
           <button 
-            className={`nav-tab ${activeTab === 'campaigns' ? 'active' : ''}`}
+            className={`nav-tab hover-glow ${activeTab === 'campaigns' ? 'active' : ''}`}
             onClick={() => setActiveTab('campaigns')}
           >
             🎯 Campaigns
           </button>
           <button 
-            className={`nav-tab ${activeTab === 'employees' ? 'active' : ''}`}
+            className={`nav-tab hover-glow ${activeTab === 'employees' ? 'active' : ''}`}
             onClick={() => setActiveTab('employees')}
           >
-            👥 Employees
+            👥 Team
           </button>
           <button 
-            className={`nav-tab ${activeTab === 'analytics' ? 'active' : ''}`}
+            className={`nav-tab hover-glow ${activeTab === 'analytics' ? 'active' : ''}`}
             onClick={() => setActiveTab('analytics')}
           >
             📈 Analytics
@@ -266,7 +299,7 @@ const AdminDashboard: React.FC = () => {
 
       {showCampaignWizard && (
         <div className="modal-overlay">
-          <div className="modal-content">
+          <div className="modal-content glass-effect">
             <CampaignWizard
               onClose={() => setShowCampaignWizard(false)}
               onComplete={() => {

@@ -42,81 +42,82 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
   };
 
   return (
-    <div className="campaign-card">
-      {campaign.banner && (
+    <div className="campaign-card glass-effect hover-lift">
+      {campaign.banner ? (
         <div className="campaign-banner">
           <img src={campaign.banner} alt={campaign.name} />
+        </div>
+      ) : (
+        <div className="campaign-banner">
+          <div className="campaign-banner-gradient"></div>
         </div>
       )}
       
       <div className="campaign-content">
         <div className="campaign-header">
-          <h3 className="campaign-title">{campaign.name}</h3>
-          <span 
-            className="campaign-status"
-            style={{ backgroundColor: getStatusColor(campaign.status) }}
-          >
+          <h3 className="campaign-title gradient-text">{campaign.name}</h3>
+          <span className={`campaign-status ${campaign.status} hover-glow`}>
+            {campaign.status === 'active' && '🟢'} 
+            {campaign.status === 'completed' && '✅'} 
+            {campaign.status === 'draft' && '📝'} 
             {campaign.status}
           </span>
         </div>
         
         <p className="campaign-description">{campaign.description}</p>
         
-        <div className="campaign-dates">
-          <span className="date-range">
-            📅 {formatDate(campaign.startDate)} - {formatDate(campaign.endDate)}
-          </span>
+        <div className="date-range glass-effect">
+          📅 {formatDate(campaign.startDate)} - {formatDate(campaign.endDate)}
         </div>
         
         <div className="campaign-metrics">
-          {campaign.type.map((type) => (
-            <div key={type} className="metric-item">
-              <span className="metric-label">
-                {type === 'sales' && '💰'}
-                {type === 'calls' && '📞'}
-                {type === 'meetings' && '🤝'}
-                {type === 'referrals' && '👥'}
-                {type.charAt(0).toUpperCase() + type.slice(1)}
-              </span>
-              {campaign.metrics[type] && (
-                <div className="metric-progress">
+          <div className="metrics-grid">
+            {campaign.type.map((type, index) => (
+              <div key={type} className="metric-card hover-scale" style={{animationDelay: `${index * 0.1}s`}}>
+                <div className="metric-icon">
+                  {type === 'sales' && '💰'}
+                  {type === 'calls' && '📞'}
+                  {type === 'meetings' && '🤝'}
+                  {type === 'referrals' && '👥'}
+                </div>
+                <div className="metric-value">
+                  {campaign.metrics[type] ? campaign.metrics[type]!.achieved : 0}
+                </div>
+                <div className="metric-target">
+                  / {campaign.metrics[type] ? campaign.metrics[type]!.target : 0} {type}
+                </div>
+                {campaign.metrics[type] && (
                   <div className="progress-bar">
                     <div 
                       className="progress-fill"
                       style={{ 
-                        width: `${(campaign.metrics[type]!.achieved / campaign.metrics[type]!.target) * 100}%`,
-                        backgroundColor: colors.primary
+                        width: `${(campaign.metrics[type]!.achieved / campaign.metrics[type]!.target) * 100}%`
                       }}
                     />
                   </div>
-                  <span className="progress-text">
-                    {campaign.metrics[type]!.achieved} / {campaign.metrics[type]!.target}
-                  </span>
-                </div>
-              )}
-            </div>
-          ))}
+                )}
+              </div>
+            ))}
+          </div>
         </div>
         
-        <div className="campaign-participants">
-          <span className="participants-count">
-            👥 {campaign.participants.length} participants
-          </span>
+        <div className="participants-count glass-effect">
+          👥 {campaign.participants.length} Active Participants
         </div>
         
         <div className="campaign-actions">
           {userRole === 'admin' ? (
             <>
-              <button className="btn-secondary" onClick={onEdit}>
-                ✏️ Edit
+              <button className="btn-secondary hover-scale" onClick={onEdit}>
+                ✏️ Edit Campaign
               </button>
-              <button className="btn" onClick={onView}>
-                📊 View Details
+              <button className="btn hover-scale" onClick={onView}>
+                📊 View Analytics
               </button>
             </>
           ) : (
-            <button className="btn" onClick={onView}>
-              🎯 View Campaign
+            <button className="btn hover-scale" onClick={onView}>
+              🎯 Join Campaign
             </button>
           )}
         </div>

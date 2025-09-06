@@ -32,9 +32,9 @@ const LoginStep: React.FC<LoginStepProps> = ({
 }) => {
   if (step === 'phone') {
     return (
-      <div className="login-step">
-        <h2 className="login-title">Welcome to F2P Buddy</h2>
-        <p className="login-subtitle">Enter your phone number to continue</p>
+      <div className="login-step animate-fade-in">
+        <h2 className="login-title gradient-text">Welcome to F2P Buddy</h2>
+        <p className="login-subtitle">✨ Enter your phone number to continue your journey</p>
         
         <div className="form-group">
           <label className="form-label">Phone Number</label>
@@ -58,11 +58,11 @@ const LoginStep: React.FC<LoginStepProps> = ({
         </div>
         
         <button 
-          className="btn" 
+          className="btn hover-scale" 
           onClick={onSendOTP}
           disabled={!phoneNumber || loading}
         >
-          {loading ? 'Sending...' : 'Send OTP'}
+          {loading ? '🚀 Sending Magic Code...' : '✨ Send OTP'}
         </button>
         
         <div id="recaptcha-container"></div>
@@ -72,9 +72,9 @@ const LoginStep: React.FC<LoginStepProps> = ({
 
   if (step === 'otp') {
     return (
-      <div className="login-step">
-        <h2 className="login-title">Verify Phone Number</h2>
-        <p className="login-subtitle">Enter the 6-digit code sent to +{phoneNumber}</p>
+      <div className="login-step animate-fade-in">
+        <h2 className="login-title gradient-text">Verify Phone Number</h2>
+        <p className="login-subtitle">🔐 Enter the 6-digit magic code sent to +{phoneNumber}</p>
         
         <div className="form-group">
           <div className="otp-container">
@@ -98,19 +98,19 @@ const LoginStep: React.FC<LoginStepProps> = ({
         </div>
         
         <button 
-          className="btn" 
+          className="btn hover-scale" 
           onClick={onVerifyOTP}
           disabled={otp.length !== 6 || loading}
         >
-          {loading ? 'Verifying...' : 'Verify OTP'}
+          {loading ? '🔍 Verifying Magic Code...' : '🎉 Verify & Continue'}
         </button>
         
         <button 
-          className="btn btn-secondary" 
+          className="btn-secondary hover-scale" 
           onClick={() => window.location.reload()}
-          style={{ marginTop: '10px' }}
+          style={{ marginTop: 'var(--space-lg)' }}
         >
-          Change Phone Number
+          🔄 Change Phone Number
         </button>
       </div>
     );
@@ -118,27 +118,29 @@ const LoginStep: React.FC<LoginStepProps> = ({
 
   if (step === 'role') {
     return (
-      <div className="login-step">
-        <h2 className="login-title">Select Your Role</h2>
-        <p className="login-subtitle">Choose your role to continue</p>
+      <div className="login-step animate-fade-in">
+        <h2 className="login-title gradient-text">Select Your Role</h2>
+        <p className="login-subtitle">🎭 Choose how you want to engage with F2P Buddy</p>
         
-        <div className="role-selection">
+        <div className="role-selection stagger-animation">
           <div 
-            className="role-btn"
+            className="role-btn glass-effect hover-lift"
             onClick={() => onRoleSelect('admin')}
+            style={{animationDelay: '0.1s'}}
           >
             <div className="role-icon">👨‍💼</div>
-            <h3>Admin</h3>
-            <p>Manage campaigns and team</p>
+            <h3 className="gradient-text">Admin</h3>
+            <p>Manage campaigns and lead your team to success</p>
           </div>
           
           <div 
-            className="role-btn"
+            className="role-btn glass-effect hover-lift"
             onClick={() => onRoleSelect('employee')}
+            style={{animationDelay: '0.2s'}}
           >
             <div className="role-icon">👥</div>
-            <h3>Employee</h3>
-            <p>Participate in campaigns</p>
+            <h3 className="gradient-text">Employee</h3>
+            <p>Participate in campaigns and earn amazing rewards</p>
           </div>
         </div>
       </div>

@@ -143,83 +143,101 @@ const EmployeeDashboard: React.FC = () => {
       <main className="dashboard-main">
         <div className="dashboard-grid">
           {/* Stats Overview */}
-          <section className="dashboard-section">
+          <section className="dashboard-section glass-effect hover-lift animate-fade-in">
+            <div className="section-header">
+              <h2 className="gradient-text">Your Performance</h2>
+              <div className="section-badge">⚡ Live Stats</div>
+            </div>
             <StatsOverview stats={userStats} />
           </section>
 
           {/* Active Campaigns */}
-          <section className="dashboard-section">
+          <section className="dashboard-section glass-effect hover-lift animate-fade-in">
             <div className="section-header">
-              <h2>Active Campaigns</h2>
-              <span className="section-badge">{activeCampaigns.length}</span>
+              <h2 className="gradient-text">Active Campaigns</h2>
+              <div className="section-badge">🔥 {activeCampaigns.length} Live</div>
             </div>
             
             {activeCampaigns.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-icon">🎯</div>
+              <div className="empty-state glass-effect">
+                <div className="empty-icon float-animation">⏰</div>
                 <h3>No Active Campaigns</h3>
-                <p>Check back later for new campaigns from your organization.</p>
+                <p>New exciting campaigns are coming soon! Stay tuned for opportunities to earn rewards.</p>
               </div>
             ) : (
-              <div className="campaigns-grid">
-                {activeCampaigns.map((campaign) => (
-                  <CampaignCard
-                    key={campaign.id}
-                    campaign={campaign}
-                    userRole="employee"
-                  />
+              <div className="campaigns-grid stagger-animation">
+                {activeCampaigns.map((campaign, index) => (
+                  <div key={campaign.id} style={{animationDelay: `${index * 0.15}s`}} className="hover-lift">
+                    <CampaignCard
+                      campaign={campaign}
+                      userRole="employee"
+                    />
+                  </div>
                 ))}
               </div>
             )}
           </section>
 
           {/* Leaderboard */}
-          <section className="dashboard-section">
+          <section className="dashboard-section glass-effect hover-lift animate-fade-in">
             <div className="section-header">
-              <h2>Leaderboard</h2>
-              <button className="btn-text">View All</button>
+              <h2 className="gradient-text">🏆 Leaderboard</h2>
+              <button className="btn-text hover-glow">View All Rankings</button>
             </div>
             <LeaderboardWidget organizationId={organization.id} />
           </section>
 
           {/* Recent Achievements */}
-          <section className="dashboard-section">
+          <section className="dashboard-section glass-effect hover-lift animate-fade-in">
             <div className="section-header">
-              <h2>Your Achievements</h2>
-              <button className="btn-text">View All</button>
+              <h2 className="gradient-text">✨ Your Achievements</h2>
+              <button className="btn-text hover-glow">View All Rewards</button>
             </div>
             <AchievementTracker userId={user?.uid} />
           </section>
 
           {/* All Campaigns History */}
-          <section className="dashboard-section full-width">
+          <section className="dashboard-section full-width glass-effect animate-fade-in">
             <div className="section-header">
-              <h2>Campaign History</h2>
-              <div className="filter-tabs">
-                <button className="filter-tab active">All</button>
-                <button className="filter-tab">Completed</button>
-                <button className="filter-tab">Participated</button>
+              <h2 className="gradient-text">📚 Campaign History</h2>
+              <div className="filter-tabs glass-effect">
+                <button className="filter-tab active">📋 All</button>
+                <button className="filter-tab">✅ Completed</button>
+                <button className="filter-tab">🏃 Participated</button>
               </div>
             </div>
             
-            <div className="campaigns-list">
-              {campaigns.map((campaign) => (
-                <div key={campaign.id} className="campaign-list-item">
+            <div className="campaigns-list stagger-animation">
+              {campaigns.map((campaign, index) => (
+                <div key={campaign.id} 
+                     className="campaign-list-item hover-lift" 
+                     style={{animationDelay: `${index * 0.1}s`}}>
                   <div className="campaign-info">
                     <h4>{campaign.name}</h4>
-                    <p className="campaign-dates">
-                      {new Date(campaign.startDate).toLocaleDateString()} - 
+                    <div className="date-range">
+                      📅 {new Date(campaign.startDate).toLocaleDateString()} - 
                       {new Date(campaign.endDate).toLocaleDateString()}
-                    </p>
+                    </div>
                   </div>
                   <div className="campaign-status">
-                    <span className={`status-badge ${campaign.status}`}>
+                    <span className={`status-badge ${campaign.status} hover-glow`}>
+                      {campaign.status === 'active' && '🟢'} 
+                      {campaign.status === 'completed' && '✅'} 
+                      {campaign.status === 'draft' && '📝'} 
                       {campaign.status}
                     </span>
                   </div>
                 </div>
               ))}
             </div>
+            
+            {campaigns.length === 0 && (
+              <div className="empty-state glass-effect">
+                <div className="empty-icon float-animation">📈</div>
+                <h3>Campaign History Empty</h3>
+                <p>Your campaign participation history will appear here as you join campaigns.</p>
+              </div>
+            )}
           </section>
         </div>
       </main>
