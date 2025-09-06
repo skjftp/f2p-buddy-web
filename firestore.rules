@@ -11,15 +11,25 @@ service cloud.firestore {
     }
     
     function hasRole(role) {
-      return isAuthenticated() && 
-             exists(/databases/$(database)/documents/users/$(request.auth.token.phone_number)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.token.phone_number)).data.role == role;
+      return isAuthenticated() && (
+        // Try phone number first (new system)
+        (exists(/databases/$(database)/documents/users/$(request.auth.token.phone_number)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.token.phone_number)).data.role == role) ||
+        // Fallback to UID (old system) 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role)
+      );
     }
     
     function belongsToOrg(orgId) {
-      return isAuthenticated() && 
-             exists(/databases/$(database)/documents/users/$(request.auth.token.phone_number)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.token.phone_number)).data.organizationId == orgId;
+      return isAuthenticated() && (
+        // Try phone number first (new system)
+        (exists(/databases/$(database)/documents/users/$(request.auth.token.phone_number)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.token.phone_number)).data.organizationId == orgId) ||
+        // Fallback to UID (old system)
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organizationId == orgId)
+      );
     }
     
     function isOrgAdmin(orgId) {
@@ -28,10 +38,11 @@ service cloud.firestore {
              get(/databases/$(database)/documents/organizations/$(orgId)).data.adminId == request.auth.uid;
     }
 
-    // Users collection - now using phone number as document ID
-    match /users/{phoneNumber} {
-      // Users can read and write their own document (by phone number)
-      allow read, write: if isAuthenticated() && request.auth.token.phone_number == phoneNumber;
+    // Users collection - supports both phone number and UID as document ID
+    match /users/{userId} {
+      // Users can read and write their own document (by phone number OR UID)
+      allow read, write: if isAuthenticated() && 
+                           (request.auth.token.phone_number == userId || request.auth.uid == userId);
       // Admins can read all users in their organization
       allow read: if isAuthenticated() && hasRole('admin');
       // Allow listing users for admin dashboard
