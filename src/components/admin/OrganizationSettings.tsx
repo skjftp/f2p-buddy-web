@@ -252,6 +252,43 @@ const OrganizationSettings: React.FC = () => {
     return parentLevel?.items || [];
   };
 
+  // Recursive function to render tree nodes with proper nesting
+  const renderTreeNode = (item: HierarchyItem, levels: HierarchyLevel[], currentLevel: number): React.ReactNode => {
+    const children = levels[currentLevel + 1]?.items.filter(child => child.parentId === item.id) || [];
+    
+    return (
+      <div key={item.id} className="tree-node-container">
+        <div className="tree-node">
+          <div className="node-name">{item.name}</div>
+          <div className="node-level">{levels[currentLevel]?.name}</div>
+        </div>
+        
+        {children.length > 0 && (
+          <>
+            {/* Vertical trunk line */}
+            <div className="tree-trunk"></div>
+            
+            {/* Horizontal branch line */}
+            <div className="tree-branch-line"></div>
+            
+            {/* Children container */}
+            <div className="tree-children">
+              {children.map((child) => (
+                <div key={child.id} className="tree-child-container">
+                  {/* Vertical connector to child */}
+                  <div className="child-connector"></div>
+                  
+                  {/* Recursively render child and its descendants */}
+                  {renderTreeNode(child, levels, currentLevel + 1)}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
+
   if (dataLoading) {
     return (
       <div className="loading-container">
@@ -467,40 +504,12 @@ const OrganizationSettings: React.FC = () => {
                       <p>Add items to your hierarchy levels to see the organizational flowchart here.</p>
                     </div>
                   ) : (
-                    hierarchyLevels.map((level, levelIndex) => (
-                      <div key={level.id} className="tree-level">
-                        {/* Level Title */}
-                        <div className="tree-level-title">{level.name}</div>
-                        
-                        {/* Nodes in this level */}
-                        <div className="tree-level-nodes">
-                          {level.items.map((item) => {
-                            const children = hierarchyLevels[levelIndex + 1]?.items.filter(child => child.parentId === item.id) || [];
-                            
-                            return (
-                              <div key={item.id} className="tree-node-group">
-                                <div className="tree-node">{item.name}</div>
-                                
-                                {/* Tree branches to children */}
-                                {children.length > 0 && (
-                                  <div className="tree-branches">
-                                    <div className="branch-trunk"></div>
-                                    <div className="branch-splits">
-                                      {children.map((child, childIndex) => (
-                                        <div key={child.id} className="branch-line">
-                                          <div className="branch-connector"></div>
-                                          <div className="branch-arrow">↓</div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))
+                    <div className="tree-root">
+                      {/* Render only top-level items, children will be recursive */}
+                      {hierarchyLevels[0]?.items.map((rootItem) => 
+                        renderTreeNode(rootItem, hierarchyLevels, 0)
+                      )}
+                    </div>
                   )}
                 </div>
               </div>

@@ -2001,7 +2001,7 @@ body {
   text-align: center;
 }
 
-/* Tree Structure Flowchart */
+/* Recursive Tree Structure */
 .flowchart-scroll {
   overflow-x: auto;
   overflow-y: visible;
@@ -2012,153 +2012,140 @@ body {
 }
 
 .flowchart-tree {
-  display: flex;
-  flex-direction: column;
-  gap: 40px;
   min-width: fit-content;
-  align-items: center;
+  padding: 20px;
 }
 
-/* Tree Level */
-.tree-level {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-}
-
-.tree-level-title {
-  background: var(--primary);
-  color: var(--white);
-  padding: 10px 20px;
-  border-radius: var(--radius-lg);
-  font-weight: 700;
-  font-size: 16px;
-  margin-bottom: 30px;
-  box-shadow: var(--shadow-md);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.tree-level-nodes {
+.tree-root {
   display: flex;
   justify-content: center;
-  gap: 80px;
-  flex-wrap: nowrap;
+  gap: 100px;
+  align-items: flex-start;
   min-width: fit-content;
 }
 
-/* Tree Node Group (parent + branches + children) */
-.tree-node-group {
+/* Tree Node Container (recursive) */
+.tree-node-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
+  margin: 10px;
 }
 
-/* Tree Node */
+/* Tree Node Box */
 .tree-node {
   background: var(--white);
   border: 3px solid var(--primary);
   border-radius: var(--radius-xl);
-  padding: 16px 24px;
-  font-weight: 700;
-  color: var(--gray-800);
-  font-size: 15px;
-  box-shadow: var(--shadow-lg);
-  transition: var(--transition);
+  padding: 16px 20px;
   text-align: center;
   min-width: 120px;
+  box-shadow: var(--shadow-lg);
+  transition: var(--transition);
   position: relative;
   z-index: 2;
 }
 
 .tree-node:hover {
-  background: rgba(102, 126, 234, 0.1);
-  transform: translateY(-3px);
+  background: rgba(102, 126, 234, 0.08);
+  transform: translateY(-2px);
   box-shadow: var(--shadow-xl);
 }
 
-/* Tree Branches */
-.tree-branches {
-  position: relative;
-  margin-top: 15px;
+.node-name {
+  font-weight: 700;
+  color: var(--gray-800);
+  font-size: 14px;
+  margin-bottom: 4px;
 }
 
-.branch-trunk {
+.node-level {
+  font-size: 10px;
+  color: var(--primary);
+  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+/* Tree Trunk (vertical line from parent) */
+.tree-trunk {
   width: 3px;
   height: 30px;
   background: var(--primary);
-  margin: 0 auto;
-  position: relative;
+  margin-top: 10px;
 }
 
-.branch-splits {
-  display: flex;
-  justify-content: center;
-  gap: 60px;
-  position: relative;
-  margin-top: -5px;
-}
-
-.branch-line {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-}
-
-.branch-connector {
+/* Horizontal branch line */
+.tree-branch-line {
   width: 3px;
-  height: 25px;
+  height: 20px;
   background: var(--primary);
   position: relative;
 }
 
-/* Branch connector horizontal line */
-.branch-line::before {
+/* Children Container */
+.tree-children {
+  display: flex;
+  justify-content: center;
+  gap: 60px;
+  align-items: flex-start;
+  position: relative;
+  margin-top: -10px;
+}
+
+/* Individual Child Container */
+.tree-child-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Connector to child */
+.child-connector {
+  width: 3px;
+  height: 30px;
+  background: var(--primary);
+  margin-bottom: 10px;
+}
+
+/* Horizontal connecting line between children */
+.tree-children::before {
   content: '';
   position: absolute;
-  top: 30px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 0;
+  left: calc(50% - 50px);
+  right: calc(50% - 50px);
   height: 3px;
   background: var(--primary);
   z-index: 1;
 }
 
-/* Calculate width for horizontal connections */
-.branch-splits .branch-line:first-child::before {
-  width: 30px;
-  left: 0;
+/* Adjust horizontal line for single child */
+.tree-children:has(.tree-child-container:only-child)::before {
+  display: none;
 }
 
-.branch-splits .branch-line:last-child::before {
-  width: 30px;
-  right: 0;
-  left: auto;
-}
-
-.branch-splits .branch-line:not(:first-child):not(:last-child)::before {
+/* For 2 children */
+.tree-children:has(.tree-child-container:nth-child(2):last-child)::before {
+  left: calc(50% - 30px);
+  right: calc(50% - 30px);
   width: 60px;
 }
 
-.branch-arrow {
-  color: var(--primary);
-  font-size: 20px;
-  font-weight: bold;
-  margin-top: -3px;
-  line-height: 1;
-  background: var(--white);
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-sm);
-  position: relative;
-  z-index: 3;
+/* For 3+ children */
+.tree-children:has(.tree-child-container:nth-child(3))::before {
+  left: calc(50% - 90px);
+  right: calc(50% - 90px);
+  width: 180px;
+}
+
+/* For 4+ children */
+.tree-children:has(.tree-child-container:nth-child(4))::before {
+  left: calc(50% - 120px);
+  right: calc(50% - 120px);
+  width: 240px;
 }
 
 .empty-flowchart {
