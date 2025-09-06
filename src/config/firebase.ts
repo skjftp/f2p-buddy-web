@@ -1,5 +1,5 @@
 import { initializeApp, FirebaseApp } from 'firebase/app';
-import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, Auth } from 'firebase/auth';
+import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, Auth, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore, enableIndexedDbPersistence, Firestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { configService, AppConfig } from './configService';
@@ -23,19 +23,31 @@ async function initializeFirebase(): Promise<void> {
     
     // Initialize services
     auth = getAuth(app);
+    
+    // Enable auth persistence for browser sessions
+    try {
+      await setPersistence(auth, browserLocalPersistence);
+      console.log('✅ Auth persistence enabled');
+    } catch (error) {
+      console.warn('⚠️ Auth persistence failed:', error);
+    }
+    
     db = getFirestore(app);
     storage = getStorage(app);
     
-    // Enable offline persistence
+    // Enable offline persistence with better error handling
     try {
-      await enableIndexedDbPersistence(db);
+      await enableIndexedDbPersistence(db, {
+        forceOwnership: false // Allow multiple tabs
+      });
       console.log('✅ Firestore persistence enabled');
     } catch (err: any) {
       if (err.code === 'failed-precondition') {
-        console.warn('⚠️ Multiple tabs open, persistence can only be enabled in one tab at a time.');
+        console.warn('⚠️ Multiple tabs open, using memory persistence');
       } else if (err.code === 'unimplemented') {
-        console.warn('⚠️ The current browser does not support all of the features required to enable persistence');
+        console.warn('⚠️ Browser does not support persistence');
       }
+      // Continue without persistence rather than failing
     }
     
     console.log('✅ Firebase initialized successfully');

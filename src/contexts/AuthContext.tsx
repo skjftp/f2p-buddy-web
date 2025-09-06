@@ -32,53 +32,78 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     dispatch(setLoading(true));
     let isSubscribed = true;
+    let mounted = true;
 
     // Initialize auth listener after Firebase is ready
     const initializeAuthListener = async (): Promise<(() => void) | undefined> => {
       try {
-        if (!isSubscribed) return undefined;
+        if (!isSubscribed || !mounted) return undefined;
         
         const authInstance = await getAuthInstance();
         
         const unsubscribe = onAuthStateChanged(authInstance, async (firebaseUser: User | null) => {
-      if (firebaseUser) {
-        try {
-          // Get user data from Firestore
-          const dbInstance = await getFirestoreInstance();
-          const userDocRef = doc(dbInstance, 'users', firebaseUser.uid);
-          const userDoc = await getDoc(userDocRef);
+          if (!mounted) return;
           
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            dispatch(setUser({
-              uid: firebaseUser.uid,
-              phoneNumber: firebaseUser.phoneNumber || userData.phoneNumber,
-              role: userData.role,
-              organizationId: userData.organizationId,
-              displayName: userData.displayName,
-              createdAt: userData.createdAt,
-            }));
-
-            // Load organization data if user has organizationId
-            if (userData.organizationId) {
-              const orgDocRef = doc(dbInstance, 'organizations', userData.organizationId);
-              const orgDoc = await getDoc(orgDocRef);
-              if (orgDoc.exists()) {
-                dispatch(setOrganization({
-                  id: orgDoc.id,
-                  ...orgDoc.data(),
-                } as any));
+          if (firebaseUser) {
+            try {
+              // Get user data from Firestore with retry logic
+              const dbInstance = await getFirestoreInstance();
+              const userDocRef = doc(dbInstance, 'users', firebaseUser.uid);
+              
+              let retries = 3;
+              let userDoc;
+              
+              while (retries > 0) {
+                try {
+                  userDoc = await getDoc(userDocRef);
+                  break;
+                } catch (error) {
+                  retries--;
+                  if (retries === 0) throw error;
+                  await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
+                }
               }
+              
+              if (userDoc && userDoc.exists()) {
+                const userData = userDoc.data();
+                dispatch(setUser({
+                  uid: firebaseUser.uid,
+                  phoneNumber: firebaseUser.phoneNumber || userData.phoneNumber,
+                  role: userData.role,
+                  organizationId: userData.organizationId,
+                  displayName: userData.displayName,
+                  createdAt: userData.createdAt,
+                }));
+
+                // Load organization data if user has organizationId
+                if (userData.organizationId) {
+                  try {
+                    const orgDocRef = doc(dbInstance, 'organizations', userData.organizationId);
+                    const orgDoc = await getDoc(orgDocRef);
+                    if (orgDoc.exists()) {
+                      dispatch(setOrganization({
+                        id: orgDoc.id,
+                        ...orgDoc.data(),
+                      } as any));
+                    }
+                  } catch (orgError) {
+                    console.warn('Could not load organization:', orgError);
+                    // Don't clear user if org loading fails
+                  }
+                }
+              } else {
+                // User exists in auth but not in Firestore - this is OK during registration
+                console.log('User authenticated but no Firestore document yet');
+              }
+            } catch (error) {
+              console.error('Error loading user data:', error);
+              // Don't clear user on Firestore errors - keep them authenticated
+              console.log('Keeping user authenticated despite Firestore error');
             }
+          } else {
+            dispatch(clearUser());
+            dispatch(clearOrganization());
           }
-        } catch (error) {
-          console.error('Error loading user data:', error);
-          dispatch(clearUser());
-        }
-        } else {
-          dispatch(clearUser());
-          dispatch(clearOrganization());
-        }
         });
         
         return unsubscribe;
@@ -97,6 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
     
     return () => {
+      mounted = false;
       isSubscribed = false;
       if (unsubscribe) {
         unsubscribe();

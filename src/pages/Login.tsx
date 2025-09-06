@@ -125,17 +125,24 @@ const Login: React.FC = () => {
           country={'in'}
           value={phoneNumber}
           onChange={setPhoneNumber}
+          inputProps={{
+            inputMode: 'tel',
+            pattern: '[0-9]*',
+            autoComplete: 'tel'
+          }}
           inputStyle={{ 
             width: '100%', 
-            height: '44px',
-            fontSize: '14px',
+            height: '48px',
+            fontSize: '16px', // Prevents zoom on iOS
             border: '1px solid #cbd5e0',
-            borderRadius: '8px'
+            borderRadius: '8px',
+            paddingLeft: '50px'
           }}
           containerStyle={{ width: '100%' }}
           buttonStyle={{
             border: '1px solid #cbd5e0',
-            borderRadius: '8px 0 0 8px'
+            borderRadius: '8px 0 0 8px',
+            background: '#f7fafc'
           }}
         />
       </div>
@@ -163,7 +170,14 @@ const Login: React.FC = () => {
             value={otp}
             onChange={setOtp}
             numInputs={6}
-            renderInput={(props) => <input {...props} />}
+            renderInput={(props) => (
+              <input 
+                {...props} 
+                inputMode="numeric" 
+                pattern="[0-9]*"
+                autoComplete="one-time-code"
+              />
+            )}
           />
         </div>
       </div>
