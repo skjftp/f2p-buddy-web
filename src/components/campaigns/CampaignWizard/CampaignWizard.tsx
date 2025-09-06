@@ -133,37 +133,87 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
 
   const handleSubmit = async () => {
     if (!user || !organization) {
-      toast.error('Authentication error');
+      toast.error('Authentication error - Please login again');
+      return;
+    }
+
+    if (!campaignData.name || !campaignData.startDate || !campaignData.endDate) {
+      toast.error('Please fill in required fields: name, start date, end date');
       return;
     }
 
     setLoading(true);
     try {
+      console.log('Starting campaign creation...', {
+        user: user.uid,
+        organization: organization.id,
+        campaignName: campaignData.name
+      });
+
       let bannerUrl = '';
       
       if (campaignData.banner) {
+        console.log('Uploading banner...');
         const storageInstance = await getStorageInstance();
         const bannerRef = ref(storageInstance, `campaigns/${Date.now()}_${campaignData.banner.name}`);
         const snapshot = await uploadBytes(bannerRef, campaignData.banner);
         bannerUrl = await getDownloadURL(snapshot.ref);
+        console.log('Banner uploaded:', bannerUrl);
       }
 
+      console.log('Creating campaign document...');
       const dbInstance = await getFirestoreInstance();
-      await addDoc(collection(dbInstance, 'campaigns'), {
-        ...campaignData,
+      
+      // Simplified campaign data for Firestore compatibility
+      const simplifiedCampaignData = {
+        name: campaignData.name,
+        startDate: campaignData.startDate,
+        endDate: campaignData.endDate,
+        description: campaignData.description,
         banner: bannerUrl,
+        
+        // Convert complex objects to simple format
+        geographic: campaignData.geographic,
+        hierarchy: campaignData.hierarchy,
+        channel: campaignData.channel,
+        contestType: campaignData.contestType,
+        
+        // Basic metrics for compatibility with existing structure
+        type: [], // Empty for now, will be populated based on targets
+        metrics: {},
+        prizes: campaignData.individualPrizes.map(prize => ({
+          position: prize.rank,
+          title: `${prize.type} Prize`,
+          description: prize.description
+        })),
+        participants: campaignData.participants,
+        
+        // Required fields
         orgId: organization.id,
         createdBy: user.uid,
         status: 'draft',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
-      });
+      };
+
+      const docRef = await addDoc(collection(dbInstance, 'campaigns'), simplifiedCampaignData);
+      console.log('Campaign created successfully:', docRef.id);
 
       toast.success('Campaign created successfully!');
       onComplete();
     } catch (error: any) {
       console.error('Error creating campaign:', error);
-      toast.error('Failed to create campaign');
+      
+      // More detailed error reporting
+      if (error.code === 'permission-denied') {
+        toast.error('Permission denied - Check your admin access');
+      } else if (error.code === 'unavailable') {
+        toast.error('Database connection issue - Please try again');
+      } else if (error.message?.includes('offline')) {
+        toast.error('You appear to be offline - Check your connection');
+      } else {
+        toast.error(`Campaign creation failed: ${error.message || 'Unknown error'}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -650,6 +700,13 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
       <div className="wizard-header">
         <h1>Create Sales Campaign</h1>
         <button className="close-btn" onClick={onClose}>×</button>
+        
+        {/* Debug info - remove in production */}
+        {(!user || !organization) && (
+          <div style={{background: 'rgba(255,0,0,0.2)', padding: '8px', borderRadius: '4px', fontSize: '12px', marginTop: '8px'}}>
+            Debug: User={user?.uid || 'null'}, Org={organization?.id || 'null'}
+          </div>
+        )}
         
         <div className="progress-steps">
           {[1, 2, 3, 4, 5, 6].map((step) => (

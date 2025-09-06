@@ -1244,6 +1244,12 @@ body {
 }
 
 /* Campaign Wizard Styles */
+.wizard-step {
+  max-height: calc(85vh - 200px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .dropzone {
   border: 2px dashed var(--gray-300);
   border-radius: var(--radius-lg);
@@ -1251,6 +1257,7 @@ body {
   cursor: pointer;
   transition: var(--transition);
   background: var(--gray-50);
+  text-align: center;
 }
 
 .dropzone.active {
