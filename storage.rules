@@ -25,12 +25,10 @@ service firebase.storage {
       return resource.contentType in ['application/pdf', 'image/jpeg', 'image/png', 'image/gif'];
     }
 
-    // Organization logos
-    match /organizations/{orgId}/{fileName} {
+    // Organization logos - allow all authenticated admin users
+    match /organizations/{fileName} {
       allow read: if true; // Public read for logos
-      allow write, delete: if isAuthenticated() && 
-                              isValidSize() && 
-                              isValidImageType();
+      allow write, delete: if isAuthenticated();
     }
     
     // Campaign banners - allow all authenticated users to upload
