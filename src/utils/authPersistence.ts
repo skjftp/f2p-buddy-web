@@ -80,5 +80,5 @@ export const clearPersistedAuthState = () => {
 
 export const hasValidPersistedAuth = (): boolean => {
   const authState = getPersistedAuthState();
-  return authState !== null && authState.uid && authState.role;
+  return authState !== null && !!authState.uid && !!authState.role;
 };
