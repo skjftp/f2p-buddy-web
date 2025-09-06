@@ -147,6 +147,11 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
   });
 
   const [bannerPreview, setBannerPreview] = useState('');
+  
+  // Step 7 state
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvData, setCsvData] = useState<any[]>([]);
+  const [csvError, setCsvError] = useState<string>('');
 
   // Load organization SKUs and users
   useEffect(() => {
@@ -193,6 +198,172 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
 
     loadOrganizationData();
   }, [organization?.id]);
+
+  // CSV handling functions
+  const handleCsvUpload = (file: File) => {
+    setCsvFile(file);
+    setCsvError('');
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target?.result as string;
+        const lines = text.trim().split('\n');
+        const headers = lines[0].split(',');
+        
+        // Validate headers
+        const expectedHeaders = ['user_id', 'user_name', 'region', ...campaignData.targetConfigs.map(c => c.skuCode)];
+        const missingHeaders = expectedHeaders.filter(h => !headers.includes(h));
+        
+        if (missingHeaders.length > 0) {
+          setCsvError(`Missing required columns: ${missingHeaders.join(', ')}`);
+          return;
+        }
+
+        // Parse data
+        const data = lines.slice(1).map((line, index) => {
+          const values = line.split(',');
+          const row: any = { lineNumber: index + 2 };
+          
+          headers.forEach((header, i) => {
+            row[header] = values[i]?.trim() || '';
+          });
+          
+          return row;
+        });
+
+        setCsvData(data);
+        
+        // Convert to UserTarget format
+        const userTargets: UserTarget[] = data.map(row => ({
+          userId: row.user_id || `csv_${Date.now()}_${Math.random()}`,
+          userName: row.user_name,
+          regionName: row.region,
+          targets: campaignData.targetConfigs.reduce((acc, config) => {
+            acc[config.skuId] = parseFloat(row[config.skuCode]) || 0;
+            return acc;
+          }, {} as Record<string, number>)
+        }));
+
+        setCampaignData(prev => ({ ...prev, userTargets }));
+        
+      } catch (error) {
+        setCsvError('Invalid CSV format. Please check your file.');
+      }
+    };
+    
+    reader.readAsText(file);
+  };
+
+  const onCsvDrop = (acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
+    if (file) {
+      handleCsvUpload(file);
+    }
+  };
+
+  const { getRootProps: getCsvRootProps, getInputProps: getCsvInputProps, isDragActive: isCsvDragActive } = useDropzone({
+    onDrop: onCsvDrop,
+    accept: { 'text/csv': ['.csv'] },
+    multiple: false,
+    maxSize: 5 * 1024 * 1024, // 5MB
+  });
+
+  // Generate sample CSV
+  const generateSampleCsv = () => {
+    const eligibleUsers = organizationUsers.filter(user => {
+      const hasDesignation = campaignData.selectedDesignations.some(desId => 
+        designations.find(des => des.id === desId)?.name === user.designationName
+      );
+      const hasRegion = campaignData.selectedRegions.some(regionId => {
+        const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
+        return Object.values(user.regionHierarchy || {}).includes(regionId) ||
+               user.finalRegionName === regionItem?.name;
+      });
+      return hasDesignation && hasRegion;
+    });
+
+    const headers = ['user_id', 'user_name', 'region', ...campaignData.targetConfigs.map(c => c.skuCode)];
+    let csv = headers.join(',') + '\n';
+    
+    eligibleUsers.slice(0, 10).forEach(user => { // Limit to first 10 for sample
+      const row = [
+        user.id,
+        user.name,
+        user.finalRegionName || 'Unknown Region',
+        ...campaignData.targetConfigs.map(() => '0') // Default targets
+      ];
+      csv += row.join(',') + '\n';
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `campaign_targets_template.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  // Compute user targets from regional distribution
+  const computeUserTargets = () => {
+    const userTargets: UserTarget[] = [];
+    
+    // Get eligible users based on region and designation selection
+    const eligibleUsers = organizationUsers.filter(user => {
+      const hasDesignation = campaignData.selectedDesignations.some(desId => 
+        designations.find(des => des.id === desId)?.name === user.designationName
+      );
+      
+      const hasRegion = campaignData.selectedRegions.some(regionId => {
+        const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
+        return Object.values(user.regionHierarchy || {}).includes(regionId) ||
+               user.finalRegionName === regionItem?.name;
+      });
+      
+      return hasDesignation && hasRegion;
+    });
+
+    // For each eligible user, calculate their targets
+    eligibleUsers.forEach(user => {
+      const userTargetData: UserTarget = {
+        userId: user.id,
+        userName: user.name,
+        regionName: user.finalRegionName || 'Unknown Region',
+        targets: {}
+      };
+
+      // Find which region this user belongs to from selected regions
+      const userRegionId = campaignData.selectedRegions.find(regionId => {
+        const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
+        return Object.values(user.regionHierarchy || {}).includes(regionId) ||
+               user.finalRegionName === regionItem?.name;
+      });
+
+      if (userRegionId) {
+        campaignData.targetConfigs.forEach(config => {
+          const regionalDist = campaignData.regionalDistribution[config.skuId]?.find(
+            dist => dist.regionId === userRegionId
+          );
+          
+          if (regionalDist) {
+            userTargetData.targets[config.skuId] = regionalDist.individualTarget;
+          }
+        });
+      }
+
+      userTargets.push(userTargetData);
+    });
+
+    setCampaignData(prev => ({ ...prev, userTargets }));
+  };
+
+  // Auto-compute when switching to computed mode
+  useEffect(() => {
+    if (!campaignData.customTargetsEnabled && Object.keys(campaignData.regionalDistribution).length > 0) {
+      computeUserTargets();
+    }
+  }, [campaignData.customTargetsEnabled, campaignData.regionalDistribution]);
 
   const onBannerDrop = (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -1489,178 +1660,7 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
   };
 
   // Step 7: User Targets & Participants
-  const renderStep7 = () => {
-    const [csvFile, setCsvFile] = useState<File | null>(null);
-    const [csvData, setCsvData] = useState<any[]>([]);
-    const [csvError, setCsvError] = useState<string>('');
-
-    // Compute user targets from regional distribution
-    const computeUserTargets = () => {
-      const userTargets: UserTarget[] = [];
-      
-      // Get eligible users based on region and designation selection
-      const eligibleUsers = organizationUsers.filter(user => {
-        const hasDesignation = campaignData.selectedDesignations.some(desId => 
-          designations.find(des => des.id === desId)?.name === user.designationName
-        );
-        
-        const hasRegion = campaignData.selectedRegions.some(regionId => {
-          const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
-          return Object.values(user.regionHierarchy || {}).includes(regionId) ||
-                 user.finalRegionName === regionItem?.name;
-        });
-        
-        return hasDesignation && hasRegion;
-      });
-
-      // For each eligible user, calculate their targets
-      eligibleUsers.forEach(user => {
-        const userTargetData: UserTarget = {
-          userId: user.id,
-          userName: user.name,
-          regionName: user.finalRegionName || 'Unknown Region',
-          targets: {}
-        };
-
-        // Find which region this user belongs to from selected regions
-        const userRegionId = campaignData.selectedRegions.find(regionId => {
-          const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
-          return Object.values(user.regionHierarchy || {}).includes(regionId) ||
-                 user.finalRegionName === regionItem?.name;
-        });
-
-        if (userRegionId) {
-          campaignData.targetConfigs.forEach(config => {
-            const regionalDist = campaignData.regionalDistribution[config.skuId]?.find(
-              dist => dist.regionId === userRegionId
-            );
-            
-            if (regionalDist) {
-              userTargetData.targets[config.skuId] = regionalDist.individualTarget;
-            }
-          });
-        }
-
-        userTargets.push(userTargetData);
-      });
-
-      setCampaignData(prev => ({ ...prev, userTargets }));
-    };
-
-    // Handle CSV file upload
-    const handleCsvUpload = (file: File) => {
-      setCsvFile(file);
-      setCsvError('');
-      
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const text = e.target?.result as string;
-          const lines = text.trim().split('\n');
-          const headers = lines[0].split(',');
-          
-          // Validate headers
-          const expectedHeaders = ['user_id', 'user_name', 'region', ...campaignData.targetConfigs.map(c => c.skuCode)];
-          const missingHeaders = expectedHeaders.filter(h => !headers.includes(h));
-          
-          if (missingHeaders.length > 0) {
-            setCsvError(`Missing required columns: ${missingHeaders.join(', ')}`);
-            return;
-          }
-
-          // Parse data
-          const data = lines.slice(1).map((line, index) => {
-            const values = line.split(',');
-            const row: any = { lineNumber: index + 2 };
-            
-            headers.forEach((header, i) => {
-              row[header] = values[i]?.trim() || '';
-            });
-            
-            return row;
-          });
-
-          setCsvData(data);
-          
-          // Convert to UserTarget format
-          const userTargets: UserTarget[] = data.map(row => ({
-            userId: row.user_id || `csv_${Date.now()}_${Math.random()}`,
-            userName: row.user_name,
-            regionName: row.region,
-            targets: campaignData.targetConfigs.reduce((acc, config) => {
-              acc[config.skuId] = parseFloat(row[config.skuCode]) || 0;
-              return acc;
-            }, {} as Record<string, number>)
-          }));
-
-          setCampaignData(prev => ({ ...prev, userTargets }));
-          
-        } catch (error) {
-          setCsvError('Invalid CSV format. Please check your file.');
-        }
-      };
-      
-      reader.readAsText(file);
-    };
-
-    const onCsvDrop = (acceptedFiles: File[]) => {
-      const file = acceptedFiles[0];
-      if (file) {
-        handleCsvUpload(file);
-      }
-    };
-
-    const { getRootProps: getCsvRootProps, getInputProps: getCsvInputProps, isDragActive: isCsvDragActive } = useDropzone({
-      onDrop: onCsvDrop,
-      accept: { 'text/csv': ['.csv'] },
-      multiple: false,
-      maxSize: 5 * 1024 * 1024, // 5MB
-    });
-
-    // Generate sample CSV
-    const generateSampleCsv = () => {
-      const eligibleUsers = organizationUsers.filter(user => {
-        const hasDesignation = campaignData.selectedDesignations.some(desId => 
-          designations.find(des => des.id === desId)?.name === user.designationName
-        );
-        const hasRegion = campaignData.selectedRegions.some(regionId => {
-          const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
-          return Object.values(user.regionHierarchy || {}).includes(regionId) ||
-                 user.finalRegionName === regionItem?.name;
-        });
-        return hasDesignation && hasRegion;
-      });
-
-      const headers = ['user_id', 'user_name', 'region', ...campaignData.targetConfigs.map(c => c.skuCode)];
-      let csv = headers.join(',') + '\n';
-      
-      eligibleUsers.slice(0, 10).forEach(user => { // Limit to first 10 for sample
-        const row = [
-          user.id,
-          user.name,
-          user.finalRegionName || 'Unknown Region',
-          ...campaignData.targetConfigs.map(() => '0') // Default targets
-        ];
-        csv += row.join(',') + '\n';
-      });
-
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `campaign_targets_template.csv`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-    };
-
-    // Auto-compute when switching to computed mode
-    React.useEffect(() => {
-      if (!campaignData.customTargetsEnabled && Object.keys(campaignData.regionalDistribution).length > 0) {
-        computeUserTargets();
-      }
-    }, [campaignData.customTargetsEnabled, campaignData.regionalDistribution]);
-
-    return (
+  const renderStep7 = () => (
       <div className="step-content">
         <div className="step-header">
           <h3>👥 User Targets & Participants</h3>
@@ -1903,8 +1903,8 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
           </div>
         )}
       </div>
-    );
-  };
+    </div>
+  );
 
   const getStepTitle = (step: number) => {
     switch (step) {
