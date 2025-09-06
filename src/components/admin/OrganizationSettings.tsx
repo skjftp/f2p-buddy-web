@@ -5,6 +5,7 @@ import { getFirestoreInstance, getStorageInstance } from '../../config/firebase'
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import { useDropzone } from 'react-dropzone';
+import DesignationManager from './DesignationManager';
 
 interface HierarchyLevel {
   id: string;
@@ -55,6 +56,7 @@ const OrganizationSettings: React.FC = () => {
   const [newHierarchyItem, setNewHierarchyItem] = useState('');
   const [selectedLevel, setSelectedLevel] = useState(1);
   const [selectedParent, setSelectedParent] = useState('');
+  const [showDesignationManager, setShowDesignationManager] = useState(false);
   
   const onLogoDrop = (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -116,28 +118,8 @@ const OrganizationSettings: React.FC = () => {
     ));
   };
 
-  const addDesignation = () => {
-    const name = prompt('Enter designation name:');
-    if (!name) return;
-
-    const category = prompt('Enter category (employee/distributor/retailer/other):') as any;
-    if (!['employee', 'distributor', 'retailer', 'other'].includes(category)) {
-      toast.error('Invalid category');
-      return;
-    }
-
-    const newDesignation: Designation = {
-      id: Date.now().toString(),
-      name,
-      category,
-      description: ''
-    };
-
-    setDesignations(prev => [...prev, newDesignation]);
-  };
-
-  const removeDesignation = (id: string) => {
-    setDesignations(prev => prev.filter(d => d.id !== id));
+  const handleDesignationUpdate = (updatedDesignations: Designation[]) => {
+    setDesignations(updatedDesignations);
   };
 
   const handleSave = async () => {
@@ -403,67 +385,72 @@ const OrganizationSettings: React.FC = () => {
           <div className="designations-settings">
             <div className="section-header">
               <h3>User Designations</h3>
-              <button className="btn-secondary" onClick={addDesignation}>
-                + Add Designation
+              <button className="btn" onClick={() => setShowDesignationManager(true)}>
+                ⚙️ Manage Designations
               </button>
             </div>
             <p className="section-description">
               Define roles for employees, distributors, retailers, and other participants in your campaigns.
             </p>
 
-            <div className="designations-grid">
-              {designations.map((designation) => (
-                <div key={designation.id} className="designation-card">
-                  <div className="designation-header">
-                    <h4>{designation.name}</h4>
-                    <span className={`category-badge ${designation.category}`}>
-                      {designation.category}
-                    </span>
-                  </div>
-                  <p className="designation-description">
-                    {designation.description || 'No description'}
-                  </p>
-                  <div className="designation-actions">
-                    <button 
-                      className="btn-icon btn-danger"
-                      onClick={() => removeDesignation(designation.id)}
-                      title="Remove"
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="designation-categories">
-              <h4>Categories</h4>
+            <div className="designation-summary">
               <div className="category-grid">
                 <div className="category-item">
                   <span className="category-icon">👥</span>
-                  <span>Employee</span>
-                  <span className="count">{designations.filter(d => d.category === 'employee').length}</span>
+                  <div>
+                    <span className="count">{designations.filter(d => d.category === 'employee').length}</span>
+                    <span className="label">Employees</span>
+                  </div>
                 </div>
                 <div className="category-item">
                   <span className="category-icon">🏪</span>
-                  <span>Distributor</span>
-                  <span className="count">{designations.filter(d => d.category === 'distributor').length}</span>
+                  <div>
+                    <span className="count">{designations.filter(d => d.category === 'distributor').length}</span>
+                    <span className="label">Distributors</span>
+                  </div>
                 </div>
                 <div className="category-item">
                   <span className="category-icon">🛒</span>
-                  <span>Retailer</span>
-                  <span className="count">{designations.filter(d => d.category === 'retailer').length}</span>
+                  <div>
+                    <span className="count">{designations.filter(d => d.category === 'retailer').length}</span>
+                    <span className="label">Retailers</span>
+                  </div>
                 </div>
                 <div className="category-item">
                   <span className="category-icon">📋</span>
-                  <span>Other</span>
-                  <span className="count">{designations.filter(d => d.category === 'other').length}</span>
+                  <div>
+                    <span className="count">{designations.filter(d => d.category === 'other').length}</span>
+                    <span className="label">Others</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="designation-preview">
+                <h4>Current Designations:</h4>
+                <div className="designation-tags">
+                  {designations.map((designation) => (
+                    <span key={designation.id} className={`designation-tag ${designation.category}`}>
+                      {designation.name}
+                    </span>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
         )}
       </div>
+      
+      {showDesignationManager && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <DesignationManager
+              designations={designations}
+              onUpdate={handleDesignationUpdate}
+              onClose={() => setShowDesignationManager(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

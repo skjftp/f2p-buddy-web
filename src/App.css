@@ -2137,3 +2137,235 @@ body {
   font-weight: 700;
   color: var(--primary);
 }
+
+.designation-summary .category-item {
+  background: var(--gray-50);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.designation-summary .category-item div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.designation-summary .count {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.designation-summary .label {
+  font-size: 11px;
+  color: var(--gray-600);
+  font-weight: 500;
+}
+
+.designation-preview {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  border: 1px solid var(--gray-200);
+  margin-top: 20px;
+}
+
+.designation-preview h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin: 0 0 12px;
+}
+
+.designation-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.designation-tag {
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--white);
+}
+
+.designation-tag.employee { background: var(--success); }
+.designation-tag.distributor { background: var(--primary); }
+.designation-tag.retailer { background: var(--warning); }
+.designation-tag.other { background: var(--gray-400); }
+
+/* Designation Manager Modal */
+.designation-manager {
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 700px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.manager-header {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: var(--white);
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.manager-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.manager-content {
+  padding: 20px 24px;
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.add-designation-section {
+  background: var(--gray-50);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.add-designation-section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin: 0 0 16px;
+}
+
+.add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.predefined-section {
+  margin-bottom: 24px;
+}
+
+.predefined-section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin: 0 0 16px;
+}
+
+.predefined-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.predefined-btn {
+  background: var(--gray-100);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: var(--transition);
+  color: var(--gray-700);
+}
+
+.predefined-btn:hover:not(:disabled) {
+  background: var(--gray-200);
+}
+
+.predefined-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.current-designations h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin: 0 0 16px;
+}
+
+.empty-designations {
+  text-align: center;
+  padding: 20px;
+  color: var(--gray-500);
+  font-size: 14px;
+}
+
+.designations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.designation-item {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.designation-info {
+  flex: 1;
+}
+
+.designation-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: 6px;
+}
+
+.designation-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.designation-desc {
+  font-size: 12px;
+  color: var(--gray-600);
+}
+
+.manager-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-top: 1px solid var(--gray-200);
+  background: var(--gray-50);
+  flex-shrink: 0;
+}
+
+.action-summary {
+  font-size: 13px;
+  color: var(--gray-600);
+  font-weight: 500;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 12px;
+}
