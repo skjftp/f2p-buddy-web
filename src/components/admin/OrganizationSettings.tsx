@@ -458,65 +458,61 @@ const OrganizationSettings: React.FC = () => {
 
             <div className="hierarchy-preview">
               <h4>Hierarchy Flowchart</h4>
-              <div className="flowchart-container">
-                {hierarchyLevels.map((level, levelIndex) => (
-                  <div key={level.id} className="flowchart-level">
-                    <div className="level-title">{level.name}</div>
-                    <div className="level-nodes">
-                      {level.items.length === 0 ? (
-                        <div className="empty-node">
-                          <span>No {level.name.toLowerCase()} added</span>
+              <div className="flowchart-scroll">
+                <div className="flowchart-container">
+                  {hierarchyLevels.every(level => level.items.length === 0) ? (
+                    <div className="empty-flowchart">
+                      <div className="empty-icon">🗺️</div>
+                      <h4>No Hierarchy Created Yet</h4>
+                      <p>Add items to your hierarchy levels to see the organizational flowchart here.</p>
+                    </div>
+                  ) : (
+                    hierarchyLevels.map((level, levelIndex) => (
+                      <div key={level.id}>
+                        {/* Level Title */}
+                        <div className="flowchart-level-header">
+                          <div className="level-title">{level.name}</div>
                         </div>
-                      ) : (
-                        level.items.map((item, itemIndex) => (
-                          <div key={item.id} className="hierarchy-node">
-                            <div className="node-content">
-                              <span className="node-name">{item.name}</span>
-                              {item.parentId && (
-                                <span className="node-parent">
-                                  under {hierarchyLevels[level.level - 2]?.items.find(p => p.id === item.parentId)?.name}
-                                </span>
+                        
+                        {/* Level Nodes */}
+                        <div className="flowchart-level-nodes">
+                          {level.items.map((item) => (
+                            <div key={item.id} className="flowchart-node-container">
+                              <div className="flowchart-node">
+                                <div className="node-name">{item.name}</div>
+                                {item.parentId && (
+                                  <div className="node-parent">
+                                    {hierarchyLevels[level.level - 2]?.items.find(p => p.id === item.parentId)?.name}
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Individual arrows to children */}
+                              {levelIndex < hierarchyLevels.length - 1 && (
+                                <div className="node-children">
+                                  {hierarchyLevels[levelIndex + 1]?.items
+                                    .filter(child => child.parentId === item.id)
+                                    .map((child) => (
+                                      <div key={child.id} className="child-arrow">
+                                        <div className="arrow-line"></div>
+                                        <div className="arrow-head">↓</div>
+                                      </div>
+                                    ))
+                                  }
+                                </div>
                               )}
                             </div>
-                            
-                            {/* Connection lines */}
-                            {levelIndex < hierarchyLevels.length - 1 && (
-                              <div className="node-connector"></div>
-                            )}
-                            
-                            {/* Child connections */}
-                            {level.level < hierarchyLevels.length && (
-                              <div className="child-connections">
-                                {hierarchyLevels[level.level]?.items
-                                  .filter(child => child.parentId === item.id)
-                                  .map((child, childIndex) => (
-                                    <div key={child.id} className="connection-line"></div>
-                                  ))
-                                }
-                              </div>
-                            )}
-                          </div>
-                        ))
-                      )}
-                    </div>
-                    
-                    {/* Level connector */}
-                    {levelIndex < hierarchyLevels.length - 1 && level.items.length > 0 && (
-                      <div className="level-connector">
-                        <div className="connector-line"></div>
-                        <div className="connector-arrow">↓</div>
+                          ))}
+                        </div>
+                        
+                        {/* Spacing between levels */}
+                        {levelIndex < hierarchyLevels.length - 1 && level.items.length > 0 && (
+                          <div className="level-spacer"></div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                ))}
-                
-                {hierarchyLevels.every(level => level.items.length === 0) && (
-                  <div className="empty-flowchart">
-                    <div className="empty-icon">🗺️</div>
-                    <h4>No Hierarchy Created Yet</h4>
-                    <p>Add items to your hierarchy levels to see the organizational flowchart here.</p>
-                  </div>
-                )}
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           </div>
