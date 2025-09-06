@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { getFirestoreInstance } from '../../config/firebase';
+import { toast } from 'react-toastify';
+import InviteEmployee from './InviteEmployee';
 
 interface Employee {
   id: string;
@@ -20,42 +22,10 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ organizationId 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
   useEffect(() => {
     if (!organizationId) {
-      // Show placeholder data
-      const placeholderEmployees: Employee[] = [
-        {
-          id: '1',
-          displayName: 'John Smith',
-          phoneNumber: '+91 98765 43210',
-          joinedAt: new Date(Date.now() - 2592000000).toISOString(),
-          status: 'active',
-          totalAchievements: 12,
-          currentRank: 1
-        },
-        {
-          id: '2',
-          displayName: 'Sarah Johnson',
-          phoneNumber: '+91 98765 43211',
-          joinedAt: new Date(Date.now() - 1814400000).toISOString(),
-          status: 'active',
-          totalAchievements: 11,
-          currentRank: 2
-        },
-        {
-          id: '3',
-          displayName: 'Mike Chen',
-          phoneNumber: '+91 98765 43212',
-          joinedAt: new Date(Date.now() - 1296000000).toISOString(),
-          status: 'inactive',
-          totalAchievements: 8,
-          currentRank: 5
-        }
-      ];
-      
-      setEmployees(placeholderEmployees);
       setLoading(false);
       return;
     }
@@ -70,19 +40,19 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ organizationId 
         );
 
         const unsubscribe = onSnapshot(employeesQuery, (snapshot) => {
-      const employeeList: Employee[] = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        employeeList.push({
-          id: doc.id,
-          displayName: data.displayName || 'Unknown User',
-          phoneNumber: data.phoneNumber || '',
-          joinedAt: data.createdAt?.toDate()?.toISOString() || new Date().toISOString(),
-          status: 'active',
-          totalAchievements: 0,
-          currentRank: 0
-        });
-      });
+          const employeeList: Employee[] = [];
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            employeeList.push({
+              id: doc.id,
+              displayName: data.displayName || 'Unknown User',
+              phoneNumber: data.phoneNumber || '',
+              joinedAt: data.createdAt?.toDate()?.toISOString() || new Date().toISOString(),
+              status: 'active',
+              totalAchievements: 0,
+              currentRank: 0
+            });
+          });
           
           setEmployees(employeeList);
           setLoading(false);
@@ -110,20 +80,15 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ organizationId 
     };
   }, [organizationId]);
 
-  const filteredEmployees = employees.filter(employee => {
-    const matchesSearch = employee.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         employee.phoneNumber.includes(searchTerm);
-    const matchesStatus = statusFilter === 'all' || employee.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredEmployees = employees.filter(employee => 
+    employee.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    employee.phoneNumber.includes(searchTerm)
+  );
 
   if (loading) {
     return (
-      <div className="employee-management">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Loading employees...</p>
-        </div>
+      <div className="loading-container">
+        <div className="spinner"></div>
       </div>
     );
   }
@@ -131,8 +96,13 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ organizationId 
   return (
     <div className="employee-management">
       <div className="content-header">
-        <h2>Employee Management</h2>
-        <button className="btn">+ Invite Employee</button>
+        <h2>Team Members</h2>
+        <button 
+          className="btn" 
+          onClick={() => setShowInviteModal(true)}
+        >
+          + Invite Employee
+        </button>
       </div>
 
       <div className="management-controls">
@@ -146,76 +116,102 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ organizationId 
           />
         </div>
         
-        <div className="filter-controls">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
-            className="filter-select"
-          >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
+        <div className="team-stats">
+          <div className="stat-item">
+            <span className="stat-number">{employees.length}</span>
+            <span className="stat-label">Total</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-number">{employees.filter(e => e.status === 'active').length}</span>
+            <span className="stat-label">Active</span>
+          </div>
         </div>
       </div>
 
-      <div className="employees-table">
-        <div className="table-header">
-          <div className="header-cell">Employee</div>
-          <div className="header-cell">Phone</div>
-          <div className="header-cell">Joined</div>
-          <div className="header-cell">Rank</div>
-          <div className="header-cell">Achievements</div>
-          <div className="header-cell">Status</div>
-          <div className="header-cell">Actions</div>
-        </div>
-        
-        <div className="table-body">
-          {filteredEmployees.map((employee) => (
-            <div key={employee.id} className="table-row">
-              <div className="table-cell">
-                <div className="employee-info">
-                  <div className="employee-avatar">
-                    {employee.displayName.charAt(0)}
-                  </div>
-                  <span className="employee-name">{employee.displayName}</span>
-                </div>
+      <div className="employee-grid">
+        {filteredEmployees.map((employee) => (
+          <div key={employee.id} className="employee-card">
+            <div className="employee-header">
+              <div className="employee-avatar">
+                {employee.displayName.charAt(0)}
               </div>
-              <div className="table-cell">{employee.phoneNumber}</div>
-              <div className="table-cell">
-                {new Date(employee.joinedAt).toLocaleDateString()}
+              <div className="employee-info">
+                <h3 className="employee-name">{employee.displayName}</h3>
+                <p className="employee-phone">{employee.phoneNumber}</p>
               </div>
-              <div className="table-cell">
-                {employee.currentRank > 0 ? `#${employee.currentRank}` : '-'}
-              </div>
-              <div className="table-cell">{employee.totalAchievements}</div>
-              <div className="table-cell">
+              <div className="employee-status">
                 <span className={`status-badge ${employee.status}`}>
-                  {employee.status}
+                  {employee.status === 'active' ? '🟢' : '🔴'} {employee.status}
                 </span>
               </div>
-              <div className="table-cell">
-                <div className="action-buttons">
-                  <button className="btn-icon" title="View Profile">👤</button>
-                  <button className="btn-icon" title="Send Message">💬</button>
-                  <button className="btn-icon" title="More Options">⋯</button>
-                </div>
+            </div>
+            
+            <div className="employee-stats">
+              <div className="stat-row">
+                <span className="stat-label">Achievements</span>
+                <span className="stat-value">{employee.totalAchievements}</span>
+              </div>
+              <div className="stat-row">
+                <span className="stat-label">Current Rank</span>
+                <span className="stat-value">
+                  {employee.currentRank > 0 ? `#${employee.currentRank}` : 'Unranked'}
+                </span>
+              </div>
+              <div className="stat-row">
+                <span className="stat-label">Joined</span>
+                <span className="stat-value">
+                  {new Date(employee.joinedAt).toLocaleDateString()}
+                </span>
               </div>
             </div>
-          ))}
-        </div>
+            
+            <div className="employee-actions">
+              <button className="btn-icon" title="View Profile">👤</button>
+              <button className="btn-icon" title="Send Message">💬</button>
+              <button className="btn-icon" title="More Options">⋯</button>
+            </div>
+          </div>
+        ))}
       </div>
 
       {filteredEmployees.length === 0 && (
         <div className="empty-state">
           <div className="empty-icon">👥</div>
-          <h3>No Employees Found</h3>
-          <p>
+          <h3>
             {searchTerm ? 
-              'No employees match your search criteria.' : 
-              'Invite employees to join your organization.'
+              'No employees match your search' : 
+              employees.length === 0 ? 
+                'No Team Members Yet' : 
+                'No matching employees'
             }
-          </p>
+          </h3>
+          {employees.length === 0 && (
+            <>
+              <p>Invite employees to join your organization and participate in campaigns.</p>
+              <button 
+                className="btn" 
+                onClick={() => setShowInviteModal(true)}
+                style={{marginTop: '16px'}}
+              >
+                + Invite First Employee
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {showInviteModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <InviteEmployee
+              organizationId={organizationId}
+              onClose={() => setShowInviteModal(false)}
+              onSuccess={() => {
+                setShowInviteModal(false);
+                toast.success('Employee invited successfully!');
+              }}
+            />
+          </div>
         </div>
       )}
     </div>
