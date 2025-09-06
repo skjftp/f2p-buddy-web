@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
 import { getFirestoreInstance } from '../../config/firebase';
 import { toast } from 'react-toastify';
 import AddUser from './AddUser';
@@ -23,6 +23,25 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ organizationId 
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    if (deleteConfirm !== userId) {
+      setDeleteConfirm(userId);
+      setTimeout(() => setDeleteConfirm(null), 3000); // Reset after 3 seconds
+      return;
+    }
+
+    try {
+      const dbInstance = await getFirestoreInstance();
+      await deleteDoc(doc(dbInstance, 'users', userId));
+      toast.success(`${userName} removed from organization`);
+      setDeleteConfirm(null);
+    } catch (error: any) {
+      console.error('Error deleting user:', error);
+      toast.error('Failed to delete user');
+    }
+  };
 
   useEffect(() => {
     if (!organizationId) {
@@ -168,7 +187,13 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ organizationId 
             <div className="employee-actions">
               <button className="btn-icon" title="View Profile">👤</button>
               <button className="btn-icon" title="Send Message">💬</button>
-              <button className="btn-icon" title="More Options">⋯</button>
+              <button 
+                className={`btn-icon btn-danger ${deleteConfirm === employee.id ? 'confirm' : ''}`}
+                onClick={() => handleDeleteUser(employee.id, employee.displayName)}
+                title={deleteConfirm === employee.id ? "Click again to delete" : "Delete user"}
+              >
+                {deleteConfirm === employee.id ? '⚠️' : '🗑️'}
+              </button>
             </div>
           </div>
         ))}

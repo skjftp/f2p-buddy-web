@@ -5,6 +5,7 @@ import { getFirestoreInstance, getStorageInstance } from '../../../config/fireba
 import { useAuth } from '../../../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import { useDropzone } from 'react-dropzone';
+import CampaignTargeting from '../CampaignTargeting';
 
 interface CampaignWizardProps {
   onClose: () => void;
@@ -78,6 +79,12 @@ interface CampaignData {
   participants: string[];
   hierarchyFilter: string[];
   geographyFilter: string[];
+  
+  // Advanced Targeting
+  selectedRegions: string[];
+  selectedDesignations: string[];
+  regionTargets: any[];
+  totalTarget: number;
 }
 
 const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) => {
@@ -106,7 +113,11 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
     participantType: 'individual',
     participants: [],
     hierarchyFilter: [],
-    geographyFilter: []
+    geographyFilter: [],
+    selectedRegions: [],
+    selectedDesignations: [],
+    regionTargets: [],
+    totalTarget: 0
   });
 
   const [bannerPreview, setBannerPreview] = useState<string>('');
@@ -128,8 +139,18 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
     maxSize: 10 * 1024 * 1024,
   });
 
-  const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 6));
+  const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 7));
   const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
+
+  const handleTargetingChange = (targetingData: any) => {
+    setCampaignData(prev => ({
+      ...prev,
+      selectedRegions: targetingData.selectedRegions,
+      selectedDesignations: targetingData.selectedDesignations,
+      regionTargets: targetingData.regionTargets,
+      totalTarget: targetingData.totalTarget
+    }));
+  };
 
   const handleSubmit = async () => {
     if (!user || !organization) {
@@ -725,7 +746,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
         )}
         
         <div className="progress-steps">
-          {[1, 2, 3, 4, 5, 6].map((step) => (
+          {[1, 2, 3, 4, 5, 6, 7].map((step) => (
             <div key={step} className={`step ${currentStep >= step ? 'active' : ''}`}>
               {step}
             </div>
@@ -736,10 +757,16 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
       <div className="wizard-content">
         {currentStep === 1 && renderStep1()}
         {currentStep === 2 && renderStep2()}
-        {currentStep === 3 && renderStep3()}
-        {currentStep === 4 && renderStep4()}
-        {currentStep === 5 && renderStep5()}
-        {currentStep === 6 && renderStep6()}
+        {currentStep === 3 && (
+          <CampaignTargeting
+            organizationId={organization?.id || ''}
+            onTargetingChange={handleTargetingChange}
+          />
+        )}
+        {currentStep === 4 && renderStep3()}
+        {currentStep === 5 && renderStep4()}
+        {currentStep === 6 && renderStep5()}
+        {currentStep === 7 && renderStep6()}
       </div>
 
       <div className="wizard-actions">
@@ -751,7 +778,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
           )}
         </div>
         <div>
-          {currentStep < 6 ? (
+          {currentStep < 7 ? (
             <button className="btn" onClick={nextStep}>
               Next →
             </button>
