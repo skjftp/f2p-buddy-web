@@ -1,6 +1,6 @@
 import React from 'react';
 import { Campaign } from '../../store/slices/campaignSlice';
-import { useTheme } from '../../contexts/ThemeContext';
+// import { useTheme } from '../../contexts/ThemeContext';
 
 interface CampaignCardProps {
   campaign: Campaign;
