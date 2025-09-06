@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { getFirestoreInstance } from '../../config/firebase';
 import { toast } from 'react-toastify';
-import InviteEmployee from './InviteEmployee';
+import AddUser from './AddUser';
 
 interface Employee {
   id: string;
@@ -22,7 +22,7 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ organizationId 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
 
   useEffect(() => {
     if (!organizationId) {
@@ -99,9 +99,9 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ organizationId 
         <h2>Team Members</h2>
         <button 
           className="btn" 
-          onClick={() => setShowInviteModal(true)}
+          onClick={() => setShowAddUserModal(true)}
         >
-          + Invite Employee
+          + Add User
         </button>
       </div>
 
@@ -190,25 +190,25 @@ const EmployeeManagement: React.FC<EmployeeManagementProps> = ({ organizationId 
               <p>Invite employees to join your organization and participate in campaigns.</p>
               <button 
                 className="btn" 
-                onClick={() => setShowInviteModal(true)}
+                onClick={() => setShowAddUserModal(true)}
                 style={{marginTop: '16px'}}
               >
-                + Invite First Employee
+                + Add First User
               </button>
             </>
           )}
         </div>
       )}
 
-      {showInviteModal && (
+      {showAddUserModal && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <InviteEmployee
+            <AddUser
               organizationId={organizationId}
-              onClose={() => setShowInviteModal(false)}
+              onClose={() => setShowAddUserModal(false)}
               onSuccess={() => {
-                setShowInviteModal(false);
-                toast.success('Employee invited successfully!');
+                setShowAddUserModal(false);
+                toast.success('User added successfully!');
               }}
             />
           </div>
