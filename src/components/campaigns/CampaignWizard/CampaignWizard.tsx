@@ -514,62 +514,6 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
     </div>
   );
 
-  const renderStep5 = () => (
-    <div className="wizard-step">
-      <h2>Prize & Reward Structure</h2>
-      <p className="step-description">Configure rewards to motivate your team</p>
-      
-      <div className="prize-sections">
-        <div className="prize-section">
-          <h4>🏆 Individual Prizes</h4>
-          <div className="prize-grid">
-            {[1, 2, 3].map(rank => (
-              <div key={rank} className="prize-card">
-                <h5>#{rank} Position</h5>
-                <div className="form-group">
-                  <select 
-                    className="form-input"
-                    value={campaignData.individualPrizes.find(p => p.rank === rank)?.type || ''}
-                    onChange={(e) => {
-                      const newPrizes = [...campaignData.individualPrizes];
-                      const existingIndex = newPrizes.findIndex(p => p.rank === rank);
-                      if (existingIndex >= 0) {
-                        newPrizes[existingIndex].type = e.target.value as any;
-                      } else {
-                        newPrizes.push({ rank, type: e.target.value as any, value: '', description: '' });
-                      }
-                      setCampaignData(prev => ({ ...prev, individualPrizes: newPrizes }));
-                    }}
-                  >
-                    <option value="">Select prize type</option>
-                    <option value="cash">💰 Cash</option>
-                    <option value="voucher">🎫 Voucher</option>
-                    <option value="gadget">📱 Gadget</option>
-                    <option value="trip">✈️ Trip</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <input
-                    className="form-input"
-                    placeholder="Prize value/description"
-                    value={campaignData.individualPrizes.find(p => p.rank === rank)?.description || ''}
-                    onChange={(e) => {
-                      const newPrizes = [...campaignData.individualPrizes];
-                      const existingIndex = newPrizes.findIndex(p => p.rank === rank);
-                      if (existingIndex >= 0) {
-                        newPrizes[existingIndex].description = e.target.value;
-                      }
-                      setCampaignData(prev => ({ ...prev, individualPrizes: newPrizes }));
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 
   const renderStep6 = () => (
     <div className="wizard-step">
