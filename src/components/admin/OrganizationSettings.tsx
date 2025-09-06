@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFirestoreInstance, getStorageInstance } from '../../config/firebase';
@@ -28,7 +28,7 @@ interface Designation {
 }
 
 const OrganizationSettings: React.FC = () => {
-  const { user, organization } = useAuth();
+  const { organization } = useAuth();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'basic' | 'hierarchy' | 'designations'>('basic');
   
