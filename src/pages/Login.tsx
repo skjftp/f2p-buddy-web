@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp, query, where, collection, getDocs } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, query, where, collection, getDocs, updateDoc } from 'firebase/firestore';
 import { getAuthInstance, getFirestoreInstance, setupRecaptcha } from '../config/firebase';
 import { saveAuthState } from '../utils/authPersistence';
 import { toast } from 'react-toastify';
@@ -119,6 +119,23 @@ const Login: React.FC = () => {
                   finalRegionName: phoneData.finalRegionName
                 };
                 console.log('✅ Merged organizationId:', userData.organizationId);
+                
+                // Update the UID-based document with organization data
+                try {
+                  console.log('📝 Updating UID document with organization data...');
+                  await updateDoc(userDocRef, {
+                    organizationId: phoneData.organizationId,
+                    displayName: phoneData.displayName,
+                    role: phoneData.role,
+                    designationName: phoneData.designationName,
+                    regionHierarchy: phoneData.regionHierarchy,
+                    finalRegionName: phoneData.finalRegionName,
+                    updatedAt: serverTimestamp()
+                  });
+                  console.log('✅ UID document updated with organization data');
+                } catch (updateError) {
+                  console.error('❌ Failed to update UID document:', updateError);
+                }
               }
             });
           } catch (phoneError) {
