@@ -195,17 +195,37 @@ const OrganizationSettings: React.FC = () => {
         console.log('✅ Logo uploaded:', logoUrl);
       }
 
+      // Clean data for Firestore (remove any undefined values)
+      const cleanHierarchyLevels = hierarchyLevels.map(level => ({
+        id: level.id,
+        name: level.name,
+        level: level.level,
+        items: level.items.map(item => ({
+          id: item.id,
+          name: item.name,
+          level: item.level,
+          ...(item.parentId && { parentId: item.parentId }) // Only include if not undefined
+        }))
+      }));
+
+      const cleanDesignations = designations.map(designation => ({
+        id: designation.id,
+        name: designation.name,
+        category: designation.category,
+        description: designation.description || ''
+      }));
+
       const updateData = {
         name: basicInfo.name,
         logo: logoUrl,
         primaryColor: basicInfo.primaryColor,
         secondaryColor: basicInfo.secondaryColor,
-        hierarchyLevels: hierarchyLevels,
-        designations: designations,
+        hierarchyLevels: cleanHierarchyLevels,
+        designations: cleanDesignations,
         updatedAt: serverTimestamp()
       };
 
-      console.log('🔄 Updating organization document...', updateData);
+      console.log('🔄 Updating organization document with clean data...', updateData);
 
       const dbInstance = await getFirestoreInstance();
       await updateDoc(doc(dbInstance, 'organizations', organization.id), updateData);
