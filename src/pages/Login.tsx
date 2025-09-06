@@ -75,6 +75,12 @@ const Login: React.FC = () => {
       const dbInstance = await getFirestoreInstance();
       
       // Look up user by phone number (which is now the document ID)
+      if (!user.phoneNumber) {
+        console.log('❌ No phone number available for user lookup');
+        toast.error('Phone number not available');
+        return;
+      }
+      
       const phoneDocRef = doc(dbInstance, 'users', user.phoneNumber);
       const phoneDoc = await getDoc(phoneDocRef);
       

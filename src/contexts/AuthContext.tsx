@@ -84,6 +84,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               // Get user data from Firestore using phone number as document ID
               const dbInstance = await getFirestoreInstance();
               
+              if (!firebaseUser.phoneNumber) {
+                console.log('❌ No phone number available for user lookup');
+                return;
+              }
+              
               console.log('📞 Looking up user by phone number:', firebaseUser.phoneNumber);
               const userDocRef = doc(dbInstance, 'users', firebaseUser.phoneNumber);
               const userDoc = await getDoc(userDocRef);
