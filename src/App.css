@@ -1982,44 +1982,151 @@ body {
   font-size: 12px;
 }
 
+/* Hierarchy Flowchart */
 .hierarchy-preview {
   background: var(--white);
   border-radius: var(--radius-lg);
-  padding: 16px;
+  padding: 20px;
   margin-top: 20px;
   border: 1px solid var(--gray-200);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .hierarchy-preview h4 {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--gray-800);
-  margin: 0 0 12px;
+  margin: 0 0 20px;
+  text-align: center;
 }
 
-.preview-tree {
+.flowchart-container {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 16px;
+  min-height: 200px;
 }
 
-.preview-level {
-  padding: 8px 0;
-  border-bottom: 1px solid var(--gray-100);
+.flowchart-level {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.level-title {
+  background: var(--primary);
+  color: var(--white);
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.level-nodes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.hierarchy-node {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.node-content {
+  background: var(--gray-50);
+  border: 2px solid var(--gray-300);
+  border-radius: var(--radius-lg);
+  padding: 12px 16px;
+  text-align: center;
+  min-width: 120px;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.node-content:hover {
+  border-color: var(--primary);
+  background: var(--white);
+}
+
+.node-name {
+  display: block;
+  font-weight: 600;
+  color: var(--gray-800);
   font-size: 13px;
 }
 
-.preview-level:last-child {
-  border-bottom: none;
-}
-
-.empty-level {
-  color: var(--gray-400);
+.node-parent {
+  display: block;
+  font-size: 10px;
+  color: var(--gray-500);
+  margin-top: 4px;
   font-style: italic;
 }
 
-.level-items {
-  color: var(--gray-700);
+.empty-node {
+  background: var(--gray-100);
+  border: 2px dashed var(--gray-300);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  text-align: center;
+  color: var(--gray-500);
+  font-style: italic;
+  min-width: 200px;
+}
+
+.level-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 8px 0;
+}
+
+.connector-line {
+  width: 2px;
+  height: 20px;
+  background: var(--gray-300);
+}
+
+.connector-arrow {
+  font-size: 20px;
+  color: var(--primary);
+  font-weight: bold;
+  margin-top: -4px;
+}
+
+.empty-flowchart {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--gray-500);
+}
+
+.empty-flowchart .empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.empty-flowchart h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-600);
+  margin: 0 0 8px;
+}
+
+.empty-flowchart p {
+  font-size: 13px;
+  color: var(--gray-500);
+  margin: 0;
 }
 
 /* Designations Settings */

@@ -457,20 +457,66 @@ const OrganizationSettings: React.FC = () => {
             </div>
 
             <div className="hierarchy-preview">
-              <h4>Hierarchy Preview</h4>
-              <div className="preview-tree">
-                {hierarchyLevels.map((level) => (
-                  <div key={level.id} className="preview-level">
-                    <strong>{level.name}:</strong> 
-                    {level.items.length === 0 ? (
-                      <span className="empty-level">No items added</span>
-                    ) : (
-                      <span className="level-items">
-                        {level.items.map(item => item.name).join(', ')}
-                      </span>
+              <h4>Hierarchy Flowchart</h4>
+              <div className="flowchart-container">
+                {hierarchyLevels.map((level, levelIndex) => (
+                  <div key={level.id} className="flowchart-level">
+                    <div className="level-title">{level.name}</div>
+                    <div className="level-nodes">
+                      {level.items.length === 0 ? (
+                        <div className="empty-node">
+                          <span>No {level.name.toLowerCase()} added</span>
+                        </div>
+                      ) : (
+                        level.items.map((item, itemIndex) => (
+                          <div key={item.id} className="hierarchy-node">
+                            <div className="node-content">
+                              <span className="node-name">{item.name}</span>
+                              {item.parentId && (
+                                <span className="node-parent">
+                                  under {hierarchyLevels[level.level - 2]?.items.find(p => p.id === item.parentId)?.name}
+                                </span>
+                              )}
+                            </div>
+                            
+                            {/* Connection lines */}
+                            {levelIndex < hierarchyLevels.length - 1 && (
+                              <div className="node-connector"></div>
+                            )}
+                            
+                            {/* Child connections */}
+                            {level.level < hierarchyLevels.length && (
+                              <div className="child-connections">
+                                {hierarchyLevels[level.level]?.items
+                                  .filter(child => child.parentId === item.id)
+                                  .map((child, childIndex) => (
+                                    <div key={child.id} className="connection-line"></div>
+                                  ))
+                                }
+                              </div>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    
+                    {/* Level connector */}
+                    {levelIndex < hierarchyLevels.length - 1 && level.items.length > 0 && (
+                      <div className="level-connector">
+                        <div className="connector-line"></div>
+                        <div className="connector-arrow">↓</div>
+                      </div>
                     )}
                   </div>
                 ))}
+                
+                {hierarchyLevels.every(level => level.items.length === 0) && (
+                  <div className="empty-flowchart">
+                    <div className="empty-icon">🗺️</div>
+                    <h4>No Hierarchy Created Yet</h4>
+                    <p>Add items to your hierarchy levels to see the organizational flowchart here.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
