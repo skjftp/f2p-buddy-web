@@ -459,7 +459,7 @@ const OrganizationSettings: React.FC = () => {
             <div className="hierarchy-preview">
               <h4>Hierarchy Flowchart</h4>
               <div className="flowchart-scroll">
-                <div className="flowchart-container">
+                <div className="flowchart-tree">
                   {hierarchyLevels.every(level => level.items.length === 0) ? (
                     <div className="empty-flowchart">
                       <div className="empty-icon">🗺️</div>
@@ -468,47 +468,37 @@ const OrganizationSettings: React.FC = () => {
                     </div>
                   ) : (
                     hierarchyLevels.map((level, levelIndex) => (
-                      <div key={level.id}>
+                      <div key={level.id} className="tree-level">
                         {/* Level Title */}
-                        <div className="flowchart-level-header">
-                          <div className="level-title">{level.name}</div>
-                        </div>
+                        <div className="tree-level-title">{level.name}</div>
                         
-                        {/* Level Nodes */}
-                        <div className="flowchart-level-nodes">
-                          {level.items.map((item) => (
-                            <div key={item.id} className="flowchart-node-container">
-                              <div className="flowchart-node">
-                                <div className="node-name">{item.name}</div>
-                                {item.parentId && (
-                                  <div className="node-parent">
-                                    {hierarchyLevels[level.level - 2]?.items.find(p => p.id === item.parentId)?.name}
+                        {/* Nodes in this level */}
+                        <div className="tree-level-nodes">
+                          {level.items.map((item) => {
+                            const children = hierarchyLevels[levelIndex + 1]?.items.filter(child => child.parentId === item.id) || [];
+                            
+                            return (
+                              <div key={item.id} className="tree-node-group">
+                                <div className="tree-node">{item.name}</div>
+                                
+                                {/* Tree branches to children */}
+                                {children.length > 0 && (
+                                  <div className="tree-branches">
+                                    <div className="branch-trunk"></div>
+                                    <div className="branch-splits">
+                                      {children.map((child, childIndex) => (
+                                        <div key={child.id} className="branch-line">
+                                          <div className="branch-connector"></div>
+                                          <div className="branch-arrow">↓</div>
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
                                 )}
                               </div>
-                              
-                              {/* Individual arrows to children */}
-                              {levelIndex < hierarchyLevels.length - 1 && (
-                                <div className="node-children">
-                                  {hierarchyLevels[levelIndex + 1]?.items
-                                    .filter(child => child.parentId === item.id)
-                                    .map((child) => (
-                                      <div key={child.id} className="child-arrow">
-                                        <div className="arrow-line"></div>
-                                        <div className="arrow-head">↓</div>
-                                      </div>
-                                    ))
-                                  }
-                                </div>
-                              )}
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
-                        
-                        {/* Spacing between levels */}
-                        {levelIndex < hierarchyLevels.length - 1 && level.items.length > 0 && (
-                          <div className="level-spacer"></div>
-                        )}
                       </div>
                     ))
                   )}
