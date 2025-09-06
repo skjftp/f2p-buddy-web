@@ -9,18 +9,38 @@ node_modules/
 # Production
 /build
 
-# Environment variables (IMPORTANT - don't commit secrets!)
+# Environment variables (CRITICAL - NEVER COMMIT THESE!)
+.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-.env
+.env.*
+
+# Firebase credentials (NEVER COMMIT!)
+firebase-adminsdk-*.json
+serviceAccountKey.json
+service-account-key.json
+*-firebase-adminsdk-*.json
+
+# Google Cloud credentials (NEVER COMMIT!)
+gcloud-service-key.json
+google-credentials.json
+*-credentials.json
+
+# API keys and secrets (NEVER COMMIT!)
+*.key
+*.pem
+*.p12
+config.json
+secrets.json
 
 # Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
+*.log
 
 # Runtime data
 pids
@@ -48,14 +68,9 @@ Thumbs.db
 .firebase/
 firebase-debug.log
 firebase-debug.*.log
-firebase-adminsdk-*.json
 
 # Netlify
 .netlify/
-
-# Google Cloud
-gcloud-service-key.json
-service-account-key.json
 
 # Backend specific
 backend/main
@@ -64,7 +79,6 @@ backend/*.exe
 # Temporary files
 *.tmp
 *.temp
-*.log
 
 # Package files
 *.tgz
@@ -106,3 +120,13 @@ dist
 # Storybook build outputs
 .out
 .storybook-out
+
+# Credentials and sensitive data (NEVER COMMIT!)
+creds/
+credentials/
+secrets/
+keys/
+tokens/
+**/Creds/**
+**/*credentials*/**
+**/*secrets*/**
