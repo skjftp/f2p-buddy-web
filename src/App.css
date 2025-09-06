@@ -2070,28 +2070,61 @@ body {
 
 /* Tree Trunk (vertical line from parent) */
 .tree-trunk {
-  width: 3px;
-  height: 30px;
+  width: 4px;
+  height: 40px;
   background: var(--primary);
-  margin-top: 10px;
+  margin: 15px auto;
+  border-radius: 2px;
 }
 
-/* Horizontal branch line */
-.tree-branch-line {
-  width: 3px;
-  height: 20px;
-  background: var(--primary);
-  position: relative;
-}
-
-/* Children Container */
+/* Children Container with proper flowchart spacing */
 .tree-children {
   display: flex;
   justify-content: center;
-  gap: 60px;
+  gap: 80px;
   align-items: flex-start;
   position: relative;
-  margin-top: -10px;
+  margin-top: 0;
+}
+
+/* Horizontal T-junction line connecting all children */
+.tree-children::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  height: 4px;
+  background: var(--primary);
+  border-radius: 2px;
+  z-index: 1;
+}
+
+/* Dynamic width based on number of children */
+.tree-children:has(.tree-child-container:only-child)::after {
+  display: none; /* No horizontal line for single child */
+}
+
+.tree-children:has(.tree-child-container:nth-child(2):last-child)::after {
+  left: 25%;
+  right: 25%;
+  width: 50%;
+}
+
+.tree-children:has(.tree-child-container:nth-child(3):last-child)::after {
+  left: 15%;
+  right: 15%;
+  width: 70%;
+}
+
+.tree-children:has(.tree-child-container:nth-child(4):last-child)::after {
+  left: 10%;
+  right: 10%;
+  width: 80%;
+}
+
+.tree-children:has(.tree-child-container:nth-child(5))::after {
+  left: 5%;
+  right: 5%;
+  width: 90%;
 }
 
 /* Individual Child Container */
@@ -2102,50 +2135,33 @@ body {
   align-items: center;
 }
 
-/* Connector to child */
+/* Vertical connector from horizontal line to child */
 .child-connector {
-  width: 3px;
-  height: 30px;
+  width: 4px;
+  height: 40px;
   background: var(--primary);
-  margin-bottom: 10px;
+  border-radius: 2px;
+  margin-bottom: 15px;
+  position: relative;
+  z-index: 2;
 }
 
-/* Horizontal connecting line between children */
-.tree-children::before {
+/* T-junction point where horizontal line meets vertical connector */
+.child-connector::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: calc(50% - 50px);
-  right: calc(50% - 50px);
-  height: 3px;
+  top: -2px;
+  left: -3px;
+  width: 10px;
+  height: 10px;
   background: var(--primary);
-  z-index: 1;
+  border-radius: 50%;
+  z-index: 3;
 }
 
-/* Adjust horizontal line for single child */
-.tree-children:has(.tree-child-container:only-child)::before {
+/* Remove T-junction for single child */
+.tree-children:has(.tree-child-container:only-child) .child-connector::before {
   display: none;
-}
-
-/* For 2 children */
-.tree-children:has(.tree-child-container:nth-child(2):last-child)::before {
-  left: calc(50% - 30px);
-  right: calc(50% - 30px);
-  width: 60px;
-}
-
-/* For 3+ children */
-.tree-children:has(.tree-child-container:nth-child(3))::before {
-  left: calc(50% - 90px);
-  right: calc(50% - 90px);
-  width: 180px;
-}
-
-/* For 4+ children */
-.tree-children:has(.tree-child-container:nth-child(4))::before {
-  left: calc(50% - 120px);
-  right: calc(50% - 120px);
-  width: 240px;
 }
 
 .empty-flowchart {
