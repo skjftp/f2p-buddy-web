@@ -75,6 +75,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (!mounted) return;
           
           if (firebaseUser) {
+            console.log('🔑 Firebase user authenticated:', {
+              uid: firebaseUser.uid,
+              phoneNumber: firebaseUser.phoneNumber,
+              isAnonymous: firebaseUser.isAnonymous
+            });
             try {
               // Get user data from Firestore - try by UID first, then by phone number
               const dbInstance = await getFirestoreInstance();
@@ -83,15 +88,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               let retries = 3;
               
               // First try by UID (for admin users)
+              console.log('🔍 Attempting UID lookup for:', firebaseUser.uid);
               while (retries > 0) {
                 try {
                   const userDocRef = doc(dbInstance, 'users', firebaseUser.uid);
                   userDoc = await getDoc(userDocRef);
+                  if (userDoc.exists()) {
+                    console.log('✅ Found user by UID:', userDoc.id);
+                  } else {
+                    console.log('❌ No document found for UID:', firebaseUser.uid);
+                  }
                   break;
                 } catch (error) {
+                  console.log('❌ UID lookup error:', error);
                   retries--;
                   if (retries === 0) {
-                    console.log('UID lookup failed, trying phone number lookup...');
+                    console.log('UID lookup failed after retries, trying phone number lookup...');
                     break;
                   }
                   await new Promise(resolve => setTimeout(resolve, 1000));
@@ -150,6 +162,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               
               if (userDoc && userDoc.exists()) {
                 const userData = userDoc.data();
+                console.log('📋 Processing user data:', {
+                  uid: firebaseUser.uid,
+                  phoneNumber: userData.phoneNumber,
+                  role: userData.role,
+                  organizationId: userData.organizationId,
+                  displayName: userData.displayName
+                });
+                
                 const userStateData = {
                   uid: firebaseUser.uid,
                   phoneNumber: firebaseUser.phoneNumber || userData.phoneNumber,
@@ -159,6 +179,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   createdAt: userData.createdAt,
                 };
                 
+                console.log('💾 Setting user state with organizationId:', userData.organizationId);
                 dispatch(setUser(userStateData));
 
                 // Load organization data if user has organizationId
