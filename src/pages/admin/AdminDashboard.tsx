@@ -4,7 +4,7 @@ import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestor
 import { getFirestoreInstance } from '../../config/firebase';
 import { Campaign } from '../../store/slices/campaignSlice';
 import CampaignWizard from '../../components/campaigns/CampaignWizard/CampaignWizard';
-import CampaignEdit from '../../components/campaigns/CampaignEdit';
+import CampaignEditWizard from '../../components/campaigns/CampaignEditWizard';
 import CampaignCard from '../../components/campaigns/CampaignCard';
 import AnalyticsDashboard from '../../components/analytics/AnalyticsDashboard';
 import EmployeeManagement from '../../components/admin/EmployeeManagement';
@@ -282,7 +282,7 @@ const AdminDashboard: React.FC = () => {
       {showEditModal && selectedCampaign && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <CampaignEdit
+            <CampaignEditWizard
               campaign={selectedCampaign}
               onClose={handleCloseEdit}
               onUpdate={handleCampaignUpdate}

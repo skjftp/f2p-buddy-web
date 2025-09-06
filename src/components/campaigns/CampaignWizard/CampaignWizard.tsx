@@ -689,7 +689,7 @@ const CampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete }) 
             onSkuTargetsChange={handleSkuTargetsChange}
           />
         )}
-        {currentStep === 4 && renderStep3()}
+        {currentStep === 4 && renderStep4()}
         {currentStep === 5 && renderStep5()}
         {currentStep === 6 && renderStep6()}
       </div>
