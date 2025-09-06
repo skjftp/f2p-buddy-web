@@ -119,39 +119,6 @@ const Login: React.FC = () => {
     }
   };
 
-  const selectRole = async (role: 'admin' | 'employee') => {
-    const authInstance = await getAuthInstance();
-    const user = authInstance.currentUser;
-    if (!user) {
-      toast.error('Authentication error');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const dbInstance = await getFirestoreInstance();
-      await setDoc(doc(dbInstance, 'users', user.uid), {
-        uid: user.uid,
-        phoneNumber: user.phoneNumber || `+${phoneNumber}`,
-        role: role,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      });
-      
-      if (role === 'admin') {
-        navigate('/admin/setup');
-      } else {
-        navigate('/employee/dashboard');
-      }
-      
-      toast.success('Registration complete');
-    } catch (error: any) {
-      console.error('Error creating user:', error);
-      toast.error('Registration failed');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const renderPhone = () => (
     <div>
