@@ -201,35 +201,6 @@ const AdminDashboard: React.FC = () => {
         </div>
       </header>
 
-      {/* Desktop Navigation */}
-      <nav className="dashboard-nav">
-        <div className="nav-tabs">
-          <button 
-            className={`nav-tab ${activeTab === 'overview' ? 'active' : ''}`}
-            onClick={() => setActiveTab('overview')}
-          >
-            📊 Overview
-          </button>
-          <button 
-            className={`nav-tab ${activeTab === 'campaigns' ? 'active' : ''}`}
-            onClick={() => setActiveTab('campaigns')}
-          >
-            🎯 Campaigns
-          </button>
-          <button 
-            className={`nav-tab ${activeTab === 'employees' ? 'active' : ''}`}
-            onClick={() => setActiveTab('employees')}
-          >
-            👥 Employees
-          </button>
-          <button 
-            className={`nav-tab ${activeTab === 'analytics' ? 'active' : ''}`}
-            onClick={() => setActiveTab('analytics')}
-          >
-            📈 Analytics
-          </button>
-        </div>
-      </nav>
 
       <main className="dashboard-main">
         {activeTab === 'overview' && renderOverview()}
