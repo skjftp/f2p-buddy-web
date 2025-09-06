@@ -1,5 +1,6 @@
 import React from 'react';
 import { Campaign } from '../../store/slices/campaignSlice';
+import QuickActions from './QuickActions';
 
 interface CampaignCardProps {
   campaign: Campaign;
@@ -83,6 +84,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
         <div className="campaign-actions">
           {userRole === 'admin' ? (
             <>
+              <QuickActions campaign={campaign} />
               <button className="btn-icon" onClick={onEdit} title="Edit">✏️</button>
               <button className="btn-icon" onClick={onView} title="Analytics">📊</button>
             </>

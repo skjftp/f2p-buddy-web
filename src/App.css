@@ -1431,3 +1431,134 @@ body {
 .upload-section {
   margin-top: 16px;
 }
+
+/* Campaign Edit Modal */
+.campaign-edit {
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 600px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.edit-header {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: var(--white);
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.edit-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.edit-content {
+  padding: 20px 24px;
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.status-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.status-option {
+  display: flex;
+  align-items: start;
+  gap: 12px;
+  padding: 16px;
+  background: var(--gray-50);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: var(--transition);
+  border: 2px solid transparent;
+}
+
+.status-option:hover {
+  background: var(--white);
+}
+
+.status-option:has(input:checked) {
+  border-color: var(--primary);
+  background: var(--white);
+}
+
+.status-option input[type="radio"] {
+  margin-top: 2px;
+}
+
+.status-content strong {
+  display: block;
+  font-size: 14px;
+  color: var(--gray-800);
+  margin-bottom: 4px;
+}
+
+.status-content p {
+  font-size: 12px;
+  color: var(--gray-600);
+  margin: 0;
+}
+
+.edit-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-top: 1px solid var(--gray-200);
+  background: var(--gray-50);
+  flex-shrink: 0;
+}
+
+.action-group {
+  display: flex;
+  gap: 12px;
+}
+
+.danger-zone {
+  display: flex;
+}
+
+.btn-danger {
+  background: var(--error);
+  color: var(--white);
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-danger:hover {
+  background: #e53e3e;
+}
+
+.btn-danger.confirm {
+  background: #c53030;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Quick Actions */
+.quick-actions {
+  display: flex;
+  gap: 4px;
+  margin-right: 8px;
+}

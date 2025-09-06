@@ -4,6 +4,7 @@ import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestor
 import { getFirestoreInstance } from '../../config/firebase';
 import { Campaign } from '../../store/slices/campaignSlice';
 import CampaignWizard from '../../components/campaigns/CampaignWizard/CampaignWizard';
+import CampaignEdit from '../../components/campaigns/CampaignEdit';
 import CampaignCard from '../../components/campaigns/CampaignCard';
 import AnalyticsDashboard from '../../components/analytics/AnalyticsDashboard';
 import EmployeeManagement from '../../components/admin/EmployeeManagement';
@@ -16,6 +17,8 @@ const AdminDashboard: React.FC = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCampaignWizard, setShowCampaignWizard] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [organizationStats, setOrganizationStats] = useState({
     totalEmployees: 2,
     activeCampaigns: 0,
@@ -75,6 +78,21 @@ const AdminDashboard: React.FC = () => {
     };
   }, [organization?.id]);
 
+  const handleEditCampaign = (campaign: Campaign) => {
+    setSelectedCampaign(campaign);
+    setShowEditModal(true);
+  };
+
+  const handleCloseEdit = () => {
+    setShowEditModal(false);
+    setSelectedCampaign(null);
+  };
+
+  const handleCampaignUpdate = () => {
+    // Campaigns will update via real-time listener
+    console.log('Campaign updated - real-time listener will refresh data');
+  };
+
   const renderOverview = () => (
     <div>
       <div className="stats-grid">
@@ -113,7 +131,7 @@ const AdminDashboard: React.FC = () => {
               key={campaign.id}
               campaign={campaign}
               userRole="admin"
-              onEdit={() => {}}
+              onEdit={() => handleEditCampaign(campaign)}
               onView={() => {}}
             />
           ))}
@@ -146,7 +164,7 @@ const AdminDashboard: React.FC = () => {
             key={campaign.id}
             campaign={campaign}
             userRole="admin"
-            onEdit={() => {}}
+            onEdit={() => handleEditCampaign(campaign)}
             onView={() => {}}
           />
         ))}
@@ -249,6 +267,18 @@ const AdminDashboard: React.FC = () => {
             <CampaignWizard
               onClose={() => setShowCampaignWizard(false)}
               onComplete={() => setShowCampaignWizard(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {showEditModal && selectedCampaign && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <CampaignEdit
+              campaign={selectedCampaign}
+              onClose={handleCloseEdit}
+              onUpdate={handleCampaignUpdate}
             />
           </div>
         </div>
