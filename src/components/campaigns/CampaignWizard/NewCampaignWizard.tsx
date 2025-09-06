@@ -439,58 +439,90 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
         hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId)
       ).filter(Boolean) as HierarchyItem[];
 
-      selectedRegionItems.forEach((regionItem, index) => {
-        // Get users in this region
-        const usersInRegion = organizationUsers.filter(user => {
-          // Check if user belongs to this region
-          const userRegionIds = Object.values(user.regionHierarchy || {});
-          return userRegionIds.includes(regionItem.id) || 
-                 user.finalRegionName === regionItem.name;
+      // Build hierarchy tree for proper parent-child distribution
+      const buildDistributionTree = (items: HierarchyItem[]) => {
+        // Group by level
+        const levelGroups: Record<number, HierarchyItem[]> = {};
+        items.forEach(item => {
+          if (!levelGroups[item.level]) levelGroups[item.level] = [];
+          levelGroups[item.level].push(item);
         });
 
-        const userCount = Math.max(1, usersInRegion.length); // At least 1 for calculation
-        let regionTarget = 0;
+        const distributionMap: Record<string, { target: number, children: string[] }> = {};
+
+        // Start with top level items and distribute total target
+        const topLevelItems = levelGroups[Math.min(...Object.keys(levelGroups).map(Number))];
         
-        switch (algorithm) {
-          case 'equal':
-            regionTarget = Math.round(totalTarget / selectedRegionItems.length);
-            break;
-          case 'territory':
-            // Territory size factor (deeper levels = smaller territories)
-            const sizeFactor = 1 / (regionItem.level || 1);
-            const totalSizeFactor = selectedRegionItems.reduce((sum, item) => sum + (1 / (item.level || 1)), 0);
-            regionTarget = Math.round(totalTarget * sizeFactor / totalSizeFactor);
-            break;
-          case 'performance':
-            // Performance-based with some randomization for demo
-            const performanceFactor = 0.7 + Math.random() * 0.6; // 0.7 to 1.3 multiplier
-            const avgTarget = totalTarget / selectedRegionItems.length;
-            regionTarget = Math.round(avgTarget * performanceFactor);
-            break;
-          default:
-            regionTarget = 0;
-        }
-
-        const individualTarget = userCount > 0 ? Math.round(regionTarget / userCount) : regionTarget;
-
-        distributions.push({
-          regionId: regionItem.id,
-          regionName: regionItem.name,
-          target: regionTarget,
-          userCount,
-          individualTarget
+        topLevelItems.forEach(item => {
+          const topLevelTarget = Math.round(totalTarget / topLevelItems.length);
+          distributionMap[item.id] = { target: topLevelTarget, children: [] };
         });
-      });
 
-      // Adjust for rounding discrepancies
-      const totalDistributed = distributions.reduce((sum, dist) => sum + dist.target, 0);
-      if (totalDistributed !== totalTarget && distributions.length > 0) {
-        const difference = totalTarget - totalDistributed;
-        distributions[0].target += difference;
-        distributions[0].individualTarget = distributions[0].userCount > 0 
-          ? Math.round(distributions[0].target / distributions[0].userCount)
-          : distributions[0].target;
-      }
+        // Process each level from top to bottom
+        const sortedLevels = Object.keys(levelGroups).map(Number).sort();
+        
+        sortedLevels.forEach(level => {
+          if (level === sortedLevels[0]) return; // Skip top level, already processed
+
+          levelGroups[level].forEach(childItem => {
+            if (childItem.parentId && distributionMap[childItem.parentId]) {
+              // Add this child to parent's children list
+              distributionMap[childItem.parentId].children.push(childItem.id);
+            }
+          });
+        });
+
+        // Now distribute parent targets to children
+        sortedLevels.forEach(level => {
+          levelGroups[level].forEach(parentItem => {
+            if (distributionMap[parentItem.id].children.length > 0) {
+              const parentTarget = distributionMap[parentItem.id].target;
+              const childrenCount = distributionMap[parentItem.id].children.length;
+              const childTarget = Math.round(parentTarget / childrenCount);
+
+              // Distribute to children
+              distributionMap[parentItem.id].children.forEach(childId => {
+                if (!distributionMap[childId]) {
+                  distributionMap[childId] = { target: childTarget, children: [] };
+                }
+              });
+
+              // Adjust parent target to 0 since it's distributed to children
+              distributionMap[parentItem.id].target = 0;
+            }
+          });
+        });
+
+        return distributionMap;
+      };
+
+      const distributionMap = buildDistributionTree(selectedRegionItems);
+
+      // Create final distributions array with user counts
+      selectedRegionItems.forEach(regionItem => {
+        const regionTarget = distributionMap[regionItem.id]?.target || 0;
+        
+        // Only include regions that have actual targets (leaf nodes)
+        if (regionTarget > 0) {
+          // Get users in this region
+          const usersInRegion = organizationUsers.filter(user => {
+            const userRegionIds = Object.values(user.regionHierarchy || {});
+            return userRegionIds.includes(regionItem.id) || 
+                   user.finalRegionName === regionItem.name;
+          });
+
+          const userCount = Math.max(1, usersInRegion.length);
+          const individualTarget = Math.round(regionTarget / userCount);
+
+          distributions.push({
+            regionId: regionItem.id,
+            regionName: regionItem.name,
+            target: regionTarget,
+            userCount,
+            individualTarget
+          });
+        }
+      });
 
       newDistribution[config.skuId] = distributions;
     });
@@ -984,7 +1016,39 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
 
                 {Object.keys(campaignData.regionalDistribution).length > 0 && (
                   <div className="distribution-preview">
-                    <h5>📋 Computed Regional Distribution</h5>
+                    <h5>📋 Hierarchical Distribution Logic</h5>
+                    
+                    {/* Example explanation */}
+                    <div className="distribution-example">
+                      <div className="example-card">
+                        <h6>🔍 Example: How Distribution Works</h6>
+                        <div className="example-tree">
+                          <div className="example-node">
+                            <strong>Total Target: 1000 units</strong>
+                          </div>
+                          <div className="example-branch">
+                            <div className="example-node">
+                              North Zone: 250 units (25%)
+                              <div className="sub-nodes">
+                                <div>Delhi District: 125 units (50% of 250)</div>
+                                <div>Punjab District: 125 units (50% of 250)</div>
+                              </div>
+                            </div>
+                            <div className="example-node">
+                              South Zone: 250 units (25%)
+                            </div>
+                            <div className="example-node">
+                              East Zone: 250 units (25%)
+                            </div>
+                            <div className="example-node">
+                              West Zone: 250 units (25%)
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actual distribution results */}
                     {campaignData.targetConfigs.map(config => {
                       const distributions = campaignData.regionalDistribution[config.skuId] || [];
                       const totalDistributed = distributions.reduce((sum, dist) => sum + dist.target, 0);
