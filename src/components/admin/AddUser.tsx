@@ -89,20 +89,20 @@ const AddUser: React.FC<AddUserProps> = ({ organizationId, onClose, onSuccess })
     // Set the selected region for this level
     newSelectedRegions[level] = itemId;
     
-    // Auto-select parent regions
-    let tempItem = selectedItem;
-    let tempLevel = level;
-    
-    while (tempItem.parentId && tempLevel > 1) {
-      tempLevel--;
-      newSelectedRegions[tempLevel] = tempItem.parentId;
-      const parentItem = hierarchyLevels[tempLevel - 1]?.items.find(item => item.id === tempItem.parentId);
+    // Auto-select parent regions using iterative approach
+    const assignParentRegions = (item: HierarchyItem, currentLevel: number) => {
+      if (!item.parentId || currentLevel <= 1) return;
+      
+      const parentLevel = currentLevel - 1;
+      newSelectedRegions[parentLevel] = item.parentId;
+      
+      const parentItem = hierarchyLevels[parentLevel - 1]?.items.find(parent => parent.id === item.parentId);
       if (parentItem) {
-        tempItem = parentItem;
-      } else {
-        break;
+        assignParentRegions(parentItem, parentLevel);
       }
-    }
+    };
+    
+    assignParentRegions(selectedItem, level);
 
     setUserData(prev => ({ ...prev, selectedRegions: newSelectedRegions }));
   };
