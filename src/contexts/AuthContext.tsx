@@ -215,6 +215,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     }
                   } catch (mergeError) {
                     console.error('❌ Failed to merge organization data:', mergeError);
+                    console.log('🔄 Continuing with existing user data despite merge failure');
                   }
                 }
                 

@@ -42,6 +42,9 @@ service cloud.firestore {
       allow update: if isAuthenticated() && hasRole('admin');
       // Admins can delete user documents in their organization
       allow delete: if isAuthenticated() && hasRole('admin');
+      // Allow authenticated users to query by phone number to find their own data
+      allow list: if isAuthenticated() && 
+                     resource.data.phoneNumber == request.auth.token.phone_number;
     }
 
     // Organizations collection
