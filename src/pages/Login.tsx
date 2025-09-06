@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, query, where, collection, getDocs } from 'firebase/firestore';
 import { getAuthInstance, getFirestoreInstance, setupRecaptcha } from '../config/firebase';
 import { saveAuthState } from '../utils/authPersistence';
 import { toast } from 'react-toastify';
@@ -67,17 +67,66 @@ const Login: React.FC = () => {
 
     setLoading(true);
     try {
+      console.log('🔐 Confirming OTP...');
       const result = await confirmationResult.confirm(otp);
       const user = result.user;
+      console.log('✅ OTP confirmed, user:', user.uid);
       
       const dbInstance = await getFirestoreInstance();
       const userDocRef = doc(dbInstance, 'users', user.uid);
       const userDoc = await getDoc(userDocRef);
       
+      let userData: any = {};
+      
       if (userDoc.exists()) {
-        const userData = userDoc.data();
+        userData = userDoc.data();
+        console.log('📋 Found user document by UID:', {
+          role: userData.role,
+          organizationId: userData.organizationId,
+          displayName: userData.displayName
+        });
         
-        // IMMEDIATELY save auth state to localStorage
+        // If missing organization data, try phone number lookup
+        if (!userData.organizationId && user.phoneNumber) {
+          console.log('🔍 Missing organizationId, searching by phone:', user.phoneNumber);
+          
+          try {
+            const phoneQuery = query(
+              collection(dbInstance, 'users'),
+              where('phoneNumber', '==', user.phoneNumber)
+            );
+            
+            const phoneSnapshot = await getDocs(phoneQuery);
+            console.log('📞 Phone lookup returned:', phoneSnapshot.size, 'documents');
+            
+            phoneSnapshot.forEach(doc => {
+              const phoneData = doc.data();
+              console.log('👤 Phone document:', {
+                id: doc.id,
+                orgId: phoneData.organizationId,
+                name: phoneData.displayName
+              });
+              
+              if (phoneData.organizationId && !userData.organizationId) {
+                console.log('🔄 Merging organization data from phone lookup');
+                userData = {
+                  ...userData,
+                  organizationId: phoneData.organizationId,
+                  displayName: phoneData.displayName,
+                  role: phoneData.role || userData.role,
+                  designationName: phoneData.designationName,
+                  regionHierarchy: phoneData.regionHierarchy,
+                  finalRegionName: phoneData.finalRegionName
+                };
+                console.log('✅ Merged organizationId:', userData.organizationId);
+              }
+            });
+          } catch (phoneError) {
+            console.error('❌ Phone lookup failed:', phoneError);
+          }
+        }
+        
+        // Save the final user state
         const userStateData = {
           uid: user.uid,
           phoneNumber: user.phoneNumber || `+${phoneNumber}`,
@@ -86,6 +135,11 @@ const Login: React.FC = () => {
           displayName: userData.displayName,
           createdAt: userData.createdAt,
         };
+        
+        console.log('💾 Saving final auth state:', {
+          role: userStateData.role,
+          organizationId: userStateData.organizationId
+        });
         saveAuthState(userStateData);
         
         if (userData.role === 'admin') {
@@ -95,6 +149,7 @@ const Login: React.FC = () => {
             navigate('/admin/setup');
           }
         } else {
+          console.log('🚀 Navigating to employee dashboard with orgId:', userData.organizationId);
           navigate('/employee/dashboard');
         }
       } else {
