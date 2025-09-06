@@ -8,8 +8,9 @@ import CampaignEdit from '../../components/campaigns/CampaignEdit';
 import CampaignCard from '../../components/campaigns/CampaignCard';
 import AnalyticsDashboard from '../../components/analytics/AnalyticsDashboard';
 import EmployeeManagement from '../../components/admin/EmployeeManagement';
+import OrganizationSettings from '../../components/admin/OrganizationSettings';
 
-type TabType = 'overview' | 'campaigns' | 'employees' | 'analytics';
+type TabType = 'overview' | 'campaigns' | 'employees' | 'analytics' | 'settings';
 
 const AdminDashboard: React.FC = () => {
   const { organization, logout } = useAuth();
@@ -225,6 +226,7 @@ const AdminDashboard: React.FC = () => {
         {activeTab === 'campaigns' && renderCampaigns()}
         {activeTab === 'employees' && <EmployeeManagement organizationId={organization?.id || ''} />}
         {activeTab === 'analytics' && <AnalyticsDashboard organizationId={organization?.id || ''} />}
+        {activeTab === 'settings' && <OrganizationSettings />}
       </main>
 
       {/* Mobile Bottom Navigation */}
@@ -257,6 +259,14 @@ const AdminDashboard: React.FC = () => {
           >
             <div className="tab-icon">📈</div>
             <span>Analytics</span>
+          </button>
+          
+          <button 
+            className={`bottom-nav-tab ${activeTab === 'settings' ? 'active' : ''}`}
+            onClick={() => setActiveTab('settings')}
+          >
+            <div className="tab-icon">⚙️</div>
+            <span>Settings</span>
           </button>
         </div>
       </nav>
