@@ -269,14 +269,23 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
         console.log('📈 Final loaded performances:', loadedPerformances);
         console.log('📅 Final loaded date-wise:', loadedDateWise);
         
-        // Immediately compute parent aggregation with loaded data
-        console.log('🔄 Computing initial parent region aggregation...');
-        const withInitialAggregation = computeParentPerformancesWithUsers(loadedPerformances, enhancedUsers);
-        console.log('📊 Initial aggregated performances:', withInitialAggregation);
-        
-        setPerformances(withInitialAggregation);
+        setPerformances(loadedPerformances);
         setDateWisePerformances(loadedDateWise);
-        computeRegionSummary(withInitialAggregation);
+        
+        // Wait for hierarchyLevels to load, then compute parent aggregation
+        setTimeout(() => {
+          console.log('🔄 Computing initial parent region aggregation...');
+          console.log('📊 HierarchyLevels available:', hierarchyLevels.length);
+          
+          if (hierarchyLevels.length > 0) {
+            const withInitialAggregation = computeParentPerformancesWithUsers(loadedPerformances, enhancedUsers);
+            console.log('📊 Initial aggregated performances:', withInitialAggregation);
+            setPerformances(withInitialAggregation);
+            computeRegionSummary(withInitialAggregation);
+          } else {
+            console.log('⚠️ HierarchyLevels not loaded yet, skipping aggregation');
+          }
+        }, 1500); // Wait for hierarchyLevels to load
         
       } catch (error) {
         console.error('❌ Error loading performance data:', error);
