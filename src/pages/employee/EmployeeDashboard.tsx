@@ -4,15 +4,15 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { getFirestoreInstance } from '../../config/firebase';
 import { Campaign } from '../../store/slices/campaignSlice';
 import CampaignCard from '../../components/campaigns/CampaignCard';
-import PerformanceModal from '../../components/campaigns/PerformanceModal';
+import MyTargetModal from '../../components/campaigns/MyTargetModal';
 import LeaderboardModal from '../../components/campaigns/LeaderboardModal';
 
 const EmployeeDashboard: React.FC = () => {
-  const { organization, logout } = useAuth();
+  const { user, organization, logout } = useAuth();
   const [activeCampaigns, setActiveCampaigns] = useState<Campaign[]>([]);
   const [pastCampaigns, setPastCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showPerformanceModal, setShowPerformanceModal] = useState(false);
+  const [showMyTargetModal, setShowMyTargetModal] = useState(false);
   const [showLeaderboardModal, setShowLeaderboardModal] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
 
@@ -68,9 +68,9 @@ const EmployeeDashboard: React.FC = () => {
   }, [organization?.id]);
 
   // Modal handlers
-  const handlePerformanceUpdate = (campaign: Campaign) => {
+  const handleMyTarget = (campaign: Campaign) => {
     setSelectedCampaign(campaign);
-    setShowPerformanceModal(true);
+    setShowMyTargetModal(true);
   };
 
   const handleLeaderboard = (campaign: Campaign) => {
@@ -79,7 +79,7 @@ const EmployeeDashboard: React.FC = () => {
   };
 
   const handleCloseModals = () => {
-    setShowPerformanceModal(false);
+    setShowMyTargetModal(false);
     setShowLeaderboardModal(false);
     setSelectedCampaign(null);
   };
@@ -151,7 +151,7 @@ const EmployeeDashboard: React.FC = () => {
                   key={campaign.id}
                   campaign={campaign}
                   userRole="employee"
-                  onPerformanceUpdate={() => handlePerformanceUpdate(campaign)}
+                  onPerformanceUpdate={() => handleMyTarget(campaign)}
                   onLeaderboard={() => handleLeaderboard(campaign)}
                 />
               ))}
@@ -179,7 +179,7 @@ const EmployeeDashboard: React.FC = () => {
                   key={campaign.id}
                   campaign={campaign}
                   userRole="employee"
-                  onPerformanceUpdate={() => handlePerformanceUpdate(campaign)}
+                  onPerformanceUpdate={() => handleMyTarget(campaign)}
                   onLeaderboard={() => handleLeaderboard(campaign)}
                 />
               ))}
@@ -189,11 +189,10 @@ const EmployeeDashboard: React.FC = () => {
       </main>
 
       {/* Modals */}
-      {showPerformanceModal && selectedCampaign && (
-        <PerformanceModal
+      {showMyTargetModal && selectedCampaign && (
+        <MyTargetModal
           campaign={selectedCampaign as any}
           onClose={handleCloseModals}
-          onUpdate={() => {}}
         />
       )}
 

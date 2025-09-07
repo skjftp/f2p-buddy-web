@@ -8267,3 +8267,326 @@ body {
   }
 }
 
+
+/* Employee Campaign Button Styles */
+.btn-employee {
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 100px;
+  justify-content: center;
+}
+
+.btn-employee:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+/* My Target Modal Styles */
+.my-target-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.my-target-modal .modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.my-target-modal .modal-content {
+  position: relative;
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  width: 90vw;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  z-index: 2001;
+}
+
+.target-content {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Overall Progress */
+.overall-progress {
+  text-align: center;
+  margin-bottom: 24px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f6f8ff, #e8f0ff);
+  border-radius: var(--radius-md);
+}
+
+.overall-progress h3 {
+  margin: 0 0 16px 0;
+  color: var(--gray-800);
+}
+
+.progress-circle {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 16px;
+  background: conic-gradient(var(--primary) 0deg, var(--primary) calc(var(--progress, 0) * 3.6deg), var(--gray-200) calc(var(--progress, 0) * 3.6deg));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.circle-progress {
+  width: 60px;
+  height: 60px;
+  background: var(--white);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.progress-percent {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.overall-progress p {
+  margin: 0;
+  color: var(--gray-600);
+  font-size: 14px;
+}
+
+/* Targets Breakdown */
+.targets-breakdown h3 {
+  margin: 0 0 16px 0;
+  color: var(--gray-800);
+}
+
+.targets-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.target-card {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  transition: all 0.2s ease;
+}
+
+.target-card:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.target-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.sku-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sku-code {
+  background: var(--primary);
+  color: var(--white);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.sku-name {
+  color: var(--gray-700);
+  font-size: 12px;
+}
+
+.target-percentage {
+  background: var(--success);
+  color: var(--white);
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.target-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.target-numbers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.achieved,
+.target-value {
+  text-align: center;
+}
+
+.achieved .label,
+.target-value .label {
+  display: block;
+  font-size: 10px;
+  color: var(--gray-500);
+  margin-bottom: 4px;
+}
+
+.achieved .value,
+.target-value .value {
+  display: block;
+  font-weight: 600;
+  color: var(--gray-800);
+  font-size: 14px;
+}
+
+.progress-bar {
+  height: 6px;
+  background: var(--gray-200);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--success), var(--primary));
+  transition: width 0.3s ease;
+}
+
+.remaining {
+  text-align: center;
+  font-size: 12px;
+}
+
+.remaining-label {
+  color: var(--gray-500);
+}
+
+.remaining-value {
+  color: var(--warning);
+  font-weight: 600;
+}
+
+/* Motivation Section */
+.motivation-section {
+  margin-top: 20px;
+}
+
+.motivation-card {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: var(--white);
+  padding: 16px;
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.motivation-card h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+}
+
+.motivation-card p {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.no-targets {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--gray-500);
+}
+
+.no-targets .empty-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.no-targets h4 {
+  margin: 0 0 8px 0;
+  color: var(--gray-600);
+}
+
+.no-targets p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Mobile My Target Modal */
+@media (max-width: 768px) {
+  .my-target-modal .modal-content {
+    width: 95vw;
+    max-height: 90vh;
+  }
+  
+  .target-content {
+    padding: 16px;
+  }
+  
+  .overall-progress {
+    padding: 16px;
+  }
+  
+  .progress-circle {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .circle-progress {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .progress-percent {
+    font-size: 14px;
+  }
+  
+  .target-numbers {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .btn-employee {
+    flex: 1;
+    padding: 12px;
+    font-size: 14px;
+    min-width: auto;
+  }
+}
+
