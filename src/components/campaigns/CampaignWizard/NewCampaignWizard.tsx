@@ -153,8 +153,7 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
   const [csvData, setCsvData] = useState<any[]>([]);
   const [csvError, setCsvError] = useState<string>('');
   
-  // Step 4 state for editable targets
-  const [editableTargets, setEditableTargets] = useState<Record<string, Record<string, number>>>({});
+  // Step 4 state
   const [distributionAlgorithm, setDistributionAlgorithm] = useState<'equal' | 'territory' | 'performance' | 'custom'>('equal');
 
   // Load organization SKUs and users
