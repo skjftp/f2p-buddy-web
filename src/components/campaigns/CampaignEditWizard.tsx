@@ -643,7 +643,6 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
                   </div>
                 )}
                 </div>
-              </div>
             ))}
           </div>
         )}
