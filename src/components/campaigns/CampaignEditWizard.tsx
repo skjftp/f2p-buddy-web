@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { doc, updateDoc, deleteDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, deleteDoc, serverTimestamp, getDoc, query, where, getDocs, collection } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFirestoreInstance, getStorageInstance } from '../../config/firebase';
 import { Campaign } from '../../store/slices/campaignSlice';
 import { toast } from 'react-toastify';
 import { useDropzone } from 'react-dropzone';
+import { useAuth } from '../../contexts/AuthContext';
 import CampaignTargeting from './CampaignTargeting';
 
 interface CampaignEditWizardProps {
@@ -14,9 +15,13 @@ interface CampaignEditWizardProps {
 }
 
 const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClose, onUpdate }) => {
+  const { organization } = useAuth();
   const [activeTab, setActiveTab] = useState<'basic' | 'skus' | 'targets' | 'regions' | 'contest' | 'prizes' | 'participants'>('basic');
   const [loading, setLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  
+  // Organization data
+  const [organizationSkus, setOrganizationSkus] = useState<any[]>([]);
   
   const [campaignData, setCampaignData] = useState({
     name: campaign.name,
@@ -25,15 +30,31 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
     endDate: campaign.endDate,
     status: campaign.status,
     banner: null as File | null,
+    
+    // New campaign structure fields
+    selectedSkus: [] as string[],
+    targetConfigs: [] as any[],
     selectedRegions: [] as string[],
     selectedDesignations: [] as string[],
+    regionalDistribution: {} as any,
+    contestType: 'points' as string,
+    pointSystem: undefined as any,
+    milestoneSystem: undefined as any,
+    prizeStructure: {
+      panIndiaLevel: [] as any[],
+      regionalLevel: [] as any[],
+      subRegionalLevel: [] as any[]
+    },
+    userTargets: [] as any[],
+    customTargetsEnabled: false,
+    
+    // Legacy fields for backward compatibility
     regionTargets: [] as any[],
     totalTarget: 0,
     skuTargets: [] as any[],
     volumeTargets: {} as any,
     valueTargets: {} as any,
     activityTargets: {} as any,
-    contestType: 'points' as string,
     individualPrizes: [] as any[],
     participantType: 'individual' as string,
     participants: campaign.participants || []
@@ -44,23 +65,48 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
   // Load complete campaign data on mount
   useEffect(() => {
     const loadCampaignData = async () => {
+      if (!organization?.id) return;
+      
       try {
         const dbInstance = await getFirestoreInstance();
+        
+        // Load organization SKUs
+        const orgDoc = await getDoc(doc(dbInstance, 'organizations', organization.id));
+        if (orgDoc.exists() && orgDoc.data().skus) {
+          setOrganizationSkus(orgDoc.data().skus);
+        }
+        
+        // Load campaign data
         const campaignDoc = await getDoc(doc(dbInstance, 'campaigns', campaign.id));
         
         if (campaignDoc.exists()) {
           const data = campaignDoc.data();
           setCampaignData(prev => ({
             ...prev,
+            // New campaign structure fields
+            selectedSkus: data.selectedSkus || [],
+            targetConfigs: data.targetConfigs || [],
             selectedRegions: data.selectedRegions || [],
             selectedDesignations: data.selectedDesignations || [],
+            regionalDistribution: data.regionalDistribution || {},
+            contestType: data.contestType || 'points',
+            pointSystem: data.pointSystem || undefined,
+            milestoneSystem: data.milestoneSystem || undefined,
+            prizeStructure: data.prizeStructure || {
+              panIndiaLevel: [],
+              regionalLevel: [],
+              subRegionalLevel: []
+            },
+            userTargets: data.userTargets || [],
+            customTargetsEnabled: data.customTargetsEnabled || false,
+            
+            // Legacy fields
             regionTargets: data.regionTargets || [],
             totalTarget: data.totalTarget || 0,
             skuTargets: data.skuTargets || [],
             volumeTargets: data.volumeTargets || {},
             valueTargets: data.valueTargets || {},
             activityTargets: data.activityTargets || {},
-            contestType: data.contestType || 'points',
             individualPrizes: data.individualPrizes || []
           }));
         }
@@ -70,7 +116,7 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
     };
 
     loadCampaignData();
-  }, [campaign.id]);
+  }, [campaign.id, organization?.id]);
 
   const onBannerDrop = (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -271,29 +317,172 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
     </div>
   );
 
-  const renderSkuTab = () => (
-    <div className="edit-tab-content">
-      <div className="section-header">
-        <h3>📦 SKU Selection</h3>
-        <p>Modify which SKUs are included in this campaign</p>
-      </div>
-      <div className="coming-soon">
-        <p>SKU editing coming soon. Use current campaign creation for SKU management.</p>
-      </div>
-    </div>
-  );
+  const renderSkuTab = () => {
+    const handleSkuSelection = (skuId: string, selected: boolean) => {
+      setCampaignData(prev => {
+        const newSelectedSkus = selected 
+          ? [...prev.selectedSkus, skuId]
+          : prev.selectedSkus.filter(id => id !== skuId);
 
-  const renderTargetsTab = () => (
-    <div className="edit-tab-content">
-      <div className="section-header">
-        <h3>🎯 Target Metrics Configuration</h3>
-        <p>Edit target values and types for selected SKUs</p>
+        // Update target configs to match selected SKUs
+        const newTargetConfigs = newSelectedSkus.map(id => {
+          const existingConfig = prev.targetConfigs.find(c => c.skuId === id);
+          if (existingConfig) return existingConfig;
+          
+          const sku = organizationSkus.find(s => s.id === id);
+          return {
+            skuId: id,
+            skuName: sku?.name || '',
+            skuCode: sku?.code || '',
+            targetType: 'volume' as const,
+            target: 0,
+            unit: 'units'
+          };
+        });
+
+        return {
+          ...prev,
+          selectedSkus: newSelectedSkus,
+          targetConfigs: newTargetConfigs
+        };
+      });
+    };
+
+    return (
+      <div className="edit-tab-content">
+        <div className="section-header">
+          <h3>📦 SKU Selection</h3>
+          <p>Modify which SKUs are included in this campaign</p>
+        </div>
+
+        {organizationSkus.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">📦</div>
+            <h4>No SKUs Available</h4>
+            <p>Please add SKUs in Organization Settings first.</p>
+          </div>
+        ) : (
+          <div className="skus-selection">
+            {organizationSkus.map((sku) => (
+              <label key={sku.id} className="sku-selection-item">
+                <input
+                  type="checkbox"
+                  checked={campaignData.selectedSkus.includes(sku.id)}
+                  onChange={(e) => handleSkuSelection(sku.id, e.target.checked)}
+                />
+                <div className="sku-info">
+                  <div className="sku-header">
+                    <span className="sku-code">{sku.code}</span>
+                    <span className="sku-name">{sku.name}</span>
+                  </div>
+                  {sku.category && <span className="sku-category">{sku.category}</span>}
+                  {sku.description && <p className="sku-description">{sku.description}</p>}
+                  {sku.unitPrice && (
+                    <div className="sku-price">
+                      {sku.currency === 'INR' ? '₹' : sku.currency === 'USD' ? '$' : '€'}
+                      {sku.unitPrice}
+                    </div>
+                  )}
+                </div>
+              </label>
+            ))}
+          </div>
+        )}
+
+        <div className="selection-summary">
+          <strong>Selected: {campaignData.selectedSkus.length} SKU(s)</strong>
+        </div>
       </div>
-      <div className="coming-soon">
-        <p>Target metrics editing coming soon. Use current campaign creation for target management.</p>
+    );
+  };
+
+  const renderTargetsTab = () => {
+    const updateTargetConfig = (skuId: string, updates: any) => {
+      setCampaignData(prev => ({
+        ...prev,
+        targetConfigs: prev.targetConfigs.map(config =>
+          config.skuId === skuId ? { ...config, ...updates } : config
+        )
+      }));
+    };
+
+    return (
+      <div className="edit-tab-content">
+        <div className="section-header">
+          <h3>🎯 Target Metrics Configuration</h3>
+          <p>Edit target values and types for selected SKUs</p>
+        </div>
+
+        {campaignData.selectedSkus.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">🎯</div>
+            <h4>No SKUs Selected</h4>
+            <p>Please select SKUs in the previous tab first.</p>
+          </div>
+        ) : (
+          <div className="target-configs">
+            {campaignData.targetConfigs.map((config) => (
+              <div key={config.skuId} className="target-config-item">
+                <h4>{config.skuCode} - {config.skuName}</h4>
+                
+                <div className="config-row">
+                  <div className="form-group">
+                    <label className="form-label">Target Type</label>
+                    <select
+                      className="form-input"
+                      value={config.targetType}
+                      onChange={(e) => updateTargetConfig(config.skuId, { 
+                        targetType: e.target.value as 'volume' | 'value',
+                        unit: e.target.value === 'volume' ? 'units' : 'INR'
+                      })}
+                    >
+                      <option value="volume">Volume Based</option>
+                      <option value="value">Value Based</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Target Value</label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      value={config.target}
+                      onChange={(e) => updateTargetConfig(config.skuId, { target: parseFloat(e.target.value) || 0 })}
+                      placeholder="Enter target"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Unit</label>
+                    <select
+                      className="form-input"
+                      value={config.unit}
+                      onChange={(e) => updateTargetConfig(config.skuId, { unit: e.target.value })}
+                    >
+                      {config.targetType === 'volume' ? (
+                        <>
+                          <option value="units">Units</option>
+                          <option value="cases">Cases</option>
+                          <option value="kg">Kilograms</option>
+                          <option value="liters">Liters</option>
+                        </>
+                      ) : (
+                        <>
+                          <option value="INR">₹ (INR)</option>
+                          <option value="USD">$ (USD)</option>
+                          <option value="EUR">€ (EUR)</option>
+                        </>
+                      )}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderRegionsTab = () => (
     <CampaignTargeting
