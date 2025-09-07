@@ -15,6 +15,10 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
   onEdit, 
   onView 
 }) => {
+  // Safety check for campaign data
+  if (!campaign) {
+    return <div className="campaign-card error">Campaign data not available</div>;
+  }
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -46,8 +50,10 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
           📅 {formatDate(campaign.startDate)} - {formatDate(campaign.endDate)}
         </div>
         
-        <div className="campaign-metrics">
-          <div className="metrics-grid">
+        {/* Campaign metrics - only show if data exists */}
+        {(campaign.targetConfigs || campaign.type) && (
+          <div className="campaign-metrics">
+            <div className="metrics-grid">
             {/* Handle new campaign structure with targetConfigs */}
             {(campaign.targetConfigs && Array.isArray(campaign.targetConfigs)) ? (
               campaign.targetConfigs.map((config: any) => (
@@ -91,8 +97,9 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
             ) : (
               <div className="no-metrics">No metrics available</div>
             )}
+            </div>
           </div>
-        </div>
+        )}
         
         <div className="participants-count">
           👥 {campaign.userTargets?.length || campaign.participants?.length || 0} participants
