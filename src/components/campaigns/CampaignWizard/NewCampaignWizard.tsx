@@ -377,7 +377,7 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
     eligibleUsers.forEach(user => {
       const userTargetData: UserTarget = {
         userId: user.id,
-        userName: user.name,
+        userName: user.name || user.displayName || 'Unknown User',
         regionName: user.finalRegionName || 'Unknown Region',
         targets: {}
       };
