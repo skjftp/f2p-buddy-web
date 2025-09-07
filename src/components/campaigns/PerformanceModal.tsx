@@ -210,7 +210,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
         }
         
         // First load complete user data with regionHierarchy
-        const enhancedUsers = [];
+        const enhancedUsers: any[] = [];
         for (const user of campaign.userTargets || []) {
           const userDoc = await getDoc(doc(dbInstance, 'users', user.userId));
           if (userDoc.exists()) {
