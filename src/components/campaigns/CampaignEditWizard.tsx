@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { doc, updateDoc, deleteDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, deleteDoc, serverTimestamp, getDoc, query, where, getDocs, collection } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFirestoreInstance, getStorageInstance } from '../../config/firebase';
 import { Campaign } from '../../store/slices/campaignSlice';
@@ -236,8 +236,88 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
     }
   };
 
+  // Recalculate targets with current organization users
+  const recalculateTargets = async () => {
+    console.log('🔄 Recalculating targets with current organization users...');
+    
+    try {
+      const dbInstance = await getFirestoreInstance();
+      
+      // Load current organization users
+      const usersQuery = query(
+        collection(dbInstance, 'users'),
+        where('organizationId', '==', organization?.id)
+      );
+      const usersSnapshot = await getDocs(usersQuery);
+      const currentUsers: any[] = [];
+      
+      usersSnapshot.forEach((doc) => {
+        currentUsers.push({ id: doc.id, ...doc.data() });
+      });
+      
+      console.log('👥 Current organization users:', currentUsers.length);
+      
+      // Filter users based on campaign targeting
+      const eligibleUsers = currentUsers.filter(user => {
+        const hasDesignation = campaignData.selectedDesignations.some(desId => 
+          designations.find(des => des.id === desId)?.name === user.designationName
+        );
+        
+        const hasRegion = campaignData.selectedRegions.some(regionId => {
+          const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
+          return Object.values(user.regionHierarchy || {}).includes(regionId) ||
+                 user.finalRegionName === regionItem?.name;
+        });
+        
+        return hasDesignation && hasRegion;
+      });
+      
+      console.log('✅ Eligible users after recalculation:', eligibleUsers.length);
+      
+      // Create new user targets
+      const newUserTargets: any[] = [];
+      
+      eligibleUsers.forEach(user => {
+        const userTargetData: any = {
+          userId: user.id,
+          userName: user.name || user.displayName || 'Unknown User',
+          regionName: user.finalRegionName || 'Unknown Region',
+          targets: {}
+        };
 
+        // Assign targets based on regional distribution
+        campaignData.targetConfigs.forEach((config: any) => {
+          campaignData.selectedRegions.forEach(regionId => {
+            const regionalDist = campaignData.regionalDistribution[config.skuId]?.find(
+              (dist: any) => dist.regionId === regionId
+            );
+            
+            const userBelongsToRegion = Object.values(user.regionHierarchy || {}).includes(regionId) ||
+                                       user.finalRegionName === regionalDist?.regionName;
+            
+            if (regionalDist && userBelongsToRegion) {
+              userTargetData.targets[config.skuId] = regionalDist.individualTarget;
+            }
+          });
+        });
 
+        newUserTargets.push(userTargetData);
+      });
+      
+      setCampaignData(prev => ({
+        ...prev,
+        userTargets: newUserTargets
+      }));
+      
+      const oldCount = campaignData.userTargets?.length || 0;
+      console.log(`🎯 Targets recalculated: ${oldCount} → ${newUserTargets.length} users`);
+      toast.success(`Targets updated! Now includes ${newUserTargets.length} users (was ${oldCount})`);
+      
+    } catch (error) {
+      console.error('❌ Error recalculating targets:', error);
+      toast.error('Failed to recalculate targets');
+    }
+  };
 
   const renderBasicTab = () => (
     <div className="edit-tab-content">
@@ -497,6 +577,71 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
                       )}
                     </select>
                   </div>
+
+                  {campaignData.targetConfigs.length > 1 && (
+                    <div className="form-group">
+                      <label className="form-label">Ranking Weightage (%)</label>
+                      <input
+                        type="number"
+                        className="form-input"
+                        value={config.weightage || 0}
+                        onChange={(e) => updateTargetConfig(config.skuId, { weightage: parseFloat(e.target.value) || 0 })}
+                        placeholder="e.g., 70"
+                        min="0"
+                        max="100"
+                      />
+                      <div className="form-help">
+                        Weight for leaderboard ranking
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {campaignData.targetConfigs.length > 1 && (
+                  <div className="weightage-summary">
+                    <h5>⚖️ Ranking Weightage Distribution</h5>
+                    <div className="weightage-grid">
+                      {campaignData.targetConfigs.map(cfg => (
+                        <div key={cfg.skuId} className="weightage-card">
+                          <span className="sku-badge">{cfg.skuCode}</span>
+                          <span className="weightage-percent">{cfg.weightage || 0}%</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="weightage-validation">
+                      <span className="total-label">Total Weightage:</span>
+                      <span className={`total-value ${
+                        campaignData.targetConfigs.reduce((sum, cfg) => sum + (cfg.weightage || 0), 0) === 100 
+                          ? 'valid' : 'invalid'
+                      }`}>
+                        {campaignData.targetConfigs.reduce((sum, cfg) => sum + (cfg.weightage || 0), 0)}%
+                      </span>
+                      {campaignData.targetConfigs.reduce((sum, cfg) => sum + (cfg.weightage || 0), 0) !== 100 && (
+                        <div className="weightage-actions">
+                          <span className="validation-warning">
+                            ⚠️ Should total 100% for accurate ranking
+                          </span>
+                          <button 
+                            type="button"
+                            className="btn-auto-balance"
+                            onClick={() => {
+                              const equalWeight = Math.round(100 / campaignData.targetConfigs.length);
+                              setCampaignData(prev => ({
+                                ...prev,
+                                targetConfigs: prev.targetConfigs.map(cfg => ({
+                                  ...cfg,
+                                  weightage: equalWeight
+                                }))
+                              }));
+                            }}
+                          >
+                            Auto-Balance
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
                 </div>
               </div>
             ))}
@@ -1074,8 +1219,17 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
                   <div className="computed-targets-section">
                     <div className="section-header">
                       <h4>🔄 Current Individual Targets</h4>
-                      <div className="targets-info">
-                        {campaignData.userTargets?.length || 0} participant(s)
+                      <div className="targets-actions">
+                        <span className="targets-info">
+                          {campaignData.userTargets?.length || 0} participant(s)
+                        </span>
+                        <button 
+                          className="btn-recalculate"
+                          onClick={recalculateTargets}
+                          title="Recalculate targets with current organization users"
+                        >
+                          🔄 Recalculate Targets
+                        </button>
                       </div>
                     </div>
 

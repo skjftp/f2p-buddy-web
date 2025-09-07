@@ -7163,3 +7163,41 @@ body {
   cursor: pointer;
 }
 
+
+/* Recalculate Targets Interface */
+.targets-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.targets-info {
+  color: var(--gray-600);
+  font-size: 12px;
+}
+
+.btn-recalculate {
+  background: var(--secondary);
+  color: var(--white);
+  border: none;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-recalculate:hover {
+  background: var(--secondary);
+  transform: translateY(-1px);
+}
+
+.weightage-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
