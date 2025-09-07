@@ -16,6 +16,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
   const [loading, setLoading] = useState(false);
   const [hierarchyLevels, setHierarchyLevels] = useState<any[]>([]);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [enhancedUserTargets, setEnhancedUserTargets] = useState<any[]>([]);
   
   // Date-wise performance data: {userId: {date: {skuId: value}}}
   const [dateWisePerformances, setDateWisePerformances] = useState<Record<string, Record<string, Record<string, number>>>>({});
@@ -26,7 +27,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
     const updatedPerformances = { ...performanceData };
     
     // For each user, check if they're in a parent region and should get child region aggregation
-    campaign.userTargets?.forEach((user: any) => {
+    enhancedUserTargets.forEach((user: any) => {
       console.log(`🔍 Checking user ${user.userName} (${user.regionName}) for parent region aggregation`);
       
       if (!user.regionName || !user.regionHierarchy) {
@@ -42,7 +43,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
         childPerformanceSum[config.skuId] = 0;
         
         // Find all child regions of this user's region
-        campaign.userTargets?.forEach((otherUser: any) => {
+        enhancedUserTargets.forEach((otherUser: any) => {
           if (otherUser.userId === user.userId) return; // Skip self
           
           console.log(`   🔍 Checking if ${otherUser.userName} (${otherUser.regionName}) is child of ${user.userName} (${user.regionName})`);
@@ -86,7 +87,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
     });
     
     return updatedPerformances;
-  }, [campaign, hierarchyLevels]);
+  }, [enhancedUserTargets, hierarchyLevels]);
 
   const computeRegionSummary = useCallback((performanceData: Record<string, Record<string, number>>) => {
     const summary: Record<string, any> = {};
@@ -130,11 +131,34 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
           }
         }
         
+        // First load complete user data with regionHierarchy
+        const enhancedUsers = [];
+        for (const user of campaign.userTargets || []) {
+          const userDoc = await getDoc(doc(dbInstance, 'users', user.userId));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            const enhancedUser = {
+              ...user,
+              regionName: userData.finalRegionName || user.regionName,
+              regionHierarchy: userData.regionHierarchy || {}
+            };
+            enhancedUsers.push(enhancedUser);
+            console.log(`👤 Enhanced ${user.userName}:`, {
+              regionName: enhancedUser.regionName,
+              regionHierarchy: enhancedUser.regionHierarchy
+            });
+          } else {
+            enhancedUsers.push(user);
+          }
+        }
+        
+        setEnhancedUserTargets(enhancedUsers);
+        
         const loadedPerformances: Record<string, Record<string, number>> = {};
         const loadedDateWise: Record<string, Record<string, Record<string, number>>> = {};
         
         // Load existing performance data for each user
-        const loadPromises = campaign.userTargets?.map(async (user: any) => {
+        const loadPromises = enhancedUsers.map(async (user: any) => {
           const docId = `${user.userId}_${campaign.id}`;
           const perfDoc = await getDoc(doc(dbInstance, 'userPerformances', docId));
           
