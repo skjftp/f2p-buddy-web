@@ -536,7 +536,7 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
                 <div key={level.id} className="hierarchy-level-section">
                   <h5 className="level-title">{level.name}</h5>
                   <div className="hierarchy-items">
-                    {level.items.map(item => {
+                    {level.items.map((item: any) => {
                       const isSelected = campaignData.selectedRegions.includes(item.id);
                       
                       return (
