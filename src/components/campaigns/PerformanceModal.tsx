@@ -122,9 +122,10 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
         
         console.log(`📊 Saving for user ${user.userName}:`, userPerformanceData);
         
-        // Save to userPerformances/{userId}/campaigns/{campaignId}
+        // Save to userPerformances/{userId}_{campaignId} (flat structure)
+        const docId = `${user.userId}_${campaign.id}`;
         await setDoc(
-          doc(dbInstance, 'userPerformances', user.userId, 'campaigns', campaign.id),
+          doc(dbInstance, 'userPerformances', docId),
           userPerformanceData,
           { merge: true } // Merge with existing data
         );

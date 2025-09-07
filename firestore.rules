@@ -101,22 +101,16 @@ service cloud.firestore {
       allow read, write: if hasRole('admin');
     }
 
-    // User Performances collection - User-centric performance data
-    match /userPerformances/{userId} {
+    // User Performances collection - Flat structure: {userId}_{campaignId}
+    match /userPerformances/{userPerformanceId} {
       // Users can read and write their own performance data
-      allow read, write: if isAuthenticated() && 
-                           (request.auth.token.phone_number == userId || request.auth.uid == userId);
+      // Document ID format: userId_campaignId
+      allow read, write: if isAuthenticated() && (
+        userPerformanceId.split('_')[0] == request.auth.token.phone_number ||
+        userPerformanceId.split('_')[0] == request.auth.uid
+      );
       // Admins can read all user performances
-      allow read: if isAuthenticated() && hasRole('admin');
-      
-      // Subcollection for campaigns
-      match /campaigns/{campaignId} {
-        // Users can manage their own campaign performance
-        allow read, write: if isAuthenticated() && 
-                             (request.auth.token.phone_number == userId || request.auth.uid == userId);
-        // Admins can read all campaign performances
-        allow read: if isAuthenticated() && hasRole('admin');
-      }
+      allow read, write: if isAuthenticated() && hasRole('admin');
     }
   }
 }
