@@ -110,6 +110,7 @@ const EmployeeDashboard: React.FC = () => {
       {/* Header with Logo Center, Icons Top Right */}
       <header className="employee-header">
         <div className="header-content">
+          <div className="header-left"></div>
           <div className="header-center">
             {organization?.logo ? (
               <img src={organization.logo} alt={organization.name} className="org-logo-image" />
