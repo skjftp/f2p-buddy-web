@@ -504,13 +504,89 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
   };
 
   const renderRegionsTab = () => (
-    <CampaignTargeting
-      organizationId={campaign.orgId}
-      initialSelectedRegions={campaignData.selectedRegions}
-      initialSelectedDesignations={campaignData.selectedDesignations}
-      initialRegionTargets={campaignData.regionTargets}
-      onTargetingChange={handleTargetingChange}
-    />
+    <div className="edit-tab-content">
+      <div className="section-header">
+        <h3>🗺️ Regional & Designation Targeting</h3>
+        <p>View and edit regional distribution and targeting</p>
+      </div>
+
+      {/* Selected Regions Display */}
+      <div className="targeting-summary">
+        <div className="summary-section">
+          <h4>Selected Regions ({campaignData.selectedRegions.length})</h4>
+          <div className="selected-items">
+            {campaignData.selectedRegions.length === 0 ? (
+              <p className="empty-text">No regions selected</p>
+            ) : (
+              campaignData.selectedRegions.map(regionId => (
+                <span key={regionId} className="selected-item">
+                  {regionId}
+                </span>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="summary-section">
+          <h4>Selected Designations ({campaignData.selectedDesignations.length})</h4>
+          <div className="selected-items">
+            {campaignData.selectedDesignations.length === 0 ? (
+              <p className="empty-text">No designations selected</p>
+            ) : (
+              campaignData.selectedDesignations.map(designationId => (
+                <span key={designationId} className="selected-item">
+                  {designationId}
+                </span>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Regional Distribution Display */}
+      {Object.keys(campaignData.regionalDistribution || {}).length > 0 && (
+        <div className="distribution-display">
+          <h4>📊 Current Regional Distribution</h4>
+          {Object.entries(campaignData.regionalDistribution).map(([skuId, distributions]) => {
+            const config = campaignData.targetConfigs.find(c => c.skuId === skuId);
+            return (
+              <div key={skuId} className="sku-distribution-view">
+                <h5>{config?.skuCode || skuId} Distribution</h5>
+                <div className="distribution-table">
+                  <div className="table-header">
+                    <span>Region</span>
+                    <span>Target</span>
+                    <span>Users</span>
+                    <span>Per User</span>
+                  </div>
+                  {(distributions as any[]).map((dist: any) => (
+                    <div key={dist.regionId} className="distribution-row">
+                      <span>{dist.regionName}</span>
+                      <span>{dist.target} {config?.unit}</span>
+                      <span>{dist.userCount}</span>
+                      <span>{dist.individualTarget} {config?.unit}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Legacy Regional Targeting Component for Further Editing */}
+      <div className="legacy-targeting">
+        <h4>🔧 Advanced Regional Targeting</h4>
+        <p>Use this interface to modify regional and designation targeting:</p>
+        <CampaignTargeting
+          organizationId={campaign.orgId}
+          initialSelectedRegions={campaignData.selectedRegions}
+          initialSelectedDesignations={campaignData.selectedDesignations}
+          initialRegionTargets={campaignData.regionTargets}
+          onTargetingChange={handleTargetingChange}
+        />
+      </div>
+    </div>
   );
 
   const renderContestTab = () => (
