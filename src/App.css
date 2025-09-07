@@ -6282,3 +6282,263 @@ body {
   margin-top: 8px;
 }
 
+
+/* Performance Modal Layout Improvements */
+.performance-modal .modal-content {
+  max-width: 95vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Fixed Region Summary at Top */
+.region-summary-fixed {
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--gray-200);
+  padding: 12px 20px;
+  flex-shrink: 0;
+}
+
+.region-summary-fixed h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: var(--gray-800);
+}
+
+.compact-summary-grid {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.compact-region-card {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  min-width: 200px;
+}
+
+.region-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.region-name {
+  font-weight: 600;
+  color: var(--gray-800);
+  font-size: 13px;
+}
+
+.user-count {
+  font-size: 11px;
+  color: var(--gray-500);
+}
+
+.region-skus-compact {
+  display: flex;
+  gap: 8px;
+}
+
+.sku-compact {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.sku-label {
+  color: var(--gray-600);
+}
+
+.sku-percentage {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.compact-bar {
+  width: 30px;
+  height: 3px;
+  background: var(--gray-200);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.compact-fill {
+  height: 100%;
+  background: var(--success);
+  transition: width 0.3s ease;
+}
+
+/* Scrollable Performance Content */
+.performance-content-scrollable {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+
+.performance-table-container {
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.performance-table {
+  width: 100%;
+  min-width: 700px;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 180px 100px repeat(auto-fit, minmax(120px, 1fr)) 80px;
+  gap: 8px;
+  background: var(--gray-100);
+  padding: 8px;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--gray-700);
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.table-body {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 180px 100px repeat(auto-fit, minmax(120px, 1fr)) 80px;
+  gap: 8px;
+  padding: 8px;
+  border-bottom: 1px solid var(--gray-100);
+  align-items: center;
+  font-size: 12px;
+}
+
+.table-row:hover {
+  background: var(--gray-50);
+}
+
+.user-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-weight: 500;
+  color: var(--gray-800);
+}
+
+.user-id {
+  font-size: 10px;
+  color: var(--gray-500);
+}
+
+.region-cell {
+  color: var(--gray-600);
+  font-size: 11px;
+}
+
+.sku-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.target-display {
+  font-size: 10px;
+  color: var(--gray-500);
+}
+
+.performance-input-compact {
+  width: 60px;
+  padding: 2px 4px;
+  border: 1px solid var(--gray-300);
+  border-radius: 3px;
+  font-size: 11px;
+  text-align: center;
+}
+
+.performance-input-compact:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.percentage-display {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.overall-cell {
+  text-align: center;
+}
+
+.overall-percentage {
+  font-weight: 600;
+  color: var(--primary);
+  font-size: 12px;
+}
+
+.unit-info {
+  font-size: 10px;
+  color: var(--gray-500);
+  font-weight: normal;
+}
+
+/* Improved Modal Actions */
+.modal-actions-compact {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--gray-200);
+  background: var(--gray-50);
+  flex-shrink: 0;
+}
+
+.btn-cancel {
+  background: var(--white);
+  color: var(--gray-600);
+  border: 1px solid var(--gray-300);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-cancel:hover {
+  background: var(--gray-50);
+}
+
+.btn-save {
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-save:hover {
+  background: var(--primary-dark);
+}
+
+.btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.date-wise-mode,
+.csv-upload-mode {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--gray-600);
+}
+

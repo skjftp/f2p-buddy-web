@@ -108,19 +108,54 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
             </button>
           </div>
 
-          <div className="performance-content">
+          {/* Region Summary - Fixed at Top */}
+          {Object.keys(regionSummary).length > 0 && (
+            <div className="region-summary-fixed">
+              <h4>🗺️ Region Performance Summary</h4>
+              <div className="compact-summary-grid">
+                {Object.entries(regionSummary).map(([regionName, data]: [string, any]) => (
+                  <div key={regionName} className="compact-region-card">
+                    <div className="region-header">
+                      <span className="region-name">{regionName}</span>
+                      <span className="user-count">({data.totalUsers} users)</span>
+                    </div>
+                    <div className="region-skus-compact">
+                      {Object.entries(data.skus).map(([skuCode, skuData]: [string, any]) => {
+                        const percentage = skuData.target > 0 ? Math.round((skuData.achieved / skuData.target) * 100) : 0;
+                        return (
+                          <div key={skuCode} className="sku-compact">
+                            <span className="sku-label">{skuCode}:</span>
+                            <span className="sku-percentage">{percentage}%</span>
+                            <div className="compact-bar">
+                              <div 
+                                className="compact-fill"
+                                style={{ width: `${Math.min(percentage, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="performance-content-scrollable">
             {activeMode === 'consolidated' && (
               <div className="performance-table-container">
                 <div className="performance-table">
                   <div className="table-header">
-                    <span>User</span>
-                    <span>Region</span>
+                    <span className="user-col">User</span>
+                    <span className="region-col">Region</span>
                     {campaign.targetConfigs?.map((config: any) => (
-                      <span key={config.skuId}>
-                        {config.skuCode} ({config.unit})
+                      <span key={config.skuId} className="sku-col">
+                        {config.skuCode}
+                        <div className="unit-info">({config.unit})</div>
                       </span>
                     ))}
-                    <span>Overall</span>
+                    <span className="overall-col">Overall</span>
                   </div>
                   
                   <div className="table-body">
@@ -143,21 +178,24 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
                             
                             return (
                               <div key={config.skuId} className="sku-cell">
-                                <div className="target-info">Target: {target}</div>
+                                <div className="target-display">Target: {target}</div>
                                 <input
                                   type="number"
+                                  className="performance-input-compact"
                                   value={achieved}
                                   onChange={(e) => updatePerformance(user.userId, config.skuId, parseFloat(e.target.value) || 0)}
                                   placeholder="0"
                                   min="0"
                                 />
-                                <div className="percentage">{percentage}%</div>
+                                <div className="percentage-display">{percentage}%</div>
                               </div>
                             );
                           })}
                           
                           <div className="overall-cell">
-                            {campaign.targetConfigs?.length > 0 ? Math.round(totalPercentage / campaign.targetConfigs.length) : 0}%
+                            <div className="overall-percentage">
+                              {campaign.targetConfigs?.length > 0 ? Math.round(totalPercentage / campaign.targetConfigs.length) : 0}%
+                            </div>
                           </div>
                         </div>
                       );
@@ -182,45 +220,16 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
             )}
           </div>
 
-          {/* Region Summary */}
-          {Object.keys(regionSummary).length > 0 && (
-            <div className="region-summary">
-              <h4>🗺️ Region-wise Performance Summary</h4>
-              <div className="summary-grid">
-                {Object.entries(regionSummary).map(([regionName, data]: [string, any]) => (
-                  <div key={regionName} className="region-card">
-                    <h5>{regionName}</h5>
-                    <div className="users-count">{data.totalUsers} users</div>
-                    {Object.entries(data.skus).map(([skuCode, skuData]: [string, any]) => {
-                      const percentage = skuData.target > 0 ? Math.round((skuData.achieved / skuData.target) * 100) : 0;
-                      return (
-                        <div key={skuCode} className="sku-summary">
-                          <div className="sku-header">
-                            <span>{skuCode}</span>
-                            <span>{percentage}%</span>
-                          </div>
-                          <div className="sku-values">
-                            {skuData.achieved}/{skuData.target}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="modal-actions">
-            <button className="btn-secondary" onClick={onClose}>
+          <div className="modal-actions-compact">
+            <button className="btn-cancel" onClick={onClose}>
               Cancel
             </button>
             <button 
-              className="btn"
+              className="btn-save"
               onClick={savePerformance}
               disabled={loading}
             >
-              {loading ? 'Saving...' : '💾 Save Performance'}
+              {loading ? 'Saving...' : '💾 Save'}
             </button>
           </div>
         </div>
