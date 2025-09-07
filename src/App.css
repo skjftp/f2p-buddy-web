@@ -8013,3 +8013,185 @@ body {
   }
 }
 
+
+/* Clean Employee Dashboard Styles */
+.employee-dashboard-container {
+  min-height: 100vh;
+  background: var(--gray-50);
+  display: flex;
+  flex-direction: column;
+}
+
+.employee-header {
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+  padding: 16px 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.employee-header .header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.employee-header .header-center {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.employee-header .org-logo-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.employee-header .org-logo-text {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.employee-header .logo-placeholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--primary);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.employee-header h1 {
+  margin: 0;
+  color: var(--gray-800);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.employee-header .header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.employee-main {
+  flex: 1;
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  overflow-y: auto;
+  scroll-behavior: auto;
+  overflow-anchor: none;
+}
+
+.campaigns-section {
+  margin-bottom: 32px;
+}
+
+.campaigns-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.section-header h2 {
+  margin: 0;
+  color: var(--gray-800);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.section-badge {
+  background: var(--primary);
+  color: var(--white);
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.campaigns-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+}
+
+.empty-state .empty-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.empty-state h3 {
+  margin: 0 0 8px 0;
+  color: var(--gray-700);
+  font-size: 16px;
+}
+
+.empty-state p {
+  margin: 0;
+  color: var(--gray-500);
+  font-size: 14px;
+}
+
+/* Mobile Employee Dashboard */
+@media (max-width: 768px) {
+  .employee-header {
+    padding: 12px 16px;
+  }
+  
+  .employee-header h1 {
+    font-size: 16px;
+  }
+  
+  .employee-main {
+    padding: 16px;
+  }
+  
+  .campaigns-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .campaigns-section {
+    margin-bottom: 24px;
+  }
+  
+  .section-header h2 {
+    font-size: 16px;
+  }
+  
+  /* Ensure employee campaign card icons stay horizontal */
+  .campaign-card[data-user-role='employee'] .campaign-actions {
+    justify-content: center !important;
+    gap: 12px !important;
+  }
+  
+  .campaign-card[data-user-role='employee'] .btn-icon {
+    min-width: 40px !important;
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 16px !important;
+  }
+}
+

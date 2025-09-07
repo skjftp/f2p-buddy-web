@@ -119,8 +119,8 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
             </>
           ) : (
             <>
-              <button className="btn-icon" onClick={onPerformanceUpdate} title="Update Performance">📈</button>
-              <button className="btn-icon" onClick={onLeaderboard} title="View Leaderboard">🏆</button>
+              <button className="btn-icon" onClick={onLeaderboard} title="Leaderboard">🏆</button>
+              <button className="btn-icon" onClick={onPerformanceUpdate} title="My Target">🎯</button>
             </>
           )}
         </div>
