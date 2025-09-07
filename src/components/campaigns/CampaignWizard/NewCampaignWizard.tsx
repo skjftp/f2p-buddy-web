@@ -427,6 +427,14 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
     setCampaignData(prev => ({ ...prev, userTargets }));
   }, [campaignData.selectedDesignations, campaignData.selectedRegions, campaignData.targetConfigs, campaignData.regionalDistribution, organizationUsers, designations, hierarchyLevels]);
 
+  // Auto-trigger distribution computation when regions or algorithm changes
+  useEffect(() => {
+    if (campaignData.selectedRegions.length > 0 && campaignData.targetConfigs.length > 0) {
+      console.log('🔄 Auto-triggering distribution due to region/algorithm change');
+      computeRegionalDistribution(distributionAlgorithm);
+    }
+  }, [campaignData.selectedRegions, distributionAlgorithm, campaignData.targetConfigs]);
+
   // Auto-compute when switching to computed mode
   useEffect(() => {
     if (!campaignData.customTargetsEnabled && Object.keys(campaignData.regionalDistribution).length > 0) {
@@ -939,13 +947,6 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
       }
       
       setCampaignData(prev => ({ ...prev, selectedRegions: Array.from(newSelected) }));
-      
-      // Trigger target distribution recalculation
-      setTimeout(() => {
-        if (Array.from(newSelected).length > 0) {
-          computeRegionalDistribution(distributionAlgorithm);
-        }
-      }, 100);
     };
 
     const removeAllChildren = (parentId: string, selectedSet: Set<string>) => {
