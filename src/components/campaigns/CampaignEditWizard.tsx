@@ -285,25 +285,6 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
           targets: {}
         };
 
-        // Find the best matching region with targets for this user
-        let bestRegionMatch: any = null;
-        let bestMatchLevel = 0;
-        
-        campaignData.targetConfigs.forEach((config: any) => {
-          const distributions = campaignData.regionalDistribution[config.skuId] || [];
-          
-          distributions.forEach((dist: any) => {
-            const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === dist.regionId);
-            
-            const userBelongsToRegion = Object.values(user.regionHierarchy || {}).includes(dist.regionId) ||
-                                       user.finalRegionName === dist.regionName;
-            
-            if (userBelongsToRegion && regionItem && regionItem.level > bestMatchLevel && dist.target > 0) {
-              bestMatchLevel = regionItem.level;
-              bestRegionMatch = dist;
-            }
-          });
-        });
 
         // Assign targets - handle parent regions that have 0 targets
         campaignData.targetConfigs.forEach((config: any) => {
