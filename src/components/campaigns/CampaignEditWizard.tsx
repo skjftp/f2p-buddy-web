@@ -148,26 +148,45 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
         bannerUrl = await getDownloadURL(snapshot.ref);
       }
 
-      const updateData = {
+      const updateData: any = {
         name: campaignData.name,
         description: campaignData.description,
         startDate: campaignData.startDate,
         endDate: campaignData.endDate,
         status: campaignData.status,
         banner: bannerUrl,
+        
+        // New campaign structure fields
+        selectedSkus: campaignData.selectedSkus,
+        targetConfigs: campaignData.targetConfigs,
         selectedRegions: campaignData.selectedRegions,
         selectedDesignations: campaignData.selectedDesignations,
+        regionalDistribution: campaignData.regionalDistribution,
+        contestType: campaignData.contestType,
+        prizeStructure: campaignData.prizeStructure,
+        userTargets: campaignData.userTargets,
+        customTargetsEnabled: campaignData.customTargetsEnabled,
+        
+        // Legacy fields for backward compatibility
         regionTargets: campaignData.regionTargets,
         totalTarget: campaignData.totalTarget,
         skuTargets: campaignData.skuTargets,
         volumeTargets: campaignData.volumeTargets,
         valueTargets: campaignData.valueTargets,
         activityTargets: campaignData.activityTargets,
-        contestType: campaignData.contestType,
         individualPrizes: campaignData.individualPrizes,
         participants: campaignData.participants,
         updatedAt: serverTimestamp()
       };
+
+      // Only add pointSystem and milestoneSystem if they have data
+      if (campaignData.pointSystem && Object.keys(campaignData.pointSystem.basePointsPerUnit || {}).length > 0) {
+        updateData.pointSystem = campaignData.pointSystem;
+      }
+      
+      if (campaignData.milestoneSystem && campaignData.milestoneSystem.milestones && campaignData.milestoneSystem.milestones.length > 0) {
+        updateData.milestoneSystem = campaignData.milestoneSystem;
+      }
 
       const dbInstance = await getFirestoreInstance();
       await updateDoc(doc(dbInstance, 'campaigns', campaign.id), updateData);
@@ -497,23 +516,195 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
         <h3>🏆 Contest Structure</h3>
         <p>Edit contest type and point/milestone configuration</p>
       </div>
-      <div className="coming-soon">
-        <p>Contest structure editing coming soon. Use current campaign creation for contest management.</p>
+
+      <div className="contest-type-selection">
+        <label className="contest-type-option">
+          <input
+            type="radio"
+            name="contestType"
+            value="points"
+            checked={campaignData.contestType === 'points'}
+            onChange={(e) => setCampaignData(prev => ({ ...prev, contestType: e.target.value as any }))}
+          />
+          <div className="option-content">
+            <div className="option-icon">⭐</div>
+            <div className="option-text">
+              <strong>Point System</strong>
+              <p>Participants earn points for achieving targets</p>
+            </div>
+          </div>
+        </label>
+
+        <label className="contest-type-option">
+          <input
+            type="radio"
+            name="contestType"
+            value="milestone"
+            checked={campaignData.contestType === 'milestone'}
+            onChange={(e) => setCampaignData(prev => ({ ...prev, contestType: e.target.value as any }))}
+          />
+          <div className="option-content">
+            <div className="option-icon">🏁</div>
+            <div className="option-text">
+              <strong>Milestone System</strong>
+              <p>Participants unlock rewards at specific achievement levels</p>
+            </div>
+          </div>
+        </label>
+
+        <label className="contest-type-option">
+          <input
+            type="radio"
+            name="contestType"
+            value="ranking"
+            checked={campaignData.contestType === 'ranking'}
+            onChange={(e) => setCampaignData(prev => ({ ...prev, contestType: e.target.value as any }))}
+          />
+          <div className="option-content">
+            <div className="option-icon">🏆</div>
+            <div className="option-text">
+              <strong>Ranking System</strong>
+              <p>Top performers compete for rank-based prizes</p>
+            </div>
+          </div>
+        </label>
       </div>
+
+      {campaignData.contestType === 'points' && campaignData.pointSystem && (
+        <div className="point-system-config">
+          <h4>Point System Configuration</h4>
+          <p>Current point system settings (editing coming soon)</p>
+          <div className="config-preview">
+            {Object.keys(campaignData.pointSystem.basePointsPerUnit || {}).map(skuId => {
+              const points = campaignData.pointSystem.basePointsPerUnit[skuId];
+              const config = campaignData.targetConfigs.find(c => c.skuId === skuId);
+              return (
+                <div key={skuId} className="point-preview">
+                  <span>{config?.skuCode}: {points} points per {config?.unit}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 
-  const renderPrizesTab = () => (
-    <div className="edit-tab-content">
-      <div className="section-header">
-        <h3>🎁 Prize Structure</h3>
-        <p>Edit prize configuration for different levels</p>
+  const renderPrizesTab = () => {
+    const updatePrize = (level: 'panIndiaLevel' | 'regionalLevel' | 'subRegionalLevel', index: number, field: 'rank' | 'prize' | 'value', value: string | number) => {
+      setCampaignData(prev => ({
+        ...prev,
+        prizeStructure: {
+          ...prev.prizeStructure,
+          [level]: prev.prizeStructure[level].map((prize, i) => 
+            i === index ? { ...prize, [field]: value } : prize
+          )
+        }
+      }));
+    };
+
+    const addPrize = (level: 'panIndiaLevel' | 'regionalLevel' | 'subRegionalLevel') => {
+      const nextRank = campaignData.prizeStructure[level].length + 1;
+      setCampaignData(prev => ({
+        ...prev,
+        prizeStructure: {
+          ...prev.prizeStructure,
+          [level]: [...prev.prizeStructure[level], { rank: nextRank, prize: '', value: '' }]
+        }
+      }));
+    };
+
+    const removePrize = (level: 'panIndiaLevel' | 'regionalLevel' | 'subRegionalLevel', index: number) => {
+      setCampaignData(prev => ({
+        ...prev,
+        prizeStructure: {
+          ...prev.prizeStructure,
+          [level]: prev.prizeStructure[level].filter((_, i) => i !== index)
+        }
+      }));
+    };
+
+    const renderPrizeLevel = (
+      level: 'panIndiaLevel' | 'regionalLevel' | 'subRegionalLevel',
+      title: string,
+      icon: string
+    ) => (
+      <div className="prize-level-section">
+        <div className="level-header">
+          <h4>{icon} {title}</h4>
+          <button className="btn-secondary" onClick={() => addPrize(level)}>
+            + Add Prize
+          </button>
+        </div>
+        
+        {campaignData.prizeStructure[level].length === 0 ? (
+          <div className="empty-prizes">
+            <p>No prizes configured for this level</p>
+          </div>
+        ) : (
+          <div className="prizes-list">
+            {campaignData.prizeStructure[level].map((prize, index) => (
+              <div key={index} className="prize-edit-item">
+                <div className="prize-form">
+                  <div className="form-group">
+                    <label>Rank</label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      value={prize.rank}
+                      onChange={(e) => updatePrize(level, index, 'rank', parseInt(e.target.value) || 1)}
+                      style={{width: '80px'}}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Prize</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={prize.prize}
+                      onChange={(e) => updatePrize(level, index, 'prize', e.target.value)}
+                      placeholder="e.g., iPhone 15 Pro"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Value</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={prize.value}
+                      onChange={(e) => updatePrize(level, index, 'value', e.target.value)}
+                      placeholder="e.g., ₹1,20,000"
+                    />
+                  </div>
+                  <button 
+                    className="btn-icon btn-danger"
+                    onClick={() => removePrize(level, index)}
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-      <div className="coming-soon">
-        <p>Prize structure editing coming soon. Use current campaign creation for prize management.</p>
+    );
+
+    return (
+      <div className="edit-tab-content">
+        <div className="section-header">
+          <h3>🎁 Prize Structure</h3>
+          <p>Edit prize configuration for different levels</p>
+        </div>
+
+        <div className="prize-levels">
+          {renderPrizeLevel('panIndiaLevel', 'Pan India Level', '🇮🇳')}
+          {renderPrizeLevel('regionalLevel', 'Regional Level', '🗺️')}
+          {renderPrizeLevel('subRegionalLevel', 'Sub-Regional Level', '📍')}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
 
   return (
