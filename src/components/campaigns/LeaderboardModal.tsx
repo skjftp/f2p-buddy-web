@@ -164,17 +164,21 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ campaign, onClose }
     const selectedRegionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
     if (!selectedRegionItem) return false;
     
-    // Check if any of user's region hierarchy matches or is a child of selected region
-    return Object.values(entry.regionHierarchy || {}).some(userRegionId => {
+    // Check each user region for hierarchy match
+    const userRegionIds = Object.values(entry.regionHierarchy || {});
+    
+    for (const userRegionId of userRegionIds) {
       const userRegionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === userRegionId);
-      if (!userRegionItem) return false;
+      if (!userRegionItem) continue;
       
       // Direct match
       if (userRegionId === regionId) return true;
       
       // Check if user's region is a child of selected region
-      return isChildOfRegion(userRegionItem, selectedRegionItem);
-    });
+      if (isChildOfRegion(userRegionItem, selectedRegionItem)) return true;
+    }
+    
+    return false;
   };
 
   // Check if a region is a child (at any level) of a parent region
@@ -182,13 +186,14 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ campaign, onClose }
     if (childRegion.level <= parentRegion.level) return false;
     
     // Traverse up the hierarchy from child to see if we reach parent
-    let currentRegion = childRegion;
-    while (currentRegion.parentId) {
-      const parentItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === currentRegion.parentId);
+    let currentRegionToCheck = childRegion;
+    
+    while (currentRegionToCheck.parentId) {
+      const parentItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === currentRegionToCheck.parentId);
       if (!parentItem) break;
       
       if (parentItem.id === parentRegion.id) return true;
-      currentRegion = parentItem;
+      currentRegionToCheck = parentItem;
     }
     
     return false;
