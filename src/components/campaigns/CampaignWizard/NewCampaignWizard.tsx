@@ -44,7 +44,8 @@ interface Designation {
 
 interface User {
   id: string;
-  name: string;
+  name?: string;
+  displayName?: string;
   email: string;
   designationName: string;
   regionHierarchy: Record<string, string>;
