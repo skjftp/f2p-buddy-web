@@ -15,6 +15,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
   const [regionSummary, setRegionSummary] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(false);
   const [hierarchyLevels, setHierarchyLevels] = useState<any[]>([]);
+  const [dataLoaded, setDataLoaded] = useState(false);
   
   // Date-wise performance data: {userId: {date: {skuId: value}}}
   const [dateWisePerformances, setDateWisePerformances] = useState<Record<string, Record<string, Record<string, number>>>>({});
@@ -103,8 +104,11 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
 
   // Load existing performance data and initialize
   useEffect(() => {
+    if (dataLoaded) return; // Prevent infinite loading
+    
     const loadAndInitializeData = async () => {
       console.log('📊 Loading existing performance data...');
+      setDataLoaded(true);
       
       try {
         const dbInstance = await getFirestoreInstance();
@@ -181,7 +185,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
     };
 
     loadAndInitializeData();
-  }, [campaign, computeRegionSummary, computeParentPerformances]);
+  }, [campaign]);
 
   const updatePerformance = (userId: string, skuId: string, value: number) => {
     const updated = {
