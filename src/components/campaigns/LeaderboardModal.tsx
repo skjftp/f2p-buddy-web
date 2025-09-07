@@ -134,7 +134,7 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ campaign, onClose }
     loadLeaderboard();
   }, [campaign]);
 
-  // Filter leaderboard based on hierarchical relationship
+  // Simple filtering - just match user region hierarchy directly
   const getFilteredLeaderboard = () => {
     if (filterLevel === 'panIndia') {
       return leaderboardData;
@@ -142,63 +142,13 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ campaign, onClose }
     
     if (selectedRegion) {
       return leaderboardData.filter(entry => {
-        // Check if user belongs to selected region OR any of its children
+        // Check if user region hierarchy includes the selected region
         const userRegionIds = Object.values(entry.regionHierarchy || {});
-        
-        // Direct match: user is directly in this region
-        const directMatch = userRegionIds.includes(selectedRegion) || entry.regionName === selectedRegion;
-        
-        // Hierarchical match: user is in a child region of selected region
-        const isInChildRegion = checkIfUserInRegionHierarchy(entry, selectedRegion);
-        
-        return directMatch || isInChildRegion;
+        return userRegionIds.includes(selectedRegion) || entry.regionName === selectedRegion;
       });
     }
     
     return leaderboardData;
-  };
-
-  // Check if user belongs to a region hierarchy (including parent regions)
-  const checkIfUserInRegionHierarchy = (entry: LeaderboardEntry, regionId: string): boolean => {
-    // Get the selected region item
-    const selectedRegionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
-    if (!selectedRegionItem) return false;
-    
-    // Check each user region for hierarchy match
-    const userRegionIds = Object.values(entry.regionHierarchy || {});
-    
-    for (const userRegionId of userRegionIds) {
-      const userRegionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === userRegionId);
-      if (!userRegionItem) continue;
-      
-      // Direct match
-      if (userRegionId === regionId) return true;
-      
-      // Check if user's region is a child of selected region
-      if (isChildOfRegion(userRegionItem, selectedRegionItem)) return true;
-    }
-    
-    return false;
-  };
-
-  // Check if a region is a child (at any level) of a parent region
-  const isChildOfRegion = (childRegion: any, parentRegion: any): boolean => {
-    if (childRegion.level <= parentRegion.level) return false;
-    
-    // Simple hierarchy check using parentId chain
-    const allItems = hierarchyLevels.flatMap(l => l.items);
-    let currentRegionToCheck = childRegion;
-    
-    // Traverse up to 5 levels max to prevent infinite loops
-    for (let i = 0; i < 5 && currentRegionToCheck.parentId; i++) {
-      const parentItem = allItems.find(item => item.id === currentRegionToCheck.parentId);
-      if (!parentItem) break;
-      
-      if (parentItem.id === parentRegion.id) return true;
-      currentRegionToCheck = parentItem;
-    }
-    
-    return false;
   };
 
   const filteredData = getFilteredLeaderboard();
