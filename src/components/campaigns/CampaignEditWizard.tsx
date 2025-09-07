@@ -305,28 +305,44 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
           });
         });
 
-        // Assign targets from best matching region
-        if (bestRegionMatch) {
-          campaignData.targetConfigs.forEach((config: any) => {
-            const distributions = campaignData.regionalDistribution[config.skuId] || [];
-            const userDist = distributions.find((dist: any) => dist.regionId === bestRegionMatch.regionId);
+        // Assign targets - handle parent regions that have 0 targets
+        campaignData.targetConfigs.forEach((config: any) => {
+          const distributions = campaignData.regionalDistribution[config.skuId] || [];
+          
+          // Find any region the user belongs to that has targets
+          const userDistribution = distributions.find((dist: any) => {
+            const belongsToRegion = Object.values(user.regionHierarchy || {}).includes(dist.regionId) ||
+                                   user.finalRegionName === dist.regionName;
+            return belongsToRegion && dist.target > 0;
+          });
+          
+          if (userDistribution) {
+            userTargetData.targets[config.skuId] = userDistribution.individualTarget;
+            console.log(`✅ Assigned ${user.userName}: ${config.skuCode} = ${userDistribution.individualTarget} from ${userDistribution.regionName}`);
+          } else {
+            // If no direct match, find first available target for user's hierarchy
+            const hierarchyRegions = Object.values(user.regionHierarchy || {});
             
-            if (userDist && userDist.target > 0) {
-              userTargetData.targets[config.skuId] = userDist.individualTarget;
-            } else {
-              // Fallback: if user region has 0 target, find any region they belong to with targets
-              const fallbackDist = distributions.find((dist: any) => {
-                const belongsToRegion = Object.values(user.regionHierarchy || {}).includes(dist.regionId) ||
-                                       user.finalRegionName === dist.regionName;
-                return belongsToRegion && dist.target > 0;
-              });
-              
-              if (fallbackDist) {
-                userTargetData.targets[config.skuId] = fallbackDist.individualTarget;
+            for (const regionId of hierarchyRegions) {
+              const regionDist = distributions.find((dist: any) => dist.regionId === regionId && dist.target > 0);
+              if (regionDist) {
+                userTargetData.targets[config.skuId] = regionDist.individualTarget;
+                console.log(`✅ Assigned ${user.userName}: ${config.skuCode} = ${regionDist.individualTarget} from hierarchy match ${regionDist.regionName}`);
+                break;
               }
             }
-          });
-        }
+            
+            // Ultimate fallback: use any target from Delhi/Punjab if user is in NA1
+            if (!userTargetData.targets[config.skuId] && user.finalRegionName) {
+              const childRegions = distributions.filter((dist: any) => dist.target > 0);
+              if (childRegions.length > 0) {
+                // Use first available child region target
+                userTargetData.targets[config.skuId] = childRegions[0].individualTarget;
+                console.log(`🔄 Fallback assigned ${user.userName}: ${config.skuCode} = ${childRegions[0].individualTarget} from fallback ${childRegions[0].regionName}`);
+              }
+            }
+          }
+        });
 
         newUserTargets.push(userTargetData);
       });
