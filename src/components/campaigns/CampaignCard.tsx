@@ -77,17 +77,17 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                     {type === 'referrals' && '👥'}
                   </div>
                   <div className="metric-value">
-                    {campaign.metrics && campaign.metrics[type] ? campaign.metrics[type]!.achieved : 0}
+                    {(campaign as any).metrics && (campaign as any).metrics[type] ? (campaign as any).metrics[type].achieved : 0}
                   </div>
                   <div className="metric-target">
-                    / {campaign.metrics && campaign.metrics[type] ? campaign.metrics[type]!.target : 0}
+                    / {(campaign as any).metrics && (campaign as any).metrics[type] ? (campaign as any).metrics[type].target : 0}
                   </div>
-                  {campaign.metrics && campaign.metrics[type] && (
+                  {(campaign as any).metrics && (campaign as any).metrics[type] && (
                     <div className="progress-bar">
                       <div 
                         className="progress-fill"
                         style={{ 
-                          width: `${(campaign.metrics[type]!.achieved / campaign.metrics[type]!.target) * 100}%`
+                          width: `${((campaign as any).metrics[type].achieved / (campaign as any).metrics[type].target) * 100}%`
                         }}
                       />
                     </div>
