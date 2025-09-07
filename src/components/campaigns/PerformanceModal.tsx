@@ -115,28 +115,39 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
           
           console.log(`   🔍 ${otherUser.userName} (${otherUser.regionName}) child of ${user.userName} (${user.regionName})?`);
           
+          console.log(`     ${user.userName} hierarchy:`, user.regionHierarchy);
+          console.log(`     ${otherUser.userName} hierarchy:`, otherUser.regionHierarchy);
+          
           // Simple check: if otherUser's regionName is a child of user's regionName
           const userRegionId = Object.values(user.regionHierarchy || {}).find(regionId => {
             const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
+            console.log(`     Looking for ${user.regionName} in hierarchy: ${regionItem?.name} (${regionId})`);
             return regionItem?.name === user.regionName;
           });
           
           const otherUserRegionId = Object.values(otherUser.regionHierarchy || {}).find(regionId => {
             const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
+            console.log(`     Looking for ${otherUser.regionName} in hierarchy: ${regionItem?.name} (${regionId})`);
             return regionItem?.name === otherUser.regionName;
           });
+          
+          console.log(`     Found IDs: ${user.regionName} = ${userRegionId}, ${otherUser.regionName} = ${otherUserRegionId}`);
           
           if (userRegionId && otherUserRegionId) {
             const otherRegionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === otherUserRegionId);
             
-            console.log(`     Region check: ${otherUser.regionName} parentId: ${otherRegionItem?.parentId} vs ${user.regionName} regionId: ${userRegionId}`);
+            console.log(`     Parent check: ${otherUser.regionName} parentId: ${otherRegionItem?.parentId} vs ${user.regionName} regionId: ${userRegionId}`);
             
             if (otherRegionItem && otherRegionItem.parentId === userRegionId) {
               const childPerformance = performanceData[otherUser.userId]?.[config.skuId] || 0;
               childPerformanceSum[config.skuId] += childPerformance;
               hasChildPerformance = true;
               console.log(`✅ ${user.userName} += ${childPerformance} from child ${otherUser.userName}`);
+            } else {
+              console.log(`❌ No parent-child relationship: ${otherRegionItem?.parentId} ≠ ${userRegionId}`);
             }
+          } else {
+            console.log(`❌ Missing region IDs: user=${userRegionId}, other=${otherUserRegionId}`);
           }
         });
       });
