@@ -118,61 +118,147 @@ const AdminDashboard: React.FC = () => {
     console.log('Campaign updated - real-time listener will refresh data');
   };
 
-  const renderOverview = () => (
-    <div>
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon">👥</div>
-          <div className="stat-value">{organizationStats.totalEmployees}</div>
-          <div className="stat-title">Employees</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">🎯</div>
-          <div className="stat-value">{organizationStats.activeCampaigns}</div>
-          <div className="stat-title">Active</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">🏆</div>
-          <div className="stat-value">{organizationStats.totalAchievements}</div>
-          <div className="stat-title">Achievements</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">📈</div>
-          <div className="stat-value">{organizationStats.completionRate.toFixed(0)}%</div>
-          <div className="stat-title">Complete</div>
-        </div>
-      </div>
-      
-      <div className="dashboard-section" style={{marginTop: '16px'}}>
-        <div className="section-header">
-          <h2>Recent Campaigns</h2>
-          <button className="btn-icon" onClick={() => setShowCampaignWizard(true)} title="Create Campaign">
-            +
-          </button>
-        </div>
-        <div className="campaigns-grid">
-          {campaigns.slice(0, 4).map((campaign) => (
-            <CampaignCard
-              key={campaign.id}
-              campaign={campaign}
-              userRole="admin"
-              onEdit={() => handleEditCampaign(campaign)}
-              onPerformanceUpdate={() => handlePerformanceUpdate(campaign)}
-              onLeaderboard={() => handleLeaderboard(campaign)}
-              onView={() => {}}
-            />
-          ))}
-        </div>
-        {campaigns.length === 0 && (
-          <div className="empty-state">
-            <div className="empty-icon">🎯</div>
-            <h3>No Campaigns</h3>
-            <button className="btn-icon" onClick={() => setShowCampaignWizard(true)}>+</button>
+  const renderOverview = () => {
+    // First-time admin experience - no campaigns yet
+    if (campaigns.length === 0) {
+      return (
+        <div className="welcome-container">
+          <div className="welcome-hero">
+            <div className="welcome-icon">🚀</div>
+            <h1>Welcome to F2P Buddy</h1>
+            <p className="welcome-subtitle">Incentive Program Management System</p>
+            <p className="welcome-description">
+              Transform your sales team performance with our comprehensive campaign management platform. 
+              Create targeted incentive campaigns, track performance, and boost team motivation.
+            </p>
+            <div className="welcome-cta">
+              <h3>🎯 Kick start your first campaign!</h3>
+              <p>Let's set up your organization and create your first sales incentive campaign.</p>
+            </div>
           </div>
-        )}
+
+          <div className="onboarding-steps">
+            <h2>🚀 Get Started in 3 Simple Steps</h2>
+            
+            <div className="steps-grid">
+              <div className="onboarding-step">
+                <div className="step-number">1</div>
+                <div className="step-content">
+                  <h3>⚙️ Configure Your Organization</h3>
+                  <p>Set up your company hierarchy, designations, and SKU catalog for targeted campaigns.</p>
+                  <button 
+                    className="btn-step" 
+                    onClick={() => setActiveTab('settings')}
+                  >
+                    Configure Organization
+                  </button>
+                </div>
+              </div>
+
+              <div className="onboarding-step">
+                <div className="step-number">2</div>
+                <div className="step-content">
+                  <h3>👥 Add Your Team</h3>
+                  <p>Add team members with regional assignments and designations for campaign targeting.</p>
+                  <button 
+                    className="btn-step" 
+                    onClick={() => setActiveTab('employees')}
+                  >
+                    Manage Team
+                  </button>
+                </div>
+              </div>
+
+              <div className="onboarding-step">
+                <div className="step-number">3</div>
+                <div className="step-content">
+                  <h3>🎯 Create First Campaign</h3>
+                  <p>Launch your first sales incentive campaign with targets, prizes, and performance tracking.</p>
+                  <button 
+                    className="btn-step primary" 
+                    onClick={() => setShowCampaignWizard(true)}
+                  >
+                    Create Campaign
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="welcome-footer">
+              <div className="feature-highlights">
+                <div className="feature">
+                  <span className="feature-icon">📊</span>
+                  <span>Real-time Performance Tracking</span>
+                </div>
+                <div className="feature">
+                  <span className="feature-icon">🏆</span>
+                  <span>Professional Leaderboards</span>
+                </div>
+                <div className="feature">
+                  <span className="feature-icon">📱</span>
+                  <span>Mobile-Optimized Interface</span>
+                </div>
+                <div className="feature">
+                  <span className="feature-icon">🎯</span>
+                  <span>Advanced Campaign Targeting</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Regular admin dashboard with campaigns
+    return (
+      <div>
+        <div className="stats-grid">
+          <div className="stat-card">
+            <div className="stat-icon">👥</div>
+            <div className="stat-value">{organizationStats.totalEmployees}</div>
+            <div className="stat-title">Employees</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon">🎯</div>
+            <div className="stat-value">{organizationStats.activeCampaigns}</div>
+            <div className="stat-title">Active</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon">🏆</div>
+            <div className="stat-value">{organizationStats.totalAchievements}</div>
+            <div className="stat-title">Achievements</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon">📈</div>
+            <div className="stat-value">{organizationStats.completionRate.toFixed(0)}%</div>
+            <div className="stat-title">Complete</div>
+          </div>
+        </div>
+        
+        <div className="dashboard-section" style={{marginTop: '16px'}}>
+          <div className="section-header">
+            <h2>Recent Campaigns</h2>
+            <button className="btn-icon" onClick={() => setShowCampaignWizard(true)} title="Create Campaign">
+              +
+            </button>
+          </div>
+          <div className="campaigns-grid">
+            {campaigns.slice(0, 4).map((campaign) => (
+              <CampaignCard
+                key={campaign.id}
+                campaign={campaign}
+                userRole="admin"
+                onEdit={() => handleEditCampaign(campaign)}
+                onPerformanceUpdate={() => handlePerformanceUpdate(campaign)}
+                onLeaderboard={() => handleLeaderboard(campaign)}
+                onView={() => {}}
+              />
+            ))}
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderCampaigns = () => (
     <div>
