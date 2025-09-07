@@ -105,7 +105,9 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
   const savePerformance = async () => {
     setLoading(true);
     try {
+      console.log('💾 Saving performance data...');
       const dbInstance = await getFirestoreInstance();
+      console.log('📊 Performance data to save:', { performances, dateWisePerformances, regionSummary });
       
       const performanceData = {
         consolidatedPerformances: performances,
