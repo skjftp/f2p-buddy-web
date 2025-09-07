@@ -590,12 +590,13 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
           });
         }
         
-        console.log('📋 Final distribution map:', Object.keys(distributionMap).map(id => ({
-          id,
-          name: items.find(i => i.id === id)?.name,
-          target: distributionMap[id].target,
-          percentage: ((distributionMap[id].target / totalTarget) * 100).toFixed(2) + '%'
-        })));
+        console.log('📋 Final distribution map:');
+        Object.keys(distributionMap).forEach(id => {
+          const item = items.find(i => i.id === id);
+          const target = distributionMap[id].target;
+          const percentage = ((target / totalTarget) * 100).toFixed(2);
+          console.log(`   ${item?.name}: ${target} (${percentage}%) - ${target > 0 ? 'GETS TARGET' : 'ZERO TARGET'}`);
+        });
         
         return distributionMap;
       };
@@ -658,7 +659,7 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
     }));
   }, [campaignData.selectedRegions, campaignData.targetConfigs, hierarchyLevels, organizationUsers]);
 
-  // Auto-trigger distribution computation when regions or algorithm changes
+  // Auto-trigger distribution computation when regions or algorithm changes  
   useEffect(() => {
     if (campaignData.selectedRegions.length > 0 && campaignData.targetConfigs.length > 0) {
       console.log('🔄 Auto-triggering distribution due to region/algorithm change');
