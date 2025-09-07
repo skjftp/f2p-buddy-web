@@ -14,6 +14,10 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
   const [performances, setPerformances] = useState<Record<string, Record<string, number>>>({});
   const [regionSummary, setRegionSummary] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(false);
+  
+  // Date-wise performance data: {userId: {date: {skuId: value}}}
+  const [dateWisePerformances, setDateWisePerformances] = useState<Record<string, Record<string, Record<string, number>>>>({});
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
   const computeRegionSummary = useCallback((performanceData: Record<string, Record<string, number>>) => {
     const summary: Record<string, any> = {};
@@ -60,18 +64,71 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
     computeRegionSummary(updated);
   };
 
+  const updateDateWisePerformance = (userId: string, skuId: string, value: number) => {
+    setDateWisePerformances(prev => {
+      const updated = {
+        ...prev,
+        [userId]: {
+          ...prev[userId],
+          [selectedDate]: {
+            ...prev[userId]?.[selectedDate],
+            [skuId]: value
+          }
+        }
+      };
+      
+      // Recalculate consolidated performance from all date entries
+      const consolidatedPerformances: Record<string, Record<string, number>> = {};
+      
+      Object.entries(updated).forEach(([uId, userDates]) => {
+        consolidatedPerformances[uId] = {};
+        campaign.targetConfigs?.forEach((config: any) => {
+          let totalAchieved = 0;
+          Object.values(userDates).forEach((dateData: any) => {
+            totalAchieved += dateData[config.skuId] || 0;
+          });
+          consolidatedPerformances[uId][config.skuId] = totalAchieved;
+        });
+      });
+      
+      setPerformances(consolidatedPerformances);
+      computeRegionSummary(consolidatedPerformances);
+      
+      return updated;
+    });
+  };
+
+  const getDateWiseValue = (userId: string, skuId: string) => {
+    return dateWisePerformances[userId]?.[selectedDate]?.[skuId] || 0;
+  };
+
   const savePerformance = async () => {
     setLoading(true);
     try {
       const dbInstance = await getFirestoreInstance();
+      
+      const performanceData = {
+        consolidatedPerformances: performances,
+        dateWisePerformances: dateWisePerformances,
+        regionSummary: regionSummary,
+        lastUpdated: new Date().toISOString(),
+        selectedDate: activeMode === 'dateWise' ? selectedDate : null
+      };
+      
       await updateDoc(doc(dbInstance, 'campaigns', campaign.id), {
-        performanceData: { performances, regionSummary },
+        performanceData,
         updatedAt: serverTimestamp()
       });
-      toast.success('Performance updated!');
+      
+      const message = activeMode === 'dateWise' 
+        ? `Performance saved for ${selectedDate}!` 
+        : 'Performance data updated!';
+      
+      toast.success(message);
       onUpdate();
     } catch (error) {
-      toast.error('Save failed');
+      console.error('Error saving performance:', error);
+      toast.error('Failed to save performance data');
     } finally {
       setLoading(false);
     }
@@ -206,9 +263,95 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
             )}
 
             {activeMode === 'dateWise' && (
-              <div className="date-wise-mode">
-                <h4>📅 Date-wise Performance Entry</h4>
-                <p>Daily performance tracking coming soon</p>
+              <div className="date-wise-container">
+                <div className="date-selector-header">
+                  <h4>📅 Date-wise Performance Entry</h4>
+                  <div className="date-input-group">
+                    <label>Performance Date:</label>
+                    <input
+                      type="date"
+                      className="date-input"
+                      value={selectedDate}
+                      onChange={(e) => setSelectedDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+                
+                <div className="performance-table-container">
+                  <div className="performance-table">
+                    <div className="table-header">
+                      <span className="user-col">User</span>
+                      <span className="region-col">Region</span>
+                      {campaign.targetConfigs?.map((config: any) => (
+                        <span key={config.skuId} className="sku-col">
+                          {config.skuCode}
+                          <div className="unit-info">Daily ({config.unit})</div>
+                        </span>
+                      ))}
+                      <span className="overall-col">Daily Total</span>
+                    </div>
+                    
+                    <div className="table-body">
+                      {campaign.userTargets?.map((user: any) => {
+                        let dailyTotal = 0;
+                        
+                        return (
+                          <div key={user.userId} className="table-row">
+                            <div className="user-cell">
+                              <div className="user-name">{user.userName}</div>
+                              <div className="user-id">#{user.userId}</div>
+                            </div>
+                            <div className="region-cell">{user.regionName}</div>
+                            
+                            {campaign.targetConfigs?.map((config: any) => {
+                              const dailyValue = getDateWiseValue(user.userId, config.skuId);
+                              const cumulativeTotal = performances[user.userId]?.[config.skuId] || 0;
+                              dailyTotal += dailyValue;
+                              
+                              return (
+                                <div key={config.skuId} className="sku-cell">
+                                  <div className="cumulative-display">
+                                    Cumulative: {cumulativeTotal}
+                                  </div>
+                                  <input
+                                    type="number"
+                                    className="performance-input-compact"
+                                    value={dailyValue}
+                                    onChange={(e) => updateDateWisePerformance(user.userId, config.skuId, parseFloat(e.target.value) || 0)}
+                                    placeholder={`Daily for ${selectedDate}`}
+                                    min="0"
+                                  />
+                                  <div className="date-note">
+                                    For {selectedDate}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                            
+                            <div className="overall-cell">
+                              <div className="daily-total">
+                                {dailyTotal}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="date-wise-info">
+                  <div className="info-card">
+                    <h5>📊 How Date-wise Tracking Works:</h5>
+                    <ul>
+                      <li><strong>Select Date:</strong> Choose performance date (e.g., Sept 10)</li>
+                      <li><strong>Enter Daily Values:</strong> Input daily achievements</li>
+                      <li><strong>Save:</strong> Date-wise data saved to database</li>
+                      <li><strong>Cumulative:</strong> All dates automatically sum up</li>
+                      <li><strong>Add More Dates:</strong> Select new date and add more performance</li>
+                    </ul>
+                  </div>
+                </div>
               </div>
             )}
 
