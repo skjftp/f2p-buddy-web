@@ -454,7 +454,10 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
         const distributionMap: Record<string, { target: number, children: string[] }> = {};
 
         // Start with top level items and distribute total target
-        const topLevelItems = levelGroups[Math.min(...Object.keys(levelGroups).map(Number))];
+        const levelNumbers = Object.keys(levelGroups).map(Number);
+        if (levelNumbers.length === 0) return distributionMap;
+        
+        const topLevelItems = levelGroups[Math.min(...levelNumbers)] || [];
         
         topLevelItems.forEach(item => {
           const topLevelTarget = Math.round(totalTarget / topLevelItems.length);
@@ -550,7 +553,7 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
         bannerUrl = await getDownloadURL(snapshot.ref);
       }
 
-      const campaignDoc = {
+      const campaignDoc: any = {
         name: campaignData.name,
         description: campaignData.description,
         startDate: campaignData.startDate,
@@ -562,8 +565,6 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
         selectedDesignations: campaignData.selectedDesignations,
         regionalDistribution: campaignData.regionalDistribution,
         contestType: campaignData.contestType,
-        pointSystem: campaignData.pointSystem,
-        milestoneSystem: campaignData.milestoneSystem,
         prizeStructure: campaignData.prizeStructure,
         userTargets: campaignData.userTargets,
         customTargetsEnabled: campaignData.customTargetsEnabled,
@@ -573,6 +574,15 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       };
+
+      // Only add pointSystem and milestoneSystem if they have data
+      if (campaignData.pointSystem && Object.keys(campaignData.pointSystem.basePointsPerUnit || {}).length > 0) {
+        campaignDoc.pointSystem = campaignData.pointSystem;
+      }
+      
+      if (campaignData.milestoneSystem && campaignData.milestoneSystem.milestones && campaignData.milestoneSystem.milestones.length > 0) {
+        campaignDoc.milestoneSystem = campaignData.milestoneSystem;
+      }
 
       const dbInstance = await getFirestoreInstance();
       await addDoc(collection(dbInstance, 'campaigns'), campaignDoc);
