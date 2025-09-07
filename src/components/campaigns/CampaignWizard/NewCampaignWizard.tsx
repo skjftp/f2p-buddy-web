@@ -519,62 +519,77 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
         parentId: item.parentId
       })));
 
-      // Build hierarchy tree for proper cascading distribution
+      // Build hierarchy tree for proper level-by-level proportional distribution
       const buildDistributionTree = (items: HierarchyItem[]) => {
         console.log('🏗️ Building distribution tree for items:', items.map(i => `${i.name}(L${i.level})`));
         
-        // Find the deepest level selected for each branch
-        const getDeepestSelectedChildren = (parentId: string): string[] => {
-          const directChildren = items.filter(item => item.parentId === parentId);
+        // Group by level
+        const levelGroups: Record<number, HierarchyItem[]> = {};
+        items.forEach(item => {
+          if (!levelGroups[item.level]) levelGroups[item.level] = [];
+          levelGroups[item.level].push(item);
+        });
+        
+        const distributionMap: Record<string, { target: number, children: string[] }> = {};
+        const sortedLevels = Object.keys(levelGroups).map(Number).sort();
+        
+        console.log('📊 Level groups:', Object.keys(levelGroups).map(level => ({
+          level: parseInt(level),
+          items: levelGroups[parseInt(level)].map(i => i.name)
+        })));
+        
+        // Level 1: Distribute total target equally among top-level items
+        const topLevel = sortedLevels[0];
+        const topLevelItems = levelGroups[topLevel] || [];
+        
+        topLevelItems.forEach(item => {
+          const itemTarget = Math.round(totalTarget / topLevelItems.length);
+          distributionMap[item.id] = { target: itemTarget, children: [] };
+          console.log(`💰 Level ${topLevel} - ${item.name}: ${itemTarget} (${(itemTarget/totalTarget*100).toFixed(1)}%)`);
+        });
+        
+        // For each subsequent level, split parent's target among children
+        for (let levelIndex = 1; levelIndex < sortedLevels.length; levelIndex++) {
+          const currentLevel = sortedLevels[levelIndex];
+          const currentLevelItems = levelGroups[currentLevel] || [];
           
-          if (directChildren.length === 0) {
-            // No children selected, this is a leaf node
-            return [parentId];
-          }
+          console.log(`🔄 Processing Level ${currentLevel}:`, currentLevelItems.map(i => i.name));
           
-          // Get deepest children from all selected children
-          const deepestChildren: string[] = [];
-          directChildren.forEach(child => {
-            deepestChildren.push(...getDeepestSelectedChildren(child.id));
+          // Group children by their parent
+          const parentGroups: Record<string, HierarchyItem[]> = {};
+          currentLevelItems.forEach(child => {
+            if (child.parentId) {
+              if (!parentGroups[child.parentId]) parentGroups[child.parentId] = [];
+              parentGroups[child.parentId].push(child);
+            }
           });
           
-          return deepestChildren;
-        };
+          // Distribute each parent's target among its children
+          Object.keys(parentGroups).forEach(parentId => {
+            const children = parentGroups[parentId];
+            const parentTarget = distributionMap[parentId]?.target || 0;
+            const childTarget = Math.round(parentTarget / children.length);
+            
+            console.log(`📂 Parent ${items.find(i => i.id === parentId)?.name} (${parentTarget}) → ${children.length} children (${childTarget} each)`);
+            
+            children.forEach(child => {
+              distributionMap[child.id] = { target: childTarget, children: [] };
+              console.log(`   💰 ${child.name}: ${childTarget} (${(childTarget/totalTarget*100).toFixed(2)}%)`);
+            });
+            
+            // Parent no longer gets direct target (distributed to children)
+            if (distributionMap[parentId]) {
+              distributionMap[parentId].target = 0;
+              console.log(`   🔄 ${items.find(i => i.id === parentId)?.name}: 0 (distributed to children)`);
+            }
+          });
+        }
         
-        // Find root level items (no parent or parent not in selected items)
-        const rootItems = items.filter(item => 
-          !item.parentId || !items.find(i => i.id === item.parentId)
-        );
-        
-        console.log('🌳 Root items:', rootItems.map(i => i.name));
-        
-        // Get all leaf nodes (deepest selected items in each branch)
-        const allLeafNodes: string[] = [];
-        rootItems.forEach(root => {
-          allLeafNodes.push(...getDeepestSelectedChildren(root.id));
-        });
-        
-        console.log('🍃 Leaf nodes (will get targets):', allLeafNodes.map(id => 
-          items.find(i => i.id === id)?.name
-        ));
-        
-        // Distribute targets equally among leaf nodes
-        const distributionMap: Record<string, { target: number, children: string[] }> = {};
-        const leafTarget = Math.round(totalTarget / allLeafNodes.length);
-        
-        // Initialize all items
-        items.forEach(item => {
-          distributionMap[item.id] = { 
-            target: allLeafNodes.includes(item.id) ? leafTarget : 0, 
-            children: [] 
-          };
-        });
-        
-        console.log('💰 Leaf target per region:', leafTarget);
-        console.log('📊 Distribution map:', Object.keys(distributionMap).map(id => ({
+        console.log('📋 Final distribution map:', Object.keys(distributionMap).map(id => ({
           id,
           name: items.find(i => i.id === id)?.name,
-          target: distributionMap[id].target
+          target: distributionMap[id].target,
+          percentage: ((distributionMap[id].target / totalTarget) * 100).toFixed(2) + '%'
         })));
         
         return distributionMap;
