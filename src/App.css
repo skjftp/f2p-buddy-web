@@ -7201,3 +7201,26 @@ body {
   flex-wrap: wrap;
 }
 
+
+/* Auto-calculated Performance Input Styles */
+.performance-input-compact.auto-calculated {
+  background: var(--gray-100);
+  color: var(--gray-600);
+  border: 1px dashed var(--gray-400);
+  cursor: not-allowed;
+}
+
+.auto-calc-indicator {
+  font-size: 8px;
+  color: var(--secondary);
+  font-weight: 600;
+  text-align: center;
+  margin-top: 2px;
+}
+
+.sku-cell.parent-region {
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 4px;
+  padding: 6px;
+}
+

@@ -156,9 +156,12 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
         console.log('📈 Final loaded performances:', loadedPerformances);
         console.log('📅 Final loaded date-wise:', loadedDateWise);
         
-        setPerformances(loadedPerformances);
+        // Apply parent region aggregation to loaded data
+        const withParentAggregation = computeParentPerformances(loadedPerformances);
+        
+        setPerformances(withParentAggregation);
         setDateWisePerformances(loadedDateWise);
-        computeRegionSummary(loadedPerformances);
+        computeRegionSummary(withParentAggregation);
         
       } catch (error) {
         console.error('❌ Error loading performance data:', error);
@@ -178,7 +181,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
     };
 
     loadAndInitializeData();
-  }, [campaign, computeRegionSummary]);
+  }, [campaign, computeRegionSummary, computeParentPerformances]);
 
   const updatePerformance = (userId: string, skuId: string, value: number) => {
     const updated = {

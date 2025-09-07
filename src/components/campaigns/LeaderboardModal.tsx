@@ -120,7 +120,9 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ campaign, onClose }
             
             // Calculate weighted score for ranking
             if (hasWeightage && config.weightage) {
-              weightedScore += (percentage * config.weightage) / 100;
+              const weightedPoints = (percentage * config.weightage) / 100;
+              weightedScore += weightedPoints;
+              console.log(`📊 ${config.skuCode}: ${percentage}% × ${config.weightage}% = ${weightedPoints.toFixed(1)} points`);
             } else {
               // If no weightage defined, use equal weighting
               totalPercentage += percentage;
@@ -131,8 +133,10 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ campaign, onClose }
           });
           
           const finalRankingScore = hasWeightage 
-            ? Math.round(weightedScore)
+            ? Math.round(weightedScore) // This is now a SUM of weighted points
             : (skuCount > 0 ? Math.round(totalPercentage / skuCount) : 0);
+          
+          console.log(`🏆 ${completeUserData.displayName || user.userName} final ranking score: ${finalRankingScore}${hasWeightage ? ' (weighted sum)' : ' (average)'}`);
           
           const entry: LeaderboardEntry = {
             userId: completeUserData.userId || user.userId,
