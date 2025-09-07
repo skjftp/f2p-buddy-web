@@ -313,13 +313,41 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
               }
             }
             
-            // Ultimate fallback: use any target from Delhi/Punjab if user is in NA1
-            if (!userTargetData.targets[config.skuId] && user.finalRegionName) {
-              const childRegions = distributions.filter((dist: any) => dist.target > 0);
-              if (childRegions.length > 0) {
-                // Use first available child region target
-                userTargetData.targets[config.skuId] = childRegions[0].individualTarget;
-                console.log(`🔄 Fallback assigned ${user.userName}: ${config.skuCode} = ${childRegions[0].individualTarget} from fallback ${childRegions[0].regionName}`);
+            // Ultimate fallback: for parent regions, SUM all child region targets
+            if (!userTargetData.targets[config.skuId]) {
+              // Find all child regions that user's region encompasses
+              const userRegionIds = Object.values(user.regionHierarchy || {});
+              let totalChildTargets = 0;
+              let childRegionsFound = 0;
+              
+              distributions.forEach((dist: any) => {
+                // Check if this distribution region is a child of user's region
+                const isChildRegion = userRegionIds.some(userRegionId => {
+                  const userRegionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === userRegionId);
+                  const distRegionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === dist.regionId);
+                  
+                  return distRegionItem && userRegionItem && 
+                         distRegionItem.parentId === userRegionId && 
+                         dist.target > 0;
+                });
+                
+                if (isChildRegion) {
+                  totalChildTargets += dist.individualTarget;
+                  childRegionsFound++;
+                  console.log(`📊 Found child region ${dist.regionName}: adding ${dist.individualTarget} to ${user.userName}'s total`);
+                }
+              });
+              
+              if (totalChildTargets > 0) {
+                userTargetData.targets[config.skuId] = totalChildTargets;
+                console.log(`✅ Assigned ${user.userName}: ${config.skuCode} = ${totalChildTargets} (sum of ${childRegionsFound} child regions)`);
+              } else {
+                // Final fallback: use first available target
+                const fallback = distributions.find((dist: any) => dist.target > 0);
+                if (fallback) {
+                  userTargetData.targets[config.skuId] = fallback.individualTarget;
+                  console.log(`🔄 Final fallback ${user.userName}: ${config.skuCode} = ${fallback.individualTarget} from ${fallback.regionName}`);
+                }
               }
             }
           }
