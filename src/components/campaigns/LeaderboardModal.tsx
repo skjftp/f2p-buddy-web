@@ -70,10 +70,27 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ campaign, onClose }
         
         const leaderboardEntries: LeaderboardEntry[] = [];
         
-        // Load performance data for each user
+        // Load performance data for each user and get complete user data
         const loadPromises = campaign.userTargets?.map(async (user: any) => {
           const docId = `${user.userId}_${campaign.id}`;
           const perfDoc = await getDoc(doc(dbInstance, 'userPerformances', docId));
+          
+          // Load complete user data to get regionHierarchy
+          let completeUserData = user;
+          try {
+            const userDoc = await getDoc(doc(dbInstance, 'users', user.userId));
+            if (userDoc.exists()) {
+              completeUserData = { ...user, ...userDoc.data() };
+              console.log(`👤 Loaded complete user data for ${user.userName}:`, {
+                regionHierarchy: completeUserData.regionHierarchy,
+                regionName: completeUserData.finalRegionName || completeUserData.regionName
+              });
+            } else {
+              console.log(`⚠️ No user document found for ${user.userId}, using campaign data`);
+            }
+          } catch (userError) {
+            console.error(`❌ Error loading user ${user.userId}:`, userError);
+          }
           
           let skuPerformances: Record<string, any> = {};
           let totalScore = 0;
@@ -104,15 +121,16 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ campaign, onClose }
           });
           
           const entry: LeaderboardEntry = {
-            userId: user.userId,
-            userName: user.userName,
-            regionName: user.regionName,
-            regionHierarchy: user.regionHierarchy || {},
+            userId: completeUserData.userId || user.userId,
+            userName: completeUserData.displayName || completeUserData.name || user.userName,
+            regionName: completeUserData.finalRegionName || completeUserData.regionName || user.regionName,
+            regionHierarchy: completeUserData.regionHierarchy || {},
             totalScore,
             skuPerformances,
             averagePerformance: skuCount > 0 ? Math.round(totalPercentage / skuCount) : 0
           };
           
+          console.log(`✅ Final leaderboard entry for ${entry.userName}:`, entry);
           leaderboardEntries.push(entry);
         }) || [];
         
