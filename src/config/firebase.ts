@@ -2,7 +2,7 @@ import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, Auth, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { getFirestore, enableIndexedDbPersistence, Firestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
-import { configService, AppConfig } from './configService';
+// Direct Firebase configuration (no backend dependency)
 
 // Global Firebase instances
 let app: FirebaseApp | null = null;
@@ -17,7 +17,17 @@ let initializationPromise: Promise<void> | null = null;
 // Check if we're running in a browser environment
 const isBrowser = typeof window !== 'undefined';
 
-// Initialize Firebase with config from backend
+// Direct Firebase configuration
+const firebaseConfig = {
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || 'AIzaSyCVxltE27-pGk1Bu3p84PbU-_6vYCejt0M',
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || 'f2p-buddy-1756234727.firebaseapp.com',
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || 'f2p-buddy-1756234727',
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || 'f2p-buddy-1756234727.appspot.com',
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || '429516619081',
+  appId: process.env.REACT_APP_FIREBASE_APP_ID || '1:429516619081:web:f9b9d4a36ddba1ca9c2e98'
+};
+
+// Initialize Firebase directly (no backend dependency)
 async function initializeFirebase(): Promise<void> {
   try {
     // If already initialized, return the existing promise
@@ -32,14 +42,11 @@ async function initializeFirebase(): Promise<void> {
     }
     
     isInitializing = true;
-    console.log('🔥 Initializing Firebase...');
-    
-    // Get config from backend
-    const config: AppConfig = await configService.getConfig();
+    console.log('🔥 Initializing Firebase directly from config...');
     
     // Initialize Firebase app ONLY if not already initialized
     if (!app) {
-      app = initializeApp(config.firebase);
+      app = initializeApp(firebaseConfig);
     }
     
     // Initialize services ONLY if not already initialized
