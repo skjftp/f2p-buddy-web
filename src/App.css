@@ -6631,3 +6631,27 @@ body {
   margin-bottom: 4px;
 }
 
+
+/* Updated Performance Table Grid - Remove Overall Column */
+.performance-table .table-header {
+  display: grid;
+  grid-template-columns: 180px 100px repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.performance-table .table-row {
+  display: grid;
+  grid-template-columns: 180px 100px repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+/* Remove overall column styles since we're not using it */
+.overall-col,
+.overall-cell,
+.overall-percentage,
+.overall-progress-bar,
+.overall-progress-fill,
+.daily-total {
+  display: none;
+}
+

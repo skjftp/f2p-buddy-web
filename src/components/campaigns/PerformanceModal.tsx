@@ -293,51 +293,39 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
                         <div className="unit-info">({config.unit})</div>
                       </span>
                     ))}
-                    <span className="overall-col">Overall</span>
                   </div>
                   
                   <div className="table-body">
-                    {campaign.userTargets?.map((user: any) => {
-                      let totalPercentage = 0;
-                      
-                      return (
-                        <div key={user.userId} className="table-row">
-                          <div className="user-cell">
-                            <div className="user-name">{user.userName}</div>
-                            <div className="user-id">#{user.userId}</div>
-                          </div>
-                          <div className="region-cell">{user.regionName}</div>
-                          
-                          {campaign.targetConfigs?.map((config: any) => {
-                            const target = user.targets[config.skuId] || 0;
-                            const achieved = performances[user.userId]?.[config.skuId] || 0;
-                            const percentage = target > 0 ? Math.round((achieved / target) * 100) : 0;
-                            totalPercentage += percentage;
-                            
-                            return (
-                              <div key={config.skuId} className="sku-cell">
-                                <div className="target-display">Target: {target}</div>
-                                <input
-                                  type="number"
-                                  className="performance-input-compact"
-                                  value={achieved}
-                                  onChange={(e) => updatePerformance(user.userId, config.skuId, parseFloat(e.target.value) || 0)}
-                                  placeholder="0"
-                                  min="0"
-                                />
-                                <div className="percentage-display">{percentage}%</div>
-                              </div>
-                            );
-                          })}
-                          
-                          <div className="overall-cell">
-                            <div className="overall-percentage">
-                              {campaign.targetConfigs?.length > 0 ? Math.round(totalPercentage / campaign.targetConfigs.length) : 0}%
-                            </div>
-                          </div>
+                    {campaign.userTargets?.map((user: any) => (
+                      <div key={user.userId} className="table-row">
+                        <div className="user-cell">
+                          <div className="user-name">{user.userName}</div>
+                          <div className="user-id">#{user.userId}</div>
                         </div>
-                      );
-                    })}
+                        <div className="region-cell">{user.regionName}</div>
+                        
+                        {campaign.targetConfigs?.map((config: any) => {
+                          const target = user.targets[config.skuId] || 0;
+                          const achieved = performances[user.userId]?.[config.skuId] || 0;
+                          const percentage = target > 0 ? Math.round((achieved / target) * 100) : 0;
+                          
+                          return (
+                            <div key={config.skuId} className="sku-cell">
+                              <div className="target-display">Target: {target}</div>
+                              <input
+                                type="number"
+                                className="performance-input-compact"
+                                value={achieved}
+                                onChange={(e) => updatePerformance(user.userId, config.skuId, parseFloat(e.target.value) || 0)}
+                                placeholder="0"
+                                min="0"
+                              />
+                              <div className="percentage-display">{percentage}%</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -369,54 +357,42 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
                           <div className="unit-info">Daily ({config.unit})</div>
                         </span>
                       ))}
-                      <span className="overall-col">Daily Total</span>
                     </div>
                     
                     <div className="table-body">
-                      {campaign.userTargets?.map((user: any) => {
-                        let dailyTotal = 0;
-                        
-                        return (
-                          <div key={user.userId} className="table-row">
-                            <div className="user-cell">
-                              <div className="user-name">{user.userName}</div>
-                              <div className="user-id">#{user.userId}</div>
-                            </div>
-                            <div className="region-cell">{user.regionName}</div>
-                            
-                            {campaign.targetConfigs?.map((config: any) => {
-                              const dailyValue = getDateWiseValue(user.userId, config.skuId);
-                              const cumulativeTotal = performances[user.userId]?.[config.skuId] || 0;
-                              dailyTotal += dailyValue;
-                              
-                              return (
-                                <div key={config.skuId} className="sku-cell">
-                                  <div className="cumulative-display">
-                                    Cumulative: {cumulativeTotal}
-                                  </div>
-                                  <input
-                                    type="number"
-                                    className="performance-input-compact"
-                                    value={dailyValue}
-                                    onChange={(e) => updateDateWisePerformance(user.userId, config.skuId, parseFloat(e.target.value) || 0)}
-                                    placeholder={`Daily for ${selectedDate}`}
-                                    min="0"
-                                  />
-                                  <div className="date-note">
-                                    For {selectedDate}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                            
-                            <div className="overall-cell">
-                              <div className="daily-total">
-                                {dailyTotal}
-                              </div>
-                            </div>
+                      {campaign.userTargets?.map((user: any) => (
+                        <div key={user.userId} className="table-row">
+                          <div className="user-cell">
+                            <div className="user-name">{user.userName}</div>
+                            <div className="user-id">#{user.userId}</div>
                           </div>
-                        );
-                      })}
+                          <div className="region-cell">{user.regionName}</div>
+                          
+                          {campaign.targetConfigs?.map((config: any) => {
+                            const dailyValue = getDateWiseValue(user.userId, config.skuId);
+                            const cumulativeTotal = performances[user.userId]?.[config.skuId] || 0;
+                            
+                            return (
+                              <div key={config.skuId} className="sku-cell">
+                                <div className="cumulative-display">
+                                  Cumulative: {cumulativeTotal}
+                                </div>
+                                <input
+                                  type="number"
+                                  className="performance-input-compact"
+                                  value={dailyValue}
+                                  onChange={(e) => updateDateWisePerformance(user.userId, config.skuId, parseFloat(e.target.value) || 0)}
+                                  placeholder={`Daily for ${selectedDate}`}
+                                  min="0"
+                                />
+                                <div className="date-note">
+                                  For {selectedDate}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
