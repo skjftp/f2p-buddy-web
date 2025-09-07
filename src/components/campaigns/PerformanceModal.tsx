@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { getFirestoreInstance } from '../../config/firebase';
 import { toast } from 'react-toastify';
 
@@ -40,19 +40,72 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
     setRegionSummary(summary);
   }, [campaign]);
 
-  // Initialize performance data
+  // Load existing performance data and initialize
   useEffect(() => {
-    const initData: Record<string, Record<string, number>> = {};
-    
-    campaign.userTargets?.forEach((user: any) => {
-      initData[user.userId] = {};
-      campaign.targetConfigs?.forEach((config: any) => {
-        initData[user.userId][config.skuId] = 0;
-      });
-    });
-    
-    setPerformances(initData);
-    computeRegionSummary(initData);
+    const loadAndInitializeData = async () => {
+      console.log('📊 Loading existing performance data...');
+      
+      try {
+        const dbInstance = await getFirestoreInstance();
+        const loadedPerformances: Record<string, Record<string, number>> = {};
+        const loadedDateWise: Record<string, Record<string, Record<string, number>>> = {};
+        
+        // Load existing performance data for each user
+        const loadPromises = campaign.userTargets?.map(async (user: any) => {
+          const docId = `${user.userId}_${campaign.id}`;
+          const perfDoc = await getDoc(doc(dbInstance, 'userPerformances', docId));
+          
+          if (perfDoc.exists()) {
+            const data = perfDoc.data();
+            console.log(`✅ Loaded existing performance for ${user.userName}:`, data);
+            
+            // Load consolidated performance
+            if (data.consolidated) {
+              loadedPerformances[user.userId] = data.consolidated;
+            }
+            
+            // Load date-wise performance
+            if (data.dateWise) {
+              loadedDateWise[user.userId] = data.dateWise;
+            }
+          } else {
+            console.log(`📊 No existing performance data for ${user.userName}, initializing to zero`);
+            
+            // Initialize to zero if no existing data
+            loadedPerformances[user.userId] = {};
+            campaign.targetConfigs?.forEach((config: any) => {
+              loadedPerformances[user.userId][config.skuId] = 0;
+            });
+          }
+        }) || [];
+        
+        await Promise.all(loadPromises);
+        
+        console.log('📈 Final loaded performances:', loadedPerformances);
+        console.log('📅 Final loaded date-wise:', loadedDateWise);
+        
+        setPerformances(loadedPerformances);
+        setDateWisePerformances(loadedDateWise);
+        computeRegionSummary(loadedPerformances);
+        
+      } catch (error) {
+        console.error('❌ Error loading performance data:', error);
+        
+        // Fallback to zero initialization
+        const initData: Record<string, Record<string, number>> = {};
+        campaign.userTargets?.forEach((user: any) => {
+          initData[user.userId] = {};
+          campaign.targetConfigs?.forEach((config: any) => {
+            initData[user.userId][config.skuId] = 0;
+          });
+        });
+        
+        setPerformances(initData);
+        computeRegionSummary(initData);
+      }
+    };
+
+    loadAndInitializeData();
   }, [campaign, computeRegionSummary]);
 
   const updatePerformance = (userId: string, skuId: string, value: number) => {
