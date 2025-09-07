@@ -51,12 +51,12 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
         </div>
         
         {/* Campaign metrics - only show if data exists */}
-        {(campaign.targetConfigs || campaign.type) && (
+        {((campaign as any).targetConfigs || (campaign as any).type) && (
           <div className="campaign-metrics">
             <div className="metrics-grid">
             {/* Handle new campaign structure with targetConfigs */}
-            {(campaign.targetConfigs && Array.isArray(campaign.targetConfigs)) ? (
-              campaign.targetConfigs.map((config: any) => (
+            {((campaign as any).targetConfigs && Array.isArray((campaign as any).targetConfigs)) ? (
+              (campaign as any).targetConfigs.map((config: any) => (
                 <div key={config.skuId} className="metric-card">
                   <div className="metric-icon">📦</div>
                   <div className="metric-title">{config.skuCode}</div>
@@ -67,8 +67,8 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                 </div>
               ))
             ) : /* Handle legacy campaign structure with type array */ 
-            (campaign.type && Array.isArray(campaign.type)) ? (
-              campaign.type.map((type: string) => (
+            ((campaign as any).type && Array.isArray((campaign as any).type)) ? (
+              (campaign as any).type.map((type: string) => (
                 <div key={type} className="metric-card">
                   <div className="metric-icon">
                     {type === 'sales' && '💰'}
@@ -102,7 +102,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
         )}
         
         <div className="participants-count">
-          👥 {campaign.userTargets?.length || campaign.participants?.length || 0} participants
+          👥 {(campaign as any).userTargets?.length || (campaign as any).participants?.length || 0} participants
         </div>
         
         <div className="campaign-actions">
