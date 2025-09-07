@@ -7,13 +7,15 @@ interface CampaignCardProps {
   userRole: 'admin' | 'employee';
   onEdit?: () => void;
   onView?: () => void;
+  onPerformanceUpdate?: () => void;
 }
 
 const CampaignCard: React.FC<CampaignCardProps> = ({ 
   campaign, 
   userRole, 
   onEdit, 
-  onView 
+  onView,
+  onPerformanceUpdate
 }) => {
   // Safety check for campaign data
   if (!campaign) {
@@ -109,11 +111,15 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
           {userRole === 'admin' ? (
             <>
               <QuickActions campaign={campaign} />
-              <button className="btn-icon" onClick={onEdit} title="Edit">✏️</button>
+              <button className="btn-icon" onClick={onEdit} title="Edit Campaign">✏️</button>
+              <button className="btn-icon" onClick={onPerformanceUpdate} title="Update Performance">📈</button>
               <button className="btn-icon" onClick={onView} title="Analytics">📊</button>
             </>
           ) : (
-            <button className="btn-icon" onClick={onView} title="View">→</button>
+            <>
+              <button className="btn-icon" onClick={onPerformanceUpdate} title="Update Performance">📈</button>
+              <button className="btn-icon" onClick={onView} title="View Campaign">→</button>
+            </>
           )}
         </div>
       </div>

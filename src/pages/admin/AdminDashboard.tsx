@@ -5,6 +5,7 @@ import { getFirestoreInstance } from '../../config/firebase';
 import { Campaign } from '../../store/slices/campaignSlice';
 import NewCampaignWizard from '../../components/campaigns/CampaignWizard/NewCampaignWizard';
 import CampaignEditWizard from '../../components/campaigns/CampaignEditWizard';
+import PerformanceModal from '../../components/campaigns/PerformanceModal';
 import CampaignCard from '../../components/campaigns/CampaignCard';
 import AnalyticsDashboard from '../../components/analytics/AnalyticsDashboard';
 import EmployeeManagement from '../../components/admin/EmployeeManagement';
@@ -19,6 +20,7 @@ const AdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showCampaignWizard, setShowCampaignWizard] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showPerformanceModal, setShowPerformanceModal] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [organizationStats, setOrganizationStats] = useState({
     totalEmployees: 2,
@@ -84,8 +86,18 @@ const AdminDashboard: React.FC = () => {
     setShowEditModal(true);
   };
 
+  const handlePerformanceUpdate = (campaign: Campaign) => {
+    setSelectedCampaign(campaign);
+    setShowPerformanceModal(true);
+  };
+
   const handleCloseEdit = () => {
     setShowEditModal(false);
+    setSelectedCampaign(null);
+  };
+
+  const handleClosePerformance = () => {
+    setShowPerformanceModal(false);
     setSelectedCampaign(null);
   };
 
@@ -133,6 +145,7 @@ const AdminDashboard: React.FC = () => {
               campaign={campaign}
               userRole="admin"
               onEdit={() => handleEditCampaign(campaign)}
+              onPerformanceUpdate={() => handlePerformanceUpdate(campaign)}
               onView={() => {}}
             />
           ))}
@@ -166,6 +179,7 @@ const AdminDashboard: React.FC = () => {
             campaign={campaign}
             userRole="admin"
             onEdit={() => handleEditCampaign(campaign)}
+            onPerformanceUpdate={() => handlePerformanceUpdate(campaign)}
             onView={() => {}}
           />
         ))}
@@ -289,6 +303,14 @@ const AdminDashboard: React.FC = () => {
             />
           </div>
         </div>
+      )}
+
+      {showPerformanceModal && selectedCampaign && (
+        <PerformanceModal
+          campaign={selectedCampaign as any}
+          onClose={handleClosePerformance}
+          onUpdate={handleCampaignUpdate}
+        />
       )}
     </div>
   );
