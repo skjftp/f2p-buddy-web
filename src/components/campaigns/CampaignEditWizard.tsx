@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { doc, updateDoc, deleteDoc, serverTimestamp, getDoc, query, where, getDocs, collection } from 'firebase/firestore';
+import { doc, updateDoc, deleteDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFirestoreInstance, getStorageInstance } from '../../config/firebase';
 import { Campaign } from '../../store/slices/campaignSlice';
@@ -23,7 +23,6 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
   const [organizationSkus, setOrganizationSkus] = useState<any[]>([]);
   const [hierarchyLevels, setHierarchyLevels] = useState<any[]>([]);
   const [designations, setDesignations] = useState<any[]>([]);
-  const [organizationUsers, setOrganizationUsers] = useState<any[]>([]);
   
   const [campaignData, setCampaignData] = useState({
     name: campaign.name,
@@ -87,17 +86,6 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
           }
         }
         
-        // Load organization users
-        const usersQuery = query(
-          collection(dbInstance, 'users'),
-          where('organizationId', '==', organization.id)
-        );
-        const usersSnapshot = await getDocs(usersQuery);
-        const users: any[] = [];
-        usersSnapshot.forEach((doc) => {
-          users.push({ id: doc.id, ...doc.data() });
-        });
-        setOrganizationUsers(users);
         
         // Load campaign data
         const campaignDoc = await getDoc(doc(dbInstance, 'campaigns', campaign.id));
