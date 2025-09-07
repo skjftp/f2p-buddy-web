@@ -23,7 +23,6 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
   const [organizationSkus, setOrganizationSkus] = useState<any[]>([]);
   const [hierarchyLevels, setHierarchyLevels] = useState<any[]>([]);
   const [designations, setDesignations] = useState<any[]>([]);
-  const [distributionAlgorithm, setDistributionAlgorithm] = useState<'equal' | 'territory' | 'performance' | 'custom'>('equal');
   
   const [campaignData, setCampaignData] = useState({
     name: campaign.name,
@@ -237,31 +236,6 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
   };
 
 
-  const handleRegionToggle = (regionId: string, checked: boolean) => {
-    setCampaignData(prev => {
-      const newSelectedRegions = checked
-        ? [...prev.selectedRegions, regionId]
-        : prev.selectedRegions.filter(id => id !== regionId);
-      
-      return {
-        ...prev,
-        selectedRegions: newSelectedRegions
-      };
-    });
-  };
-
-  const handleDesignationToggle = (designationId: string, checked: boolean) => {
-    setCampaignData(prev => {
-      const newSelectedDesignations = checked
-        ? [...prev.selectedDesignations, designationId]
-        : prev.selectedDesignations.filter(id => id !== designationId);
-      
-      return {
-        ...prev,
-        selectedDesignations: newSelectedDesignations
-      };
-    });
-  };
 
 
   const renderBasicTab = () => (
@@ -644,7 +618,15 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
                               <input
                                 type="checkbox"
                                 checked={isSelected}
-                                onChange={(e) => handleRegionToggle(item.id, e.target.checked)}
+                                onChange={(e) => {
+                                  const checked = e.target.checked;
+                                  setCampaignData(prev => ({
+                                    ...prev,
+                                    selectedRegions: checked
+                                      ? [...prev.selectedRegions, item.id]
+                                      : prev.selectedRegions.filter(id => id !== item.id)
+                                  }));
+                                }}
                               />
                             </div>
                             <div className="item-info">
@@ -690,7 +672,15 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
                     <input
                       type="checkbox"
                       checked={campaignData.selectedDesignations.includes(designation.id)}
-                      onChange={(e) => handleDesignationToggle(designation.id, e.target.checked)}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setCampaignData(prev => ({
+                          ...prev,
+                          selectedDesignations: checked
+                            ? [...prev.selectedDesignations, designation.id]
+                            : prev.selectedDesignations.filter(id => id !== designation.id)
+                        }));
+                      }}
                     />
                     <div className="designation-info">
                       <span className={`category-badge ${designation.category}`}>
@@ -707,71 +697,15 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
             )}
           </div>
 
-          {/* Distribution Algorithm Selection */}
+          {/* Distribution Algorithm - Coming Soon */}
           {campaignData.selectedRegions.length > 0 && (
             <div className="targeting-section">
               <div className="section-header">
                 <h4>📊 Distribution Algorithm</h4>
-                <p>Choose how to distribute targets across selected regions</p>
+                <p>Target distribution editing coming soon</p>
               </div>
-
-              <div className="algorithm-options">
-                <label className="algorithm-option">
-                  <input 
-                    type="radio" 
-                    name="editAlgorithm" 
-                    value="equal"
-                    checked={distributionAlgorithm === 'equal'}
-                    onChange={() => {
-                      setDistributionAlgorithm('equal');
-                    }}
-                  />
-                  <div className="option-content">
-                    <div className="option-icon">⚖️</div>
-                    <div className="option-text">
-                      <strong>Equal Distribution</strong>
-                      <p>Divide targets equally across all selected regions</p>
-                    </div>
-                  </div>
-                </label>
-
-                <label className="algorithm-option">
-                  <input 
-                    type="radio" 
-                    name="editAlgorithm" 
-                    value="territory"
-                    checked={distributionAlgorithm === 'territory'}
-                    onChange={() => {
-                      setDistributionAlgorithm('territory');
-                    }}
-                  />
-                  <div className="option-content">
-                    <div className="option-icon">🗺️</div>
-                    <div className="option-text">
-                      <strong>Territory-based</strong>
-                      <p>Larger territories get proportionally higher targets</p>
-                    </div>
-                  </div>
-                </label>
-
-                <label className="algorithm-option">
-                  <input 
-                    type="radio" 
-                    name="editAlgorithm" 
-                    value="custom"
-                    checked={distributionAlgorithm === 'custom'}
-                    onChange={() => {
-                      setDistributionAlgorithm('custom');
-                    }}
-                  />
-                  <div className="option-content">
-                    <div className="option-icon">✏️</div>
-                    <div className="option-text">
-                      <strong>Custom Distribution</strong>
-                      <p>Manually set targets for each region</p>
-                    </div>
-                  </div>
-                </label>
+              <div className="coming-soon">
+                <p>Use current data or create new campaign for distribution changes</p>
               </div>
             </div>
           )}
