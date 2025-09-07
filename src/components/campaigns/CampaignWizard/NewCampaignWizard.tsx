@@ -499,14 +499,25 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
   };
 
   const computeRegionalDistribution = (algorithm: 'equal' | 'territory' | 'performance' | 'custom' = 'equal') => {
+    console.log('🔄 Computing regional distribution with algorithm:', algorithm);
+    console.log('📊 Selected regions:', campaignData.selectedRegions);
+    
     const newDistribution: Record<string, RegionalDistribution[]> = {};
 
     campaignData.targetConfigs.forEach(config => {
+      console.log('🎯 Computing distribution for SKU:', config.skuCode, 'Target:', config.target);
       const distributions: RegionalDistribution[] = [];
       const totalTarget = config.target;
       const selectedRegionItems = campaignData.selectedRegions.map(regionId => 
         hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId)
       ).filter(Boolean) as HierarchyItem[];
+      
+      console.log('🗺️ Selected region items:', selectedRegionItems.map(item => ({
+        id: item.id,
+        name: item.name,
+        level: item.level,
+        parentId: item.parentId
+      })));
 
       // Build hierarchy tree for proper parent-child distribution
       const buildDistributionTree = (items: HierarchyItem[]) => {
@@ -569,10 +580,19 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
       };
 
       const distributionMap = buildDistributionTree(selectedRegionItems);
+      console.log('🌳 Distribution map:', distributionMap);
 
       // Create final distributions array with user counts
       selectedRegionItems.forEach(regionItem => {
         const regionTarget = distributionMap[regionItem.id]?.target || 0;
+        
+        console.log('📍 Processing region:', {
+          id: regionItem.id,
+          name: regionItem.name,
+          level: regionItem.level,
+          target: regionTarget,
+          hasTarget: regionTarget > 0
+        });
         
         // Only include regions that have actual targets (leaf nodes)
         if (regionTarget > 0) {
@@ -586,6 +606,14 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
           const userCount = Math.max(1, usersInRegion.length);
           const individualTarget = Math.round(regionTarget / userCount);
 
+          console.log('✅ Adding distribution:', {
+            regionId: regionItem.id,
+            regionName: regionItem.name,
+            target: regionTarget,
+            userCount,
+            individualTarget
+          });
+
           distributions.push({
             regionId: regionItem.id,
             regionName: regionItem.name,
@@ -593,8 +621,12 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
             userCount,
             individualTarget
           });
+        } else {
+          console.log('❌ Skipping region with zero target:', regionItem.name);
         }
       });
+
+      console.log('📋 Final distributions for', config.skuCode, ':', distributions);
 
       newDistribution[config.skuId] = distributions;
     });
