@@ -27,7 +27,12 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
     
     // For each user, check if they're in a parent region and should get child region aggregation
     campaign.userTargets?.forEach((user: any) => {
-      if (!user.regionName || !user.regionHierarchy) return;
+      console.log(`🔍 Checking user ${user.userName} (${user.regionName}) for parent region aggregation`);
+      
+      if (!user.regionName || !user.regionHierarchy) {
+        console.log(`❌ ${user.userName}: Missing regionName or regionHierarchy`);
+        return;
+      }
       
       // Check if this user is in a parent region (has child regions with performance)
       let childPerformanceSum: Record<string, number> = {};
@@ -39,6 +44,8 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
         // Find all child regions of this user's region
         campaign.userTargets?.forEach((otherUser: any) => {
           if (otherUser.userId === user.userId) return; // Skip self
+          
+          console.log(`   🔍 Checking if ${otherUser.userName} (${otherUser.regionName}) is child of ${user.userName} (${user.regionName})`);
           
           // Check if otherUser is in a child region of this user
           const otherUserRegionId = Object.values(otherUser.regionHierarchy || {}).find(regionId => {
