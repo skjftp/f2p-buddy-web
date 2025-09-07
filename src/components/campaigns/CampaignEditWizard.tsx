@@ -24,6 +24,7 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
   const [organizationSkus, setOrganizationSkus] = useState<any[]>([]);
   const [hierarchyLevels, setHierarchyLevels] = useState<any[]>([]);
   const [designations, setDesignations] = useState<any[]>([]);
+  const [distributionAlgorithm, setDistributionAlgorithm] = useState<'equal' | 'territory' | 'performance' | 'custom'>('equal');
   
   const [campaignData, setCampaignData] = useState({
     name: campaign.name,
@@ -244,6 +245,32 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
       regionTargets: targetingData.regionTargets,
       totalTarget: targetingData.totalTarget
     }));
+  };
+
+  const handleRegionToggle = (regionId: string, checked: boolean) => {
+    setCampaignData(prev => {
+      const newSelectedRegions = checked
+        ? [...prev.selectedRegions, regionId]
+        : prev.selectedRegions.filter(id => id !== regionId);
+      
+      return {
+        ...prev,
+        selectedRegions: newSelectedRegions
+      };
+    });
+  };
+
+  const handleDesignationToggle = (designationId: string, checked: boolean) => {
+    setCampaignData(prev => {
+      const newSelectedDesignations = checked
+        ? [...prev.selectedDesignations, designationId]
+        : prev.selectedDesignations.filter(id => id !== designationId);
+      
+      return {
+        ...prev,
+        selectedDesignations: newSelectedDesignations
+      };
+    });
   };
 
 
@@ -591,17 +618,174 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
         </div>
       )}
 
-      {/* Legacy Regional Targeting Component for Further Editing */}
-      <div className="legacy-targeting">
-        <h4>🔧 Advanced Regional Targeting</h4>
-        <p>Use this interface to modify regional and designation targeting:</p>
-        <CampaignTargeting
-          organizationId={campaign.orgId}
-          initialSelectedRegions={campaignData.selectedRegions}
-          initialSelectedDesignations={campaignData.selectedDesignations}
-          initialRegionTargets={campaignData.regionTargets}
-          onTargetingChange={handleTargetingChange}
-        />
+      {/* Interactive Regional & Designation Targeting (Same as Step 4) */}
+      <div className="interactive-targeting">
+        <div className="targeting-sections">
+          {/* Regional Targeting Section */}
+          <div className="targeting-section">
+            <div className="section-header">
+              <h4>🗺️ Regional Targeting</h4>
+              <div className="selected-count">
+                {campaignData.selectedRegions.length} region(s) selected
+              </div>
+            </div>
+
+            {hierarchyLevels.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-icon">🏗️</div>
+                <h4>Loading Hierarchy...</h4>
+                <p>Please wait while organization hierarchy loads.</p>
+              </div>
+            ) : (
+              <div className="hierarchy-selection">
+                {hierarchyLevels.map(level => (
+                  <div key={level.id} className="hierarchy-level-section">
+                    <h5 className="level-title">{level.name}</h5>
+                    <div className="hierarchy-items">
+                      {level.items.map(item => {
+                        const isSelected = campaignData.selectedRegions.includes(item.id);
+                        
+                        return (
+                          <label 
+                            key={item.id} 
+                            className={`hierarchy-item ${isSelected ? 'selected' : ''}`}
+                          >
+                            <div className="checkbox-wrapper">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) => handleRegionToggle(item.id, e.target.checked)}
+                              />
+                            </div>
+                            <div className="item-info">
+                              <span className="item-name">{item.name}</span>
+                              {item.parentId && (
+                                <span className="parent-info">
+                                  under {hierarchyLevels.flatMap(l => l.items).find(p => p.id === item.parentId)?.name}
+                                </span>
+                              )}
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Designation Targeting Section */}
+          <div className="targeting-section">
+            <div className="section-header">
+              <h4>👔 Designation Targeting</h4>
+              <div className="selected-count">
+                {campaignData.selectedDesignations.length} designation(s) selected
+              </div>
+            </div>
+
+            {designations.length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-icon">👥</div>
+                <h4>Loading Designations...</h4>
+                <p>Please wait while designations load.</p>
+              </div>
+            ) : (
+              <div className="designations-grid">
+                {designations.map(designation => (
+                  <label 
+                    key={designation.id}
+                    className={`designation-item ${campaignData.selectedDesignations.includes(designation.id) ? 'selected' : ''}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={campaignData.selectedDesignations.includes(designation.id)}
+                      onChange={(e) => handleDesignationToggle(designation.id, e.target.checked)}
+                    />
+                    <div className="designation-info">
+                      <span className={`category-badge ${designation.category}`}>
+                        {designation.category}
+                      </span>
+                      <span className="designation-name">{designation.name}</span>
+                      {designation.description && (
+                        <span className="designation-desc">{designation.description}</span>
+                      )}
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Distribution Algorithm Selection */}
+          {campaignData.selectedRegions.length > 0 && (
+            <div className="targeting-section">
+              <div className="section-header">
+                <h4>📊 Distribution Algorithm</h4>
+                <p>Choose how to distribute targets across selected regions</p>
+              </div>
+
+              <div className="algorithm-options">
+                <label className="algorithm-option">
+                  <input 
+                    type="radio" 
+                    name="editAlgorithm" 
+                    value="equal"
+                    checked={distributionAlgorithm === 'equal'}
+                    onChange={() => {
+                      setDistributionAlgorithm('equal');
+                    }}
+                  />
+                  <div className="option-content">
+                    <div className="option-icon">⚖️</div>
+                    <div className="option-text">
+                      <strong>Equal Distribution</strong>
+                      <p>Divide targets equally across all selected regions</p>
+                    </div>
+                  </div>
+                </label>
+
+                <label className="algorithm-option">
+                  <input 
+                    type="radio" 
+                    name="editAlgorithm" 
+                    value="territory"
+                    checked={distributionAlgorithm === 'territory'}
+                    onChange={() => {
+                      setDistributionAlgorithm('territory');
+                    }}
+                  />
+                  <div className="option-content">
+                    <div className="option-icon">🗺️</div>
+                    <div className="option-text">
+                      <strong>Territory-based</strong>
+                      <p>Larger territories get proportionally higher targets</p>
+                    </div>
+                  </div>
+                </label>
+
+                <label className="algorithm-option">
+                  <input 
+                    type="radio" 
+                    name="editAlgorithm" 
+                    value="custom"
+                    checked={distributionAlgorithm === 'custom'}
+                    onChange={() => {
+                      setDistributionAlgorithm('custom');
+                    }}
+                  />
+                  <div className="option-content">
+                    <div className="option-icon">✏️</div>
+                    <div className="option-text">
+                      <strong>Custom Distribution</strong>
+                      <p>Manually set targets for each region</p>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
