@@ -19,6 +19,66 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
   const [dateWisePerformances, setDateWisePerformances] = useState<Record<string, Record<string, Record<string, number>>>>({});
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
+  // Compute parent region performance from child regions
+  const computeParentPerformances = useCallback((performanceData: Record<string, Record<string, number>>) => {
+    const updatedPerformances = { ...performanceData };
+    
+    // For each user, check if they're in a parent region and should get child region aggregation
+    campaign.userTargets?.forEach((user: any) => {
+      if (!user.regionName || !user.regionHierarchy) return;
+      
+      // Check if this user is in a parent region (has child regions with performance)
+      let childPerformanceSum: Record<string, number> = {};
+      let hasChildPerformance = false;
+      
+      campaign.targetConfigs?.forEach((config: any) => {
+        childPerformanceSum[config.skuId] = 0;
+        
+        // Find all child regions of this user's region
+        campaign.userTargets?.forEach((otherUser: any) => {
+          if (otherUser.userId === user.userId) return; // Skip self
+          
+          // Check if otherUser is in a child region of this user
+          const otherUserRegionId = Object.values(otherUser.regionHierarchy || {}).find(regionId => {
+            const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
+            return regionItem?.name === otherUser.regionName;
+          });
+          
+          const userRegionId = Object.values(user.regionHierarchy || {}).find(regionId => {
+            const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
+            return regionItem?.name === user.regionName;
+          });
+          
+          if (otherUserRegionId && userRegionId) {
+            const otherRegionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === otherUserRegionId);
+            
+            // If other user's region is a direct child of this user's region
+            if (otherRegionItem && otherRegionItem.parentId === userRegionId) {
+              const childPerformance = performanceData[otherUser.userId]?.[config.skuId] || 0;
+              childPerformanceSum[config.skuId] += childPerformance;
+              hasChildPerformance = true;
+              console.log(`📊 ${user.userName} (${user.regionName}) += ${childPerformance} from child ${otherUser.userName} (${otherUser.regionName})`);
+            }
+          }
+        });
+      });
+      
+      // If user has child performance, update their performance to be sum of children
+      if (hasChildPerformance) {
+        if (!updatedPerformances[user.userId]) {
+          updatedPerformances[user.userId] = {};
+        }
+        
+        Object.entries(childPerformanceSum).forEach(([skuId, sum]) => {
+          updatedPerformances[user.userId][skuId] = sum;
+          console.log(`✅ Auto-updated ${user.userName} (${user.regionName}): ${campaign.targetConfigs.find((c: any) => c.skuId === skuId)?.skuCode} = ${sum} (sum of children)`);
+        });
+      }
+    });
+    
+    return updatedPerformances;
+  }, [campaign, hierarchyLevels]);
+
   const computeRegionSummary = useCallback((performanceData: Record<string, Record<string, number>>) => {
     const summary: Record<string, any> = {};
     
@@ -113,8 +173,12 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
       ...performances,
       [userId]: { ...performances[userId], [skuId]: value }
     };
-    setPerformances(updated);
-    computeRegionSummary(updated);
+    
+    // Compute parent region performance aggregation
+    const withParentAggregation = computeParentPerformances(updated);
+    
+    setPerformances(withParentAggregation);
+    computeRegionSummary(withParentAggregation);
   };
 
   const updateDateWisePerformance = (userId: string, skuId: string, value: number) => {
@@ -144,8 +208,11 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
         });
       });
       
-      setPerformances(consolidatedPerformances);
-      computeRegionSummary(consolidatedPerformances);
+      // Compute parent region performance aggregation from child regions
+      const withParentAggregation = computeParentPerformances(consolidatedPerformances);
+      
+      setPerformances(withParentAggregation);
+      computeRegionSummary(withParentAggregation);
       
       return updated;
     });
