@@ -36,9 +36,24 @@ while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
         break
     fi
     
+    # Check if we've been waiting too long (likely build failed)
+    if [ $ATTEMPT -ge 6 ]; then
+        echo "⚠️ Build taking longer than expected (>3 minutes)"
+        echo "🔍 Checking for build failure indicators..."
+        
+        # Check if hash is very old (indicates failed build)
+        if [ "$CURRENT_HASH" = "$PREV_HASH" ]; then
+            echo "❌ BUILD FAILURE DETECTED!"
+            echo "🔧 Hash unchanged after 3+ minutes - build likely failed"
+            echo "📋 Likely causes: TypeScript errors, ESLint errors, compilation failures"
+            echo "🔄 Claude should now apply auto-corrections..."
+            break
+        fi
+    fi
+    
     # Check if site is down (build failed)
     if [[ "$STATUS" != *"200"* ]]; then
-        echo "❌ Site is down - build likely failed"
+        echo "❌ Site is down - build definitely failed"
         echo "🔧 Build failure detected - manual intervention may be required"
         break
     fi

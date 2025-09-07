@@ -6,7 +6,6 @@ import { Campaign } from '../../store/slices/campaignSlice';
 import { toast } from 'react-toastify';
 import { useDropzone } from 'react-dropzone';
 import { useAuth } from '../../contexts/AuthContext';
-import CampaignTargeting from './CampaignTargeting';
 
 interface CampaignEditWizardProps {
   campaign: Campaign;
@@ -237,15 +236,6 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
     }
   };
 
-  const handleTargetingChange = (targetingData: any) => {
-    setCampaignData(prev => ({
-      ...prev,
-      selectedRegions: targetingData.selectedRegions,
-      selectedDesignations: targetingData.selectedDesignations,
-      regionTargets: targetingData.regionTargets,
-      totalTarget: targetingData.totalTarget
-    }));
-  };
 
   const handleRegionToggle = (regionId: string, checked: boolean) => {
     setCampaignData(prev => {
