@@ -582,133 +582,35 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
         </div>
       )}
 
-      {/* Interactive Regional & Designation Targeting (Same as Step 4) */}
-      <div className="interactive-targeting">
-        <div className="targeting-sections">
-          {/* Regional Targeting Section */}
-          <div className="targeting-section">
-            <div className="section-header">
-              <h4>🗺️ Regional Targeting</h4>
-              <div className="selected-count">
-                {campaignData.selectedRegions.length} region(s) selected
+      {/* Simplified Regional Targeting Edit */}
+      <div className="simple-targeting-edit">
+        <div className="edit-notice">
+          <h4>🔧 Regional Targeting Edit</h4>
+          <p>For complex targeting changes, please create a new campaign. Basic viewing available below.</p>
+        </div>
+        
+        {/* Simple region list for editing */}
+        <div className="simple-region-edit">
+          <h5>Current Regions</h5>
+          {campaignData.selectedRegions.map(regionId => {
+            const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
+            return (
+              <div key={regionId} className="region-edit-item">
+                <span className="region-name">{regionItem?.name || regionId}</span>
+                <button 
+                  className="btn-small btn-danger"
+                  onClick={() => {
+                    setCampaignData(prev => ({
+                      ...prev,
+                      selectedRegions: prev.selectedRegions.filter(id => id !== regionId)
+                    }));
+                  }}
+                >
+                  Remove
+                </button>
               </div>
-            </div>
-
-            {hierarchyLevels.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-icon">🏗️</div>
-                <h4>Loading Hierarchy...</h4>
-                <p>Please wait while organization hierarchy loads.</p>
-              </div>
-            ) : (
-              <div className="hierarchy-selection">
-                {hierarchyLevels.map(level => (
-                  <div key={level.id} className="hierarchy-level-section">
-                    <h5 className="level-title">{level.name}</h5>
-                    <div className="hierarchy-items">
-                      {level.items.map(item => {
-                        const isSelected = campaignData.selectedRegions.includes(item.id);
-                        
-                        return (
-                          <label 
-                            key={item.id} 
-                            className={`hierarchy-item ${isSelected ? 'selected' : ''}`}
-                          >
-                            <div className="checkbox-wrapper">
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={(e) => {
-                                  const checked = e.target.checked;
-                                  setCampaignData(prev => ({
-                                    ...prev,
-                                    selectedRegions: checked
-                                      ? [...prev.selectedRegions, item.id]
-                                      : prev.selectedRegions.filter(id => id !== item.id)
-                                  }));
-                                }}
-                              />
-                            </div>
-                            <div className="item-info">
-                              <span className="item-name">{item.name}</span>
-                              {item.parentId && (
-                                <span className="parent-info">
-                                  under {hierarchyLevels.flatMap(l => l.items).find(p => p.id === item.parentId)?.name}
-                                </span>
-                              )}
-                            </div>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Designation Targeting Section */}
-          <div className="targeting-section">
-            <div className="section-header">
-              <h4>👔 Designation Targeting</h4>
-              <div className="selected-count">
-                {campaignData.selectedDesignations.length} designation(s) selected
-              </div>
-            </div>
-
-            {designations.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-icon">👥</div>
-                <h4>Loading Designations...</h4>
-                <p>Please wait while designations load.</p>
-              </div>
-            ) : (
-              <div className="designations-grid">
-                {designations.map(designation => (
-                  <label 
-                    key={designation.id}
-                    className={`designation-item ${campaignData.selectedDesignations.includes(designation.id) ? 'selected' : ''}`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={campaignData.selectedDesignations.includes(designation.id)}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        setCampaignData(prev => ({
-                          ...prev,
-                          selectedDesignations: checked
-                            ? [...prev.selectedDesignations, designation.id]
-                            : prev.selectedDesignations.filter(id => id !== designation.id)
-                        }));
-                      }}
-                    />
-                    <div className="designation-info">
-                      <span className={`category-badge ${designation.category}`}>
-                        {designation.category}
-                      </span>
-                      <span className="designation-name">{designation.name}</span>
-                      {designation.description && (
-                        <span className="designation-desc">{designation.description}</span>
-                      )}
-                    </div>
-                  </label>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Distribution Algorithm - Coming Soon */}
-          {campaignData.selectedRegions.length > 0 && (
-            <div className="targeting-section">
-              <div className="section-header">
-                <h4>📊 Distribution Algorithm</h4>
-                <p>Target distribution editing coming soon</p>
-              </div>
-              <div className="coming-soon">
-                <p>Use current data or create new campaign for distribution changes</p>
-              </div>
-            </div>
-          )}
+            );
+          })}
         </div>
       </div>
     </div>
