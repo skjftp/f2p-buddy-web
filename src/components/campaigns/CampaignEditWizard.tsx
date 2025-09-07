@@ -1005,40 +1005,176 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
         {activeTab === 'contest' && renderContestTab()}
         {activeTab === 'prizes' && renderPrizesTab()}
         {activeTab === 'participants' && (
-          <div className="participants-tab">
-            <h3>Campaign Participants</h3>
-            <p>Manage who can participate in this campaign</p>
-            
-            <div className="participants-list">
-              <div className="participants-count">
-                <strong>Current Participants: {campaignData.participants.length}</strong>
-              </div>
-              
-              {campaignData.participants.length === 0 ? (
-                <div className="empty-participants">
-                  <p>No participants added yet. Participants will be auto-assigned based on regional and designation targeting.</p>
-                </div>
-              ) : (
-                <div className="participant-items">
-                  {campaignData.participants.map((participantId, index) => (
-                    <div key={index} className="participant-item">
-                      <span>Participant {participantId}</span>
-                      <button 
-                        className="btn-icon-small btn-danger"
-                        onClick={() => {
-                          setCampaignData(prev => ({
-                            ...prev,
-                            participants: prev.participants.filter(p => p !== participantId)
-                          }));
-                        }}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+          <div className="step-content">
+            <div className="step-header">
+              <h3>👥 User Targets & Participants</h3>
+              <p>Review and finalize individual user targets for the campaign</p>
             </div>
+
+            {Object.keys(campaignData.regionalDistribution || {}).length === 0 ? (
+              <div className="empty-state">
+                <div className="empty-icon">🎯</div>
+                <h4>No Regional Distribution Data</h4>
+                <p>Campaign doesn't have regional distribution data. This may be a legacy campaign.</p>
+              </div>
+            ) : (
+              <div className="user-targets">
+                {/* Target Mode Selection */}
+                <div className="target-mode-selection">
+                  <h4>📊 Target Assignment Method</h4>
+                  <div className="mode-options">
+                    <label className="mode-option">
+                      <input
+                        type="radio"
+                        name="targetMode"
+                        value="computed"
+                        checked={!campaignData.customTargetsEnabled}
+                        onChange={() => setCampaignData(prev => ({ ...prev, customTargetsEnabled: false }))}
+                      />
+                      <div className="option-content">
+                        <div className="option-icon">🔄</div>
+                        <div className="option-text">
+                          <strong>Use Current Targets</strong>
+                          <p>Display computed targets from regional distribution</p>
+                          <div className="option-features">
+                            <span>• Based on regional target distribution</span>
+                            <span>• Computed individual user targets</span>
+                            <span>• Maintains target accuracy</span>
+                          </div>
+                        </div>
+                      </div>
+                    </label>
+
+                    <label className="mode-option">
+                      <input
+                        type="radio"
+                        name="targetMode"
+                        value="custom"
+                        checked={campaignData.customTargetsEnabled}
+                        onChange={() => setCampaignData(prev => ({ ...prev, customTargetsEnabled: true }))}
+                      />
+                      <div className="option-content">
+                        <div className="option-icon">📄</div>
+                        <div className="option-text">
+                          <strong>Custom CSV Upload</strong>
+                          <p>Upload new user-specific target assignments</p>
+                          <div className="option-features">
+                            <span>• Individual target control</span>
+                            <span>• Bulk upload capability</span>
+                            <span>• Override current values</span>
+                          </div>
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Current Targets Display */}
+                {!campaignData.customTargetsEnabled && (
+                  <div className="computed-targets-section">
+                    <div className="section-header">
+                      <h4>🔄 Current Individual Targets</h4>
+                      <div className="targets-info">
+                        {campaignData.userTargets?.length || 0} participant(s)
+                      </div>
+                    </div>
+
+                    {(!campaignData.userTargets || campaignData.userTargets.length === 0) ? (
+                      <div className="empty-targets">
+                        <div className="empty-icon">👥</div>
+                        <h5>No User Targets Computed</h5>
+                        <p>User targets will be computed based on regional distribution and eligible participants.</p>
+                      </div>
+                    ) : (
+                      <div className="targets-display">
+                        <div className="targets-summary">
+                          <div className="summary-cards">
+                            <div className="summary-card">
+                              <span className="card-number">{campaignData.userTargets.length}</span>
+                              <span className="card-label">Participants</span>
+                            </div>
+                            <div className="summary-card">
+                              <span className="card-number">{campaignData.targetConfigs?.length || 0}</span>
+                              <span className="card-label">SKUs</span>
+                            </div>
+                            <div className="summary-card">
+                              <span className="card-number">{campaignData.selectedRegions.length}</span>
+                              <span className="card-label">Regions</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="targets-table">
+                          <div className="table-header">
+                            <span>Participant</span>
+                            <span>Region</span>
+                            {campaignData.targetConfigs?.map((config: any) => (
+                              <span key={config.skuId}>
+                                {config.skuCode} ({config.unit})
+                              </span>
+                            ))}
+                          </div>
+                          
+                          <div className="table-body">
+                            {campaignData.userTargets.slice(0, 20).map((userTarget: any, index: number) => (
+                              <div key={userTarget.userId} className="table-row">
+                                <div className="participant-info">
+                                  <span className="participant-name">{userTarget.userName}</span>
+                                  <span className="participant-id">#{userTarget.userId}</span>
+                                </div>
+                                <span className="participant-region">{userTarget.regionName}</span>
+                                {campaignData.targetConfigs?.map((config: any) => (
+                                  <span key={config.skuId} className="target-value">
+                                    {userTarget.targets?.[config.skuId] || 0}
+                                  </span>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+
+                          {campaignData.userTargets.length > 20 && (
+                            <div className="table-footer">
+                              <p>Showing first 20 participants. Total: {campaignData.userTargets.length}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Custom CSV Upload Mode */}
+                {campaignData.customTargetsEnabled && (
+                  <div className="csv-upload-section">
+                    <div className="section-header">
+                      <h4>📄 Custom Target Upload</h4>
+                      <p>Upload new target assignments via CSV</p>
+                    </div>
+
+                    <div className="csv-upload-area">
+                      <div className="csv-dropzone">
+                        <div className="dropzone-content">
+                          <div className="dropzone-icon">📄</div>
+                          <h5>CSV Upload Coming Soon</h5>
+                          <p>Custom CSV upload functionality will be implemented</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="csv-format-guide">
+                      <h5>📋 Required CSV Format</h5>
+                      <div className="format-example">
+                        <code>
+                          user_id,user_name,region,{campaignData.targetConfigs?.map((c: any) => c.skuCode).join(',')}
+                          <br />
+                          +919955100649,Sumit Jha,Delhi,{campaignData.targetConfigs?.map(() => '1000').join(',')}
+                        </code>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
