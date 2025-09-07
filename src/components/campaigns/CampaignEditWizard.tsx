@@ -582,36 +582,91 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
         </div>
       )}
 
-      {/* Simplified Regional Targeting Edit */}
-      <div className="simple-targeting-edit">
-        <div className="edit-notice">
-          <h4>🔧 Regional Targeting Edit</h4>
-          <p>For complex targeting changes, please create a new campaign. Basic viewing available below.</p>
-        </div>
-        
-        {/* Simple region list for editing */}
-        <div className="simple-region-edit">
-          <h5>Current Regions</h5>
-          {campaignData.selectedRegions.map(regionId => {
-            const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
-            return (
-              <div key={regionId} className="region-edit-item">
-                <span className="region-name">{regionItem?.name || regionId}</span>
-                <button 
-                  className="btn-small btn-danger"
-                  onClick={() => {
-                    setCampaignData(prev => ({
-                      ...prev,
-                      selectedRegions: prev.selectedRegions.filter(id => id !== regionId)
-                    }));
-                  }}
-                >
-                  Remove
-                </button>
-              </div>
-            );
-          })}
-        </div>
+      {/* Exact Step 4 Interface with Existing Data */}
+      <div className="step4-interface">
+        {/* Show current editable target distribution */}
+        {Object.keys(campaignData.regionalDistribution || {}).length > 0 && (
+          <div className="distribution-preview">
+            <h4>📋 Current Regional Distribution (Editable)</h4>
+            
+            {campaignData.targetConfigs.map(config => {
+              const distributions = campaignData.regionalDistribution[config.skuId] || [];
+              const totalDistributed = distributions.reduce((sum: number, dist: any) => sum + dist.target, 0);
+              
+              const updateRegionalTarget = (regionId: string, newTarget: number) => {
+                setCampaignData(prev => {
+                  const newDistribution = { ...prev.regionalDistribution };
+                  if (newDistribution[config.skuId]) {
+                    newDistribution[config.skuId] = newDistribution[config.skuId].map((dist: any) =>
+                      dist.regionId === regionId 
+                        ? { 
+                            ...dist, 
+                            target: newTarget,
+                            individualTarget: dist.userCount > 0 ? Math.round(newTarget / dist.userCount) : newTarget
+                          }
+                        : dist
+                    );
+                  }
+                  return {
+                    ...prev,
+                    regionalDistribution: newDistribution
+                  };
+                });
+              };
+              
+              return (
+                <div key={config.skuId} className="sku-distribution-card">
+                  <div className="sku-header">
+                    <span className="sku-code">{config.skuCode}</span>
+                    <span className="sku-name">{config.skuName}</span>
+                    <span className="total-target">
+                      {config.target} {config.unit} total
+                    </span>
+                  </div>
+                  
+                  <div className="distribution-table">
+                    <div className="table-header">
+                      <span>Region</span>
+                      <span>Target (Editable)</span>
+                      <span>Users</span>
+                      <span>Per User</span>
+                    </div>
+                    {distributions.map((dist: any) => (
+                      <div key={dist.regionId} className="distribution-row editable">
+                        <span className="region-name">{dist.regionName}</span>
+                        <div className="editable-target">
+                          <input
+                            type="number"
+                            className="target-input"
+                            value={dist.target}
+                            onChange={(e) => updateRegionalTarget(dist.regionId, parseFloat(e.target.value) || 0)}
+                            min="0"
+                          />
+                          <span className="unit-label">{config.unit}</span>
+                        </div>
+                        <span className="user-count">{dist.userCount}</span>
+                        <span className="individual-target">
+                          {dist.individualTarget} {config.unit}
+                        </span>
+                      </div>
+                    ))}
+                    <div className="distribution-footer">
+                      <span>Total Distributed:</span>
+                      <span className={`total-distributed ${totalDistributed !== config.target ? 'variance' : ''}`}>
+                        {totalDistributed} {config.unit}
+                      </span>
+                      {totalDistributed !== config.target && (
+                        <span className="variance">
+                          (Target: {config.target} | Variance: ±{Math.abs(config.target - totalDistributed)})
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
