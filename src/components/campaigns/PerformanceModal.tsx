@@ -14,6 +14,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
   const [performances, setPerformances] = useState<Record<string, Record<string, number>>>({});
   const [regionSummary, setRegionSummary] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(false);
+  const [hierarchyLevels, setHierarchyLevels] = useState<any[]>([]);
   
   // Date-wise performance data: {userId: {date: {skuId: value}}}
   const [dateWisePerformances, setDateWisePerformances] = useState<Record<string, Record<string, Record<string, number>>>>({});
@@ -107,6 +108,17 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
       
       try {
         const dbInstance = await getFirestoreInstance();
+        
+        // Load organization hierarchy for parent-child relationships
+        const campaignDoc = await getDoc(doc(dbInstance, 'campaigns', campaign.id));
+        if (campaignDoc.exists()) {
+          const campaignData = campaignDoc.data();
+          const orgDoc = await getDoc(doc(dbInstance, 'organizations', campaignData.orgId));
+          if (orgDoc.exists() && orgDoc.data().hierarchyLevels) {
+            setHierarchyLevels(orgDoc.data().hierarchyLevels);
+          }
+        }
+        
         const loadedPerformances: Record<string, Record<string, number>> = {};
         const loadedDateWise: Record<string, Record<string, Record<string, number>>> = {};
         
