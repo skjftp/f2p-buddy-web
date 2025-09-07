@@ -7562,3 +7562,199 @@ body {
   }
 }
 
+
+/* Enhanced Employee Dashboard */
+.employee-performance-focus {
+  display: grid;
+  gap: 20px;
+}
+
+.performance-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.focus-card {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+.focus-card h3 {
+  margin: 0 0 12px 0;
+  color: var(--gray-800);
+  font-size: 16px;
+}
+
+/* Target Display */
+.target-display {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.campaign-target {
+  background: var(--gray-50);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+
+.campaign-name {
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.target-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sku-target {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--white);
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--gray-200);
+}
+
+.sku-code {
+  background: var(--secondary);
+  color: var(--white);
+  padding: 2px 4px;
+  border-radius: 2px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.target-value {
+  font-weight: 600;
+  color: var(--gray-800);
+  font-size: 12px;
+}
+
+/* Rank Display */
+.rank-display {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rank-number {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: var(--white);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.rank-info {
+  flex: 1;
+}
+
+.rank-info p {
+  margin: 0;
+  color: var(--gray-600);
+  font-size: 12px;
+}
+
+/* Quick Actions */
+.quick-actions {
+  display: grid;
+  gap: 12px;
+}
+
+.campaign-actions {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.campaign-quick-info h4 {
+  margin: 0 0 4px 0;
+  color: var(--gray-800);
+  font-size: 14px;
+}
+
+.quick-stats {
+  display: flex;
+  gap: 8px;
+}
+
+.participants,
+.skus {
+  font-size: 11px;
+  color: var(--gray-500);
+  background: var(--gray-100);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-action {
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-action:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+/* Mobile Employee Dashboard */
+@media (max-width: 768px) {
+  .performance-summary {
+    grid-template-columns: 1fr;
+  }
+  
+  .campaign-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .action-buttons {
+    justify-content: center;
+  }
+  
+  .btn-action {
+    flex: 1;
+    padding: 10px 16px;
+    font-size: 12px;
+  }
+  
+  .target-details {
+    flex-direction: column;
+  }
+  
+  .sku-target {
+    justify-content: space-between;
+  }
+}
+

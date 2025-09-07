@@ -225,13 +225,83 @@ const EmployeeDashboard: React.FC = () => {
 
       <main className="dashboard-main">
         <div className="dashboard-grid">
-          {/* Stats Overview */}
+          {/* Employee Performance Focus */}
           <section className="dashboard-section glass-effect hover-lift animate-fade-in">
             <div className="section-header">
-              <h2>Performance</h2>
+              <h2>📊 My Performance</h2>
               <div className="section-badge">⚡</div>
             </div>
-            <StatsOverview stats={userStats} />
+            
+            {activeCampaigns.length > 0 ? (
+              <div className="employee-performance-focus">
+                <div className="performance-summary">
+                  <div className="focus-card">
+                    <h3>🎯 Current Targets</h3>
+                    <div className="target-display">
+                      {activeCampaigns.map(campaign => (
+                        <div key={campaign.id} className="campaign-target">
+                          <div className="campaign-name">{campaign.name}</div>
+                          <div className="target-details">
+                            {(campaign as any).targetConfigs?.map((config: any) => (
+                              <div key={config.skuId} className="sku-target">
+                                <span className="sku-code">{config.skuCode}</span>
+                                <span className="target-value">
+                                  {(campaign as any).userTargets?.find((ut: any) => ut.userId === user?.uid)?.targets[config.skuId] || 0} {config.unit}
+                                </span>
+                              </div>
+                            )) || (
+                              <div className="legacy-target">
+                                Campaign targets available
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="focus-card">
+                    <h3>🏆 My Ranking</h3>
+                    <div className="rank-display">
+                      <div className="rank-number">#?</div>
+                      <div className="rank-info">
+                        <p>Click leaderboard to see your current rank</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="quick-actions">
+                  {activeCampaigns.map(campaign => (
+                    <div key={campaign.id} className="campaign-actions">
+                      <div className="campaign-quick-info">
+                        <h4>{campaign.name}</h4>
+                        <div className="quick-stats">
+                          <span className="participants">👥 {(campaign as any).userTargets?.length || 0}</span>
+                          <span className="skus">📦 {(campaign as any).targetConfigs?.length || 0}</span>
+                        </div>
+                      </div>
+                      <div className="action-buttons">
+                        <button 
+                          className="btn-action"
+                          onClick={() => handlePerformanceUpdate(campaign)}
+                        >
+                          📈 Update Performance
+                        </button>
+                        <button 
+                          className="btn-action" 
+                          onClick={() => handleLeaderboard(campaign)}
+                        >
+                          🏆 View Leaderboard
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <StatsOverview stats={userStats} />
+            )}
           </section>
 
           {/* Active Campaigns */}
@@ -254,6 +324,8 @@ const EmployeeDashboard: React.FC = () => {
                     <CampaignCard
                       campaign={campaign}
                       userRole="employee"
+                      onPerformanceUpdate={() => handlePerformanceUpdate(campaign)}
+                      onLeaderboard={() => handleLeaderboard(campaign)}
                     />
                   </div>
                 ))}
@@ -324,6 +396,23 @@ const EmployeeDashboard: React.FC = () => {
           </section>
         </div>
       </main>
+
+      {/* Performance Modal */}
+      {showPerformanceModal && selectedCampaign && (
+        <PerformanceModal
+          campaign={selectedCampaign as any}
+          onClose={handleCloseModals}
+          onUpdate={() => {}}
+        />
+      )}
+
+      {/* Leaderboard Modal */}
+      {showLeaderboardModal && selectedCampaign && (
+        <LeaderboardModal
+          campaign={selectedCampaign as any}
+          onClose={handleCloseModals}
+        />
+      )}
     </div>
   );
 };
