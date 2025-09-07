@@ -433,7 +433,7 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
       console.log('🔄 Auto-triggering distribution due to region/algorithm change');
       computeRegionalDistribution(distributionAlgorithm);
     }
-  }, [campaignData.selectedRegions, distributionAlgorithm, campaignData.targetConfigs]);
+  }, [campaignData.selectedRegions, distributionAlgorithm, campaignData.targetConfigs, computeRegionalDistribution]);
 
   // Auto-compute when switching to computed mode
   useEffect(() => {
@@ -506,7 +506,7 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
     }));
   };
 
-  const computeRegionalDistribution = (algorithm: 'equal' | 'territory' | 'performance' | 'custom' = 'equal') => {
+  const computeRegionalDistribution = useCallback((algorithm: 'equal' | 'territory' | 'performance' | 'custom' = 'equal') => {
     console.log('🔄 Computing regional distribution with algorithm:', algorithm);
     console.log('📊 Selected regions count:', campaignData.selectedRegions.length);
     console.log('📊 Selected regions IDs:', campaignData.selectedRegions);
@@ -663,7 +663,7 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
       ...prev,
       regionalDistribution: newDistribution
     }));
-  };
+  }, [campaignData.selectedRegions, campaignData.targetConfigs, hierarchyLevels, organizationUsers]);
 
 
   const handleSubmit = async () => {
