@@ -49,7 +49,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
         <div className="campaign-metrics">
           <div className="metrics-grid">
             {/* Handle new campaign structure with targetConfigs */}
-            {campaign.targetConfigs ? (
+            {(campaign.targetConfigs && Array.isArray(campaign.targetConfigs)) ? (
               campaign.targetConfigs.map((config: any) => (
                 <div key={config.skuId} className="metric-card">
                   <div className="metric-icon">📦</div>
@@ -61,7 +61,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
                 </div>
               ))
             ) : /* Handle legacy campaign structure with type array */ 
-            campaign.type ? (
+            (campaign.type && Array.isArray(campaign.type)) ? (
               campaign.type.map((type: string) => (
                 <div key={type} className="metric-card">
                   <div className="metric-icon">
