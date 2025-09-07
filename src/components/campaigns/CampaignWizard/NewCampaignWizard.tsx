@@ -427,13 +427,6 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
     setCampaignData(prev => ({ ...prev, userTargets }));
   }, [campaignData.selectedDesignations, campaignData.selectedRegions, campaignData.targetConfigs, campaignData.regionalDistribution, organizationUsers, designations, hierarchyLevels]);
 
-  // Auto-trigger distribution computation when regions or algorithm changes
-  useEffect(() => {
-    if (campaignData.selectedRegions.length > 0 && campaignData.targetConfigs.length > 0) {
-      console.log('🔄 Auto-triggering distribution due to region/algorithm change');
-      computeRegionalDistribution(distributionAlgorithm);
-    }
-  }, [campaignData.selectedRegions, distributionAlgorithm, campaignData.targetConfigs, computeRegionalDistribution]);
 
   // Auto-compute when switching to computed mode
   useEffect(() => {
@@ -665,6 +658,13 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
     }));
   }, [campaignData.selectedRegions, campaignData.targetConfigs, hierarchyLevels, organizationUsers]);
 
+  // Auto-trigger distribution computation when regions or algorithm changes
+  useEffect(() => {
+    if (campaignData.selectedRegions.length > 0 && campaignData.targetConfigs.length > 0) {
+      console.log('🔄 Auto-triggering distribution due to region/algorithm change');
+      computeRegionalDistribution(distributionAlgorithm);
+    }
+  }, [campaignData.selectedRegions, distributionAlgorithm, campaignData.targetConfigs, computeRegionalDistribution]);
 
   const handleSubmit = async () => {
     setLoading(true);
