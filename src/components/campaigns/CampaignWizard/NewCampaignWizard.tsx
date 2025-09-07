@@ -59,6 +59,7 @@ interface TargetConfig {
   targetType: 'volume' | 'value';
   target: number;
   unit: string; // 'units', 'cases', 'INR', 'USD', etc.
+  weightage?: number; // Percentage weightage for ranking calculation (0-100)
 }
 
 interface RegionalDistribution {
@@ -964,6 +965,74 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
                     )}
                   </select>
                 </div>
+
+                {campaignData.targetConfigs.length > 1 && (
+                  <div className="form-group">
+                    <label className="form-label">Ranking Weightage (%)</label>
+                    <input
+                      type="number"
+                      className="form-input"
+                      value={config.weightage || 0}
+                      onChange={(e) => {
+                        const newWeightage = parseFloat(e.target.value) || 0;
+                        updateTargetConfig(config.skuId, { weightage: newWeightage });
+                      }}
+                      placeholder="e.g., 70"
+                      min="0"
+                      max="100"
+                    />
+                    <div className="form-help">
+                      Weight for leaderboard ranking
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {campaignData.targetConfigs.length > 1 && (
+                <div className="weightage-summary">
+                  <h5>⚖️ Ranking Weightage Distribution</h5>
+                  <div className="weightage-grid">
+                    {campaignData.targetConfigs.map(cfg => (
+                      <div key={cfg.skuId} className="weightage-card">
+                        <span className="sku-badge">{cfg.skuCode}</span>
+                        <span className="weightage-percent">{cfg.weightage || 0}%</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="weightage-validation">
+                    <span className="total-label">Total Weightage:</span>
+                    <span className={`total-value ${
+                      campaignData.targetConfigs.reduce((sum, cfg) => sum + (cfg.weightage || 0), 0) === 100 
+                        ? 'valid' : 'invalid'
+                    }`}>
+                      {campaignData.targetConfigs.reduce((sum, cfg) => sum + (cfg.weightage || 0), 0)}%
+                    </span>
+                    {campaignData.targetConfigs.reduce((sum, cfg) => sum + (cfg.weightage || 0), 0) !== 100 && (
+                      <div className="weightage-actions">
+                        <span className="validation-warning">
+                          ⚠️ Should total 100% for accurate ranking
+                        </span>
+                        <button 
+                          type="button"
+                          className="btn-auto-balance"
+                          onClick={() => {
+                            const equalWeight = Math.round(100 / campaignData.targetConfigs.length);
+                            setCampaignData(prev => ({
+                              ...prev,
+                              targetConfigs: prev.targetConfigs.map(cfg => ({
+                                ...cfg,
+                                weightage: equalWeight
+                              }))
+                            }));
+                          }}
+                        >
+                          Auto-Balance
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
               </div>
             </div>
           ))}

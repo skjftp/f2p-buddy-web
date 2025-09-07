@@ -97,7 +97,10 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ campaign, onClose }
           let totalPercentage = 0;
           let skuCount = 0;
           
-          // Calculate performance for each SKU
+          // Calculate weighted performance for each SKU
+          let weightedScore = 0;
+          const hasWeightage = campaign.targetConfigs?.some((c: any) => c.weightage && c.weightage > 0);
+          
           campaign.targetConfigs?.forEach((config: any) => {
             const target = user.targets[config.skuId] || 0;
             let achieved = 0;
@@ -115,10 +118,21 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ campaign, onClose }
               percentage
             };
             
+            // Calculate weighted score for ranking
+            if (hasWeightage && config.weightage) {
+              weightedScore += (percentage * config.weightage) / 100;
+            } else {
+              // If no weightage defined, use equal weighting
+              totalPercentage += percentage;
+              skuCount++;
+            }
+            
             totalScore += achieved;
-            totalPercentage += percentage;
-            skuCount++;
           });
+          
+          const finalRankingScore = hasWeightage 
+            ? Math.round(weightedScore)
+            : (skuCount > 0 ? Math.round(totalPercentage / skuCount) : 0);
           
           const entry: LeaderboardEntry = {
             userId: completeUserData.userId || user.userId,
@@ -127,7 +141,7 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ campaign, onClose }
             regionHierarchy: completeUserData.regionHierarchy || {},
             totalScore,
             skuPerformances,
-            averagePerformance: skuCount > 0 ? Math.round(totalPercentage / skuCount) : 0
+            averagePerformance: finalRankingScore
           };
           
           console.log(`✅ Final leaderboard entry for ${entry.userName}:`, entry);

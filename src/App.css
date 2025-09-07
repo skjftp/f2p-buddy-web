@@ -7051,3 +7051,115 @@ body {
   }
 }
 
+
+/* SKU Weightage Interface */
+.config-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.form-help {
+  font-size: 11px;
+  color: var(--gray-500);
+  margin-top: 4px;
+}
+
+.weightage-summary {
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-top: 20px;
+}
+
+.weightage-summary h5 {
+  margin: 0 0 12px 0;
+  color: var(--gray-800);
+  font-size: 14px;
+}
+
+.weightage-grid {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.weightage-card {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+}
+
+.sku-badge {
+  background: var(--primary);
+  color: var(--white);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.weightage-percent {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-700);
+}
+
+.weightage-validation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--white);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--gray-200);
+}
+
+.total-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+.total-value.valid {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--success);
+}
+
+.total-value.invalid {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--warning);
+}
+
+.validation-warning {
+  font-size: 11px;
+  color: var(--warning);
+  font-weight: 500;
+}
+
+/* Auto-balance button for weightage */
+.weightage-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btn-auto-balance {
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
