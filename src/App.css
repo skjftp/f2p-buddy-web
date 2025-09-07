@@ -7758,3 +7758,123 @@ body {
   }
 }
 
+
+/* Fix Campaign Card Mobile Layout */
+@media (max-width: 768px) {
+  .campaign-actions {
+    display: flex;
+    flex-direction: row !important;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  .btn-icon {
+    min-width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    border: 1px solid var(--gray-300);
+    background: var(--white);
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+  }
+  
+  .btn-icon:hover {
+    background: var(--primary);
+    color: var(--white);
+    border-color: var(--primary);
+  }
+  
+  /* Force horizontal layout for campaign card actions */
+  .campaign-card .campaign-actions {
+    flex-direction: row !important;
+    align-items: center;
+    justify-content: space-around;
+    padding: 12px 8px;
+  }
+  
+  .campaign-card .btn-icon {
+    flex: 0 0 auto;
+    margin: 0;
+  }
+}
+
+
+/* Fix Auto-scroll Back Issue */
+.dashboard-main {
+  scroll-behavior: smooth;
+  overflow-anchor: none; /* Prevent automatic scroll anchoring */
+  touch-action: pan-y; /* Allow vertical scrolling on mobile */
+}
+
+.dashboard-container {
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-main {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  scroll-snap-type: none; /* Disable scroll snapping that might cause auto-scroll */
+}
+
+/* Prevent scroll jumping on mobile */
+@media (max-width: 768px) {
+  .dashboard-main {
+    position: relative;
+    height: auto;
+    min-height: calc(100vh - 120px); /* Account for header height */
+    padding-bottom: 80px; /* Space for bottom navigation */
+    scroll-padding-top: 20px;
+  }
+  
+  /* Fix iOS scroll bounce issues */
+  .dashboard-container {
+    -webkit-overflow-scrolling: touch;
+    touch-action: manipulation;
+  }
+  
+  /* Prevent content shifting during scroll */
+  .dashboard-grid {
+    contain: layout style paint;
+  }
+  
+  .dashboard-section {
+    contain: layout style;
+  }
+}
+
+/* Fix scroll restoration issues */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  overflow-anchor: none;
+  scroll-behavior: smooth;
+}
+
+/* Disable automatic scroll restoration */
+.employee-dashboard-container {
+  scroll-restoration: manual;
+}
+
+/* Improved mobile scroll handling */
+@media (max-width: 768px) {
+  .dashboard-section {
+    scroll-margin-top: 20px;
+    margin-bottom: 16px;
+  }
+  
+  .dashboard-grid {
+    scroll-padding: 20px 0;
+  }
+}
+
