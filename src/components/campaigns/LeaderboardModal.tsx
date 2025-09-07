@@ -185,11 +185,13 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ campaign, onClose }
   const isChildOfRegion = (childRegion: any, parentRegion: any): boolean => {
     if (childRegion.level <= parentRegion.level) return false;
     
-    // Traverse up the hierarchy from child to see if we reach parent
+    // Simple hierarchy check using parentId chain
+    const allItems = hierarchyLevels.flatMap(l => l.items);
     let currentRegionToCheck = childRegion;
     
-    while (currentRegionToCheck.parentId) {
-      const parentItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === currentRegionToCheck.parentId);
+    // Traverse up to 5 levels max to prevent infinite loops
+    for (let i = 0; i < 5 && currentRegionToCheck.parentId; i++) {
+      const parentItem = allItems.find(item => item.id === currentRegionToCheck.parentId);
       if (!parentItem) break;
       
       if (parentItem.id === parentRegion.id) return true;
