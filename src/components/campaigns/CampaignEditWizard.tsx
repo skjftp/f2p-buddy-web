@@ -321,20 +321,27 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
               let childRegionsFound = 0;
               
               distributions.forEach((dist: any) => {
-                // Check if this distribution region is a child of user's region
-                const isChildRegion = userRegionIds.some(userRegionId => {
-                  const userRegionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === userRegionId);
-                  const distRegionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === dist.regionId);
-                  
-                  return distRegionItem && userRegionItem && 
-                         distRegionItem.parentId === userRegionId && 
-                         dist.target > 0;
+                // Check if this distribution region is a DIRECT child of user's specific region
+                const userNA1RegionId = Object.values(user.regionHierarchy || {}).find(regionId => {
+                  const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
+                  return regionItem?.name === user.finalRegionName; // Find NA1 region ID
                 });
                 
-                if (isChildRegion) {
-                  totalChildTargets += dist.individualTarget;
-                  childRegionsFound++;
-                  console.log(`📊 Found child region ${dist.regionName}: adding ${dist.individualTarget} to ${user.userName}'s total`);
+                if (userNA1RegionId) {
+                  const distRegionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === dist.regionId);
+                  
+                  // Check if this distribution region is a direct child of NA1
+                  const isDirectChild = distRegionItem && distRegionItem.parentId === userNA1RegionId && dist.target > 0;
+                  
+                  if (isDirectChild) {
+                    totalChildTargets += dist.individualTarget;
+                    childRegionsFound++;
+                    console.log(`📊 Found direct child of ${user.finalRegionName}: ${dist.regionName} (${dist.individualTarget}) → Total: ${totalChildTargets}`);
+                  } else {
+                    console.log(`❌ ${dist.regionName} is NOT a direct child of ${user.finalRegionName}`);
+                  }
+                } else {
+                  console.log(`⚠️ Could not find region ID for ${user.finalRegionName} in hierarchy`);
                 }
               });
               
