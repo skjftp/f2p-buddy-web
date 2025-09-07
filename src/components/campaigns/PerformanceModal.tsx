@@ -11,8 +11,6 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
   const [performances, setPerformances] = useState<Record<string, Record<string, number>>>({});
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [regionSummary, setRegionSummary] = useState<Record<string, any>>({});
-  const [csvFile, setCsvFile] = useState<File | null>(null);
-  const [csvError, setCsvError] = useState<string>('');
 
   // Initialize performance data from campaign
   useEffect(() => {
@@ -28,6 +26,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
     }
     
     setPerformances(initPerformances);
+    computeRegionSummary(initPerformances);
   }, [campaign]);
 
   const updatePerformance = (userId: string, skuId: string, value: number) => {
