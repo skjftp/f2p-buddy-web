@@ -140,7 +140,19 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
         : 'Performance data updated!';
       
       toast.success(message);
-      onUpdate();
+      console.log('✅ All performance data saved successfully');
+      
+      // Close modal after successful save
+      setTimeout(() => {
+        onClose();
+      }, 1000); // Small delay to show success message
+      
+      // Also trigger update callback
+      try {
+        onUpdate();
+      } catch (updateError) {
+        console.log('⚠️ Update callback error (non-critical):', updateError);
+      }
     } catch (error) {
       console.error('Error saving performance:', error);
       console.log('🔍 Error details:', error);
