@@ -519,63 +519,64 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
         parentId: item.parentId
       })));
 
-      // Build hierarchy tree for proper parent-child distribution
+      // Build hierarchy tree for proper cascading distribution
       const buildDistributionTree = (items: HierarchyItem[]) => {
-        // Group by level
-        const levelGroups: Record<number, HierarchyItem[]> = {};
-        items.forEach(item => {
-          if (!levelGroups[item.level]) levelGroups[item.level] = [];
-          levelGroups[item.level].push(item);
+        console.log('🏗️ Building distribution tree for items:', items.map(i => `${i.name}(L${i.level})`));
+        
+        // Find the deepest level selected for each branch
+        const getDeepestSelectedChildren = (parentId: string): string[] => {
+          const directChildren = items.filter(item => item.parentId === parentId);
+          
+          if (directChildren.length === 0) {
+            // No children selected, this is a leaf node
+            return [parentId];
+          }
+          
+          // Get deepest children from all selected children
+          const deepestChildren: string[] = [];
+          directChildren.forEach(child => {
+            deepestChildren.push(...getDeepestSelectedChildren(child.id));
+          });
+          
+          return deepestChildren;
+        };
+        
+        // Find root level items (no parent or parent not in selected items)
+        const rootItems = items.filter(item => 
+          !item.parentId || !items.find(i => i.id === item.parentId)
+        );
+        
+        console.log('🌳 Root items:', rootItems.map(i => i.name));
+        
+        // Get all leaf nodes (deepest selected items in each branch)
+        const allLeafNodes: string[] = [];
+        rootItems.forEach(root => {
+          allLeafNodes.push(...getDeepestSelectedChildren(root.id));
         });
-
+        
+        console.log('🍃 Leaf nodes (will get targets):', allLeafNodes.map(id => 
+          items.find(i => i.id === id)?.name
+        ));
+        
+        // Distribute targets equally among leaf nodes
         const distributionMap: Record<string, { target: number, children: string[] }> = {};
-
-        // Start with top level items and distribute total target
-        const levelNumbers = Object.keys(levelGroups).map(Number);
-        if (levelNumbers.length === 0) return distributionMap;
+        const leafTarget = Math.round(totalTarget / allLeafNodes.length);
         
-        const topLevelItems = levelGroups[Math.min(...levelNumbers)] || [];
+        // Initialize all items
+        items.forEach(item => {
+          distributionMap[item.id] = { 
+            target: allLeafNodes.includes(item.id) ? leafTarget : 0, 
+            children: [] 
+          };
+        });
         
-        topLevelItems.forEach(item => {
-          const topLevelTarget = Math.round(totalTarget / topLevelItems.length);
-          distributionMap[item.id] = { target: topLevelTarget, children: [] };
-        });
-
-        // Process each level from top to bottom
-        const sortedLevels = Object.keys(levelGroups).map(Number).sort();
+        console.log('💰 Leaf target per region:', leafTarget);
+        console.log('📊 Distribution map:', Object.keys(distributionMap).map(id => ({
+          id,
+          name: items.find(i => i.id === id)?.name,
+          target: distributionMap[id].target
+        })));
         
-        sortedLevels.forEach(level => {
-          if (level === sortedLevels[0]) return; // Skip top level, already processed
-
-          levelGroups[level].forEach(childItem => {
-            if (childItem.parentId && distributionMap[childItem.parentId]) {
-              // Add this child to parent's children list
-              distributionMap[childItem.parentId].children.push(childItem.id);
-            }
-          });
-        });
-
-        // Now distribute parent targets to children
-        sortedLevels.forEach(level => {
-          levelGroups[level].forEach(parentItem => {
-            if (distributionMap[parentItem.id] && distributionMap[parentItem.id].children.length > 0) {
-              const parentTarget = distributionMap[parentItem.id].target;
-              const childrenCount = distributionMap[parentItem.id].children.length;
-              const childTarget = Math.round(parentTarget / childrenCount);
-
-              // Distribute to children
-              distributionMap[parentItem.id].children.forEach(childId => {
-                if (!distributionMap[childId]) {
-                  distributionMap[childId] = { target: childTarget, children: [] };
-                }
-              });
-
-              // Adjust parent target to 0 since it's distributed to children
-              distributionMap[parentItem.id].target = 0;
-            }
-          });
-        });
-
         return distributionMap;
       };
 
