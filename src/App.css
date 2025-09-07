@@ -7878,3 +7878,138 @@ body {
   }
 }
 
+
+/* Compact Campaign Actions for Mobile - All 5 Icons in One Row */
+@media (max-width: 768px) {
+  .campaign-actions {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 4px !important; /* Reduced from 8px */
+    padding: 8px 4px !important; /* Reduced padding */
+    flex-wrap: nowrap !important; /* Prevent wrapping */
+  }
+  
+  .campaign-card .campaign-actions {
+    gap: 2px !important; /* Even smaller gap */
+    padding: 8px 2px !important;
+  }
+  
+  .btn-icon {
+    min-width: 32px !important; /* Smaller width */
+    width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: 14px !important; /* Slightly smaller icons */
+    border-radius: 4px !important;
+    flex: 0 0 32px !important; /* Fixed size, no grow/shrink */
+  }
+  
+  /* Specific campaign card action optimization */
+  .campaign-card .btn-icon {
+    min-width: 30px !important;
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 12px !important;
+  }
+  
+  /* Override any flex-wrap that might cause line breaking */
+  .campaign-actions * {
+    flex-shrink: 0 !important;
+  }
+  
+  /* Ensure QuickActions component doesn't interfere */
+  .campaign-actions > * {
+    flex: 0 0 auto !important;
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+  .campaign-actions {
+    gap: 1px !important;
+    padding: 6px 1px !important;
+  }
+  
+  .btn-icon {
+    min-width: 28px !important;
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 11px !important;
+  }
+}
+
+
+/* Fix Auto-Scroll Back Issue - Enhanced */
+@media (max-width: 768px) {
+  /* Prevent scroll anchoring and auto-restore */
+  html {
+    scroll-restoration: manual !important;
+    overflow-anchor: none !important;
+  }
+  
+  body {
+    scroll-restoration: manual !important;
+    overflow-anchor: none !important;
+    touch-action: pan-y pinch-zoom !important;
+  }
+  
+  /* Dashboard container scroll fixes */
+  .dashboard-container {
+    overflow: hidden !important;
+    height: 100vh !important;
+    position: relative !important;
+  }
+  
+  .dashboard-main {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    height: calc(100vh - 120px) !important; /* Account for header */
+    scroll-behavior: auto !important; /* Disable smooth scroll that might interfere */
+    overscroll-behavior: contain !important; /* Prevent scroll chaining */
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  /* Prevent scroll snap and anchoring */
+  .dashboard-grid {
+    scroll-snap-type: none !important;
+    overflow-anchor: none !important;
+  }
+  
+  .dashboard-section {
+    scroll-snap-align: none !important;
+    overflow-anchor: none !important;
+    contain: layout style !important; /* Prevent layout shifts */
+  }
+  
+  /* Override any global scroll behavior */
+  .dashboard-main * {
+    scroll-behavior: auto !important;
+    overflow-anchor: none !important;
+  }
+}
+
+/* Additional scroll stability fixes */
+@media (max-width: 768px) {
+  /* Prevent momentum scrolling issues */
+  .dashboard-main::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+  }
+  
+  /* Stable positioning */
+  .dashboard-section {
+    position: relative;
+    z-index: 1;
+    isolation: isolate; /* Create stacking context */
+  }
+  
+  /* Prevent element shifting during scroll */
+  .glass-effect {
+    will-change: auto !important; /* Don't hint at transforms */
+    transform: none !important; /* Disable transforms that might interfere */
+  }
+}
+
