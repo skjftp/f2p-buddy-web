@@ -316,7 +316,6 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
             } else {
               // Fallback: if user region has 0 target, find any region they belong to with targets
               const fallbackDist = distributions.find((dist: any) => {
-                const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === dist.regionId);
                 const belongsToRegion = Object.values(user.regionHierarchy || {}).includes(dist.regionId) ||
                                        user.finalRegionName === dist.regionName;
                 return belongsToRegion && dist.target > 0;
