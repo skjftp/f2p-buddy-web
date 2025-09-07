@@ -167,6 +167,69 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
     return updatedPerformances;
   };
 
+  // Function to compute parent performances with explicit hierarchy
+  const computeParentPerformancesWithUsersAndHierarchy = (performanceData: Record<string, Record<string, number>>, usersList: any[], hierarchy: any[]) => {
+    const updatedPerformances = { ...performanceData };
+    
+    console.log('📊 Computing with users and hierarchy:', usersList.length, 'users,', hierarchy.length, 'levels');
+    
+    usersList.forEach((user: any) => {
+      console.log(`🔍 Checking ${user.userName} (${user.regionName}) for parent aggregation`);
+      
+      if (!user.regionName || !user.regionHierarchy) return;
+      
+      let childPerformanceSum: Record<string, number> = {};
+      let hasChildPerformance = false;
+      
+      campaign.targetConfigs?.forEach((config: any) => {
+        childPerformanceSum[config.skuId] = 0;
+        
+        usersList.forEach((otherUser: any) => {
+          if (otherUser.userId === user.userId) return;
+          
+          // Find region IDs using loaded hierarchy
+          const userRegionId = Object.values(user.regionHierarchy || {}).find(regionId => {
+            const regionItem = hierarchy.flatMap(l => l.items).find(item => item.id === regionId);
+            return regionItem?.name === user.regionName;
+          });
+          
+          const otherRegionId = Object.values(otherUser.regionHierarchy || {}).find(regionId => {
+            const regionItem = hierarchy.flatMap(l => l.items).find(item => item.id === regionId);
+            return regionItem?.name === otherUser.regionName;
+          });
+          
+          console.log(`   ${user.regionName} ID: ${userRegionId}, ${otherUser.regionName} ID: ${otherRegionId}`);
+          
+          if (userRegionId && otherRegionId) {
+            const otherRegionItem = hierarchy.flatMap(l => l.items).find(item => item.id === otherRegionId);
+            
+            console.log(`   Parent check: ${otherUser.regionName} parentId: ${otherRegionItem?.parentId} vs ${user.regionName} ID: ${userRegionId}`);
+            
+            if (otherRegionItem && otherRegionItem.parentId === userRegionId) {
+              const childPerformance = performanceData[otherUser.userId]?.[config.skuId] || 0;
+              childPerformanceSum[config.skuId] += childPerformance;
+              hasChildPerformance = true;
+              console.log(`✅ ${user.userName} += ${childPerformance} from child ${otherUser.userName}`);
+            }
+          }
+        });
+      });
+      
+      if (hasChildPerformance) {
+        if (!updatedPerformances[user.userId]) {
+          updatedPerformances[user.userId] = {};
+        }
+        
+        Object.entries(childPerformanceSum).forEach(([skuId, sum]) => {
+          updatedPerformances[user.userId][skuId] = sum;
+          console.log(`✅ Final update ${user.userName}: ${campaign.targetConfigs.find((c: any) => c.skuId === skuId)?.skuCode} = ${sum}`);
+        });
+      }
+    });
+    
+    return updatedPerformances;
+  };
+
   const computeRegionSummary = useCallback((performanceData: Record<string, Record<string, number>>) => {
     const summary: Record<string, any> = {};
     
@@ -200,6 +263,8 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
         const dbInstance = await getFirestoreInstance();
         
         // Load organization hierarchy for parent-child relationships
+        let loadedHierarchy: any[] = [];
+        
         const campaignDoc = await getDoc(doc(dbInstance, 'campaigns', campaign.id));
         if (campaignDoc.exists()) {
           const campaignData = campaignDoc.data();
@@ -211,8 +276,9 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
             console.log('📊 Organization data loaded:', !!orgData.hierarchyLevels);
             
             if (orgData.hierarchyLevels) {
+              loadedHierarchy = orgData.hierarchyLevels;
               setHierarchyLevels(orgData.hierarchyLevels);
-              console.log('✅ HierarchyLevels set:', orgData.hierarchyLevels.length, 'levels');
+              console.log('✅ HierarchyLevels loaded directly:', orgData.hierarchyLevels.length, 'levels');
             } else {
               console.log('❌ No hierarchyLevels in organization document');
             }
@@ -286,20 +352,16 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
         setPerformances(loadedPerformances);
         setDateWisePerformances(loadedDateWise);
         
-        // Wait for hierarchyLevels to load, then compute parent aggregation
-        setTimeout(() => {
-          console.log('🔄 Computing initial parent region aggregation...');
-          console.log('📊 HierarchyLevels available:', hierarchyLevels.length);
-          
-          if (hierarchyLevels.length > 0) {
-            const withInitialAggregation = computeParentPerformancesWithUsers(loadedPerformances, enhancedUsers);
-            console.log('📊 Initial aggregated performances:', withInitialAggregation);
-            setPerformances(withInitialAggregation);
-            computeRegionSummary(withInitialAggregation);
-          } else {
-            console.log('⚠️ HierarchyLevels not loaded yet, skipping aggregation');
-          }
-        }, 1500); // Wait for hierarchyLevels to load
+        // Compute parent aggregation immediately with loaded hierarchy
+        if (loadedHierarchy.length > 0) {
+          console.log('🔄 Computing initial parent region aggregation with loaded hierarchy...');
+          const withInitialAggregation = computeParentPerformancesWithUsersAndHierarchy(loadedPerformances, enhancedUsers, loadedHierarchy);
+          console.log('📊 Initial aggregated performances:', withInitialAggregation);
+          setPerformances(withInitialAggregation);
+          computeRegionSummary(withInitialAggregation);
+        } else {
+          console.log('⚠️ No hierarchy data available, skipping aggregation');
+        }
         
       } catch (error) {
         console.error('❌ Error loading performance data:', error);
