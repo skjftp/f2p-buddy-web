@@ -134,18 +134,36 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ campaign, onClose }
     loadLeaderboard();
   }, [campaign]);
 
-  // Simple filtering - just match user region hierarchy directly
+  // Simple filtering with debugging
   const getFilteredLeaderboard = () => {
     if (filterLevel === 'panIndia') {
       return leaderboardData;
     }
     
     if (selectedRegion) {
-      return leaderboardData.filter(entry => {
-        // Check if user region hierarchy includes the selected region
+      console.log('🔍 Filtering by region:', selectedRegion);
+      console.log('📊 Total users before filtering:', leaderboardData.length);
+      
+      const filtered = leaderboardData.filter(entry => {
         const userRegionIds = Object.values(entry.regionHierarchy || {});
-        return userRegionIds.includes(selectedRegion) || entry.regionName === selectedRegion;
+        const directMatch = userRegionIds.includes(selectedRegion);
+        const nameMatch = entry.regionName === selectedRegion;
+        const matches = directMatch || nameMatch;
+        
+        console.log(`👤 ${entry.userName}:`, {
+          userRegionIds,
+          userRegionName: entry.regionName,
+          selectedRegion,
+          directMatch,
+          nameMatch,
+          matches
+        });
+        
+        return matches;
       });
+      
+      console.log('✅ Filtered users:', filtered.length);
+      return filtered;
     }
     
     return leaderboardData;
