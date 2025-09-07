@@ -285,21 +285,49 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
           targets: {}
         };
 
-        // Assign targets based on regional distribution
+        // Find the best matching region with targets for this user
+        let bestRegionMatch: any = null;
+        let bestMatchLevel = 0;
+        
         campaignData.targetConfigs.forEach((config: any) => {
-          campaignData.selectedRegions.forEach(regionId => {
-            const regionalDist = campaignData.regionalDistribution[config.skuId]?.find(
-              (dist: any) => dist.regionId === regionId
-            );
+          const distributions = campaignData.regionalDistribution[config.skuId] || [];
+          
+          distributions.forEach((dist: any) => {
+            const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === dist.regionId);
             
-            const userBelongsToRegion = Object.values(user.regionHierarchy || {}).includes(regionId) ||
-                                       user.finalRegionName === regionalDist?.regionName;
+            const userBelongsToRegion = Object.values(user.regionHierarchy || {}).includes(dist.regionId) ||
+                                       user.finalRegionName === dist.regionName;
             
-            if (regionalDist && userBelongsToRegion) {
-              userTargetData.targets[config.skuId] = regionalDist.individualTarget;
+            if (userBelongsToRegion && regionItem && regionItem.level > bestMatchLevel && dist.target > 0) {
+              bestMatchLevel = regionItem.level;
+              bestRegionMatch = dist;
             }
           });
         });
+
+        // Assign targets from best matching region
+        if (bestRegionMatch) {
+          campaignData.targetConfigs.forEach((config: any) => {
+            const distributions = campaignData.regionalDistribution[config.skuId] || [];
+            const userDist = distributions.find((dist: any) => dist.regionId === bestRegionMatch.regionId);
+            
+            if (userDist && userDist.target > 0) {
+              userTargetData.targets[config.skuId] = userDist.individualTarget;
+            } else {
+              // Fallback: if user region has 0 target, find any region they belong to with targets
+              const fallbackDist = distributions.find((dist: any) => {
+                const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === dist.regionId);
+                const belongsToRegion = Object.values(user.regionHierarchy || {}).includes(dist.regionId) ||
+                                       user.finalRegionName === dist.regionName;
+                return belongsToRegion && dist.target > 0;
+              });
+              
+              if (fallbackDist) {
+                userTargetData.targets[config.skuId] = fallbackDist.individualTarget;
+              }
+            }
+          });
+        }
 
         newUserTargets.push(userTargetData);
       });
