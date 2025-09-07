@@ -34,6 +34,9 @@ interface RegionTarget {
 
 interface CampaignTargetingProps {
   organizationId: string;
+  initialSelectedRegions?: string[];
+  initialSelectedDesignations?: string[];
+  initialRegionTargets?: RegionTarget[];
   onTargetingChange: (data: {
     selectedRegions: string[];
     selectedDesignations: string[];
@@ -42,14 +45,33 @@ interface CampaignTargetingProps {
   }) => void;
 }
 
-const CampaignTargeting: React.FC<CampaignTargetingProps> = ({ organizationId, onTargetingChange }) => {
+const CampaignTargeting: React.FC<CampaignTargetingProps> = ({ 
+  organizationId, 
+  initialSelectedRegions = [],
+  initialSelectedDesignations = [],
+  initialRegionTargets = [],
+  onTargetingChange 
+}) => {
   const [hierarchyLevels, setHierarchyLevels] = useState<HierarchyLevel[]>([]);
   const [designations, setDesignations] = useState<Designation[]>([]);
-  const [selectedRegions, setSelectedRegions] = useState<Set<string>>(new Set());
-  const [selectedDesignations, setSelectedDesignations] = useState<Set<string>>(new Set());
-  const [regionTargets, setRegionTargets] = useState<RegionTarget[]>([]);
+  const [selectedRegions, setSelectedRegions] = useState<Set<string>>(new Set(initialSelectedRegions));
+  const [selectedDesignations, setSelectedDesignations] = useState<Set<string>>(new Set(initialSelectedDesignations));
+  const [regionTargets, setRegionTargets] = useState<RegionTarget[]>(initialRegionTargets);
   const [totalTarget, setTotalTarget] = useState(0);
   const [showTargetBreakup, setShowTargetBreakup] = useState(false);
+
+  // Update state when initial values change (for edit mode)
+  useEffect(() => {
+    if (initialSelectedRegions.length > 0) {
+      setSelectedRegions(new Set(initialSelectedRegions));
+    }
+    if (initialSelectedDesignations.length > 0) {
+      setSelectedDesignations(new Set(initialSelectedDesignations));
+    }
+    if (initialRegionTargets.length > 0) {
+      setRegionTargets(initialRegionTargets);
+    }
+  }, [initialSelectedRegions, initialSelectedDesignations, initialRegionTargets]);
 
   useEffect(() => {
     const loadOrganizationData = async () => {

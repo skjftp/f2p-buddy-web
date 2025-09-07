@@ -506,6 +506,9 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
   const renderRegionsTab = () => (
     <CampaignTargeting
       organizationId={campaign.orgId}
+      initialSelectedRegions={campaignData.selectedRegions}
+      initialSelectedDesignations={campaignData.selectedDesignations}
+      initialRegionTargets={campaignData.regionTargets}
       onTargetingChange={handleTargetingChange}
     />
   );
