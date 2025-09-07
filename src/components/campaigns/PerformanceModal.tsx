@@ -160,12 +160,17 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
         console.log('📈 Final loaded performances:', loadedPerformances);
         console.log('📅 Final loaded date-wise:', loadedDateWise);
         
-        // Apply parent region aggregation to loaded data
-        const withParentAggregation = computeParentPerformances(loadedPerformances);
-        
-        setPerformances(withParentAggregation);
+        setPerformances(loadedPerformances);
         setDateWisePerformances(loadedDateWise);
-        computeRegionSummary(withParentAggregation);
+        
+        // Apply parent region aggregation after setting initial data
+        setTimeout(() => {
+          console.log('🔄 Computing parent region aggregation...');
+          const withParentAggregation = computeParentPerformances(loadedPerformances);
+          console.log('📊 Aggregated performances:', withParentAggregation);
+          setPerformances(withParentAggregation);
+          computeRegionSummary(withParentAggregation);
+        }, 500);
         
       } catch (error) {
         console.error('❌ Error loading performance data:', error);
