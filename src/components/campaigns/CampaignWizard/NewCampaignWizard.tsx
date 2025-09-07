@@ -312,20 +312,65 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
   const computeUserTargets = useCallback(() => {
     const userTargets: UserTarget[] = [];
     
+    console.log('🔍 Computing user targets...');
+    console.log('📊 Campaign data:', {
+      selectedRegions: campaignData.selectedRegions,
+      selectedDesignations: campaignData.selectedDesignations,
+      totalUsers: organizationUsers.length
+    });
+    
     // Get eligible users based on region and designation selection
     const eligibleUsers = organizationUsers.filter(user => {
-      const hasDesignation = campaignData.selectedDesignations.some(desId => 
-        designations.find(des => des.id === desId)?.name === user.designationName
-      );
+      console.log('👤 Checking user:', {
+        name: user.name || user.displayName,
+        designationName: user.designationName,
+        regionHierarchy: user.regionHierarchy,
+        finalRegionName: user.finalRegionName
+      });
+      
+      const hasDesignation = campaignData.selectedDesignations.some(desId => {
+        const designation = designations.find(des => des.id === desId);
+        const matches = designation?.name === user.designationName;
+        console.log('🏷️ Designation check:', {
+          selectedDesId: desId,
+          designationName: designation?.name,
+          userDesignation: user.designationName,
+          matches
+        });
+        return matches;
+      });
       
       const hasRegion = campaignData.selectedRegions.some(regionId => {
         const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
-        return Object.values(user.regionHierarchy || {}).includes(regionId) ||
-               user.finalRegionName === regionItem?.name;
+        const matchesHierarchy = Object.values(user.regionHierarchy || {}).includes(regionId);
+        const matchesName = user.finalRegionName === regionItem?.name;
+        const matches = matchesHierarchy || matchesName;
+        
+        console.log('🗺️ Region check:', {
+          selectedRegionId: regionId,
+          regionName: regionItem?.name,
+          userHierarchy: user.regionHierarchy,
+          userFinalRegion: user.finalRegionName,
+          matchesHierarchy,
+          matchesName,
+          matches
+        });
+        
+        return matches;
       });
       
-      return hasDesignation && hasRegion;
+      const isEligible = hasDesignation && hasRegion;
+      console.log('✅ User eligibility:', {
+        user: user.name || user.displayName,
+        hasDesignation,
+        hasRegion,
+        isEligible
+      });
+      
+      return isEligible;
     });
+
+    console.log('🎯 Eligible users found:', eligibleUsers.length);
 
     // For each eligible user, calculate their targets
     eligibleUsers.forEach(user => {
