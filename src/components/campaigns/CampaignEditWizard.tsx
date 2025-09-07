@@ -6,7 +6,6 @@ import { Campaign } from '../../store/slices/campaignSlice';
 import { toast } from 'react-toastify';
 import { useDropzone } from 'react-dropzone';
 import CampaignTargeting from './CampaignTargeting';
-import SkuTargeting from './SkuTargeting';
 
 interface CampaignEditWizardProps {
   campaign: Campaign;
@@ -171,12 +170,6 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
     }));
   };
 
-  const handleSkuTargetsChange = (skuTargets: any[]) => {
-    setCampaignData(prev => ({
-      ...prev,
-      skuTargets: skuTargets
-    }));
-  };
 
   const renderBasicTab = () => (
     <div className="edit-tab-content">
