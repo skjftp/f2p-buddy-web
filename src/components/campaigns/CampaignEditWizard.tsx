@@ -333,13 +333,6 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
     </div>
   );
 
-  const renderSkuTab_Old = () => (
-    <SkuTargeting
-      organizationId={campaign.orgId}
-      selectedRegions={campaignData.selectedRegions}
-      onSkuTargetsChange={handleSkuTargetsChange}
-    />
-  );
 
   return (
     <div className="campaign-edit-wizard">
