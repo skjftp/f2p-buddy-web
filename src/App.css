@@ -8590,3 +8590,43 @@ body {
   }
 }
 
+
+/* Fix: Scope employee dashboard CSS to not affect admin */
+
+/* Remove general employee-main styles that affect admin */
+/* Replace with specific employee-dashboard-container styles */
+
+.employee-dashboard-container .dashboard-main {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 24px !important;
+  padding: 24px !important;
+}
+
+.employee-dashboard-container .campaigns-section {
+  width: 100% !important;
+  margin-bottom: 0 !important;
+}
+
+.employee-dashboard-container .campaigns-section:nth-child(1) {
+  order: 1;
+}
+
+.employee-dashboard-container .campaigns-section:nth-child(2) {
+  order: 2;
+  margin-top: 0 !important;
+}
+
+/* Override previous employee-main styles that might affect admin */
+.admin-dashboard-container .dashboard-main {
+  display: block !important; /* Reset to original admin layout */
+  flex-direction: unset !important;
+  gap: unset !important;
+}
+
+.admin-dashboard-container .campaigns-section {
+  width: unset !important;
+  margin-bottom: unset !important;
+  order: unset !important;
+}
+
