@@ -106,11 +106,10 @@ const EmployeeDashboard: React.FC = () => {
   }
 
   return (
-    <div className="employee-dashboard-container">
-      {/* Header with Logo Center, Icons Top Right */}
-      <header className="employee-header">
+    <div className="admin-dashboard-container">
+      {/* Header - Exact Copy from Admin Dashboard */}
+      <header className="dashboard-header">
         <div className="header-content">
-          <div className="header-left"></div>
           <div className="header-center">
             {organization?.logo ? (
               <img src={organization.logo} alt={organization.name} className="org-logo-image" />
@@ -131,7 +130,7 @@ const EmployeeDashboard: React.FC = () => {
       </header>
 
       {/* Main Content - Single Page, No Bottom Navigation */}
-      <main className="employee-main">
+      <main className="dashboard-main">
         {/* Active Campaigns Section */}
         <section className="campaigns-section">
           <div className="section-header">
