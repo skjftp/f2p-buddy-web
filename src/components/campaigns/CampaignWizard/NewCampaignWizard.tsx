@@ -402,12 +402,13 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
         targets: {}
       };
 
-      // Find which region this user belongs to from selected regions
+      // Find the most specific region this user belongs to that has targets
       console.log('🔍 Finding user region for:', user.name || user.displayName);
       console.log('   User final region:', user.finalRegionName);
       console.log('   User region hierarchy:', user.regionHierarchy);
       
-      const userRegionId = campaignData.selectedRegions.find(regionId => {
+      // Find all regions that match the user
+      const matchingRegions = campaignData.selectedRegions.filter(regionId => {
         const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
         const matchesHierarchy = Object.values(user.regionHierarchy || {}).includes(regionId);
         const matchesName = user.finalRegionName === regionItem?.name;
@@ -415,6 +416,23 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
         console.log(`   Testing region ${regionItem?.name} (${regionId}): hierarchy=${matchesHierarchy}, name=${matchesName}`);
         
         return matchesHierarchy || matchesName;
+      });
+      
+      // Find the most specific (deepest level) region that has actual targets
+      let userRegionId: string | undefined;
+      let maxLevel = 0;
+      
+      campaignData.targetConfigs.forEach(config => {
+        matchingRegions.forEach(regionId => {
+          const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
+          const hasTarget = campaignData.regionalDistribution[config.skuId]?.some(dist => dist.regionId === regionId);
+          
+          if (hasTarget && regionItem && regionItem.level > maxLevel) {
+            maxLevel = regionItem.level;
+            userRegionId = regionId;
+            console.log(`   📍 Better match found: ${regionItem.name} (Level ${regionItem.level}) has targets`);
+          }
+        });
       });
 
       console.log('✅ User matched to region ID:', userRegionId);
