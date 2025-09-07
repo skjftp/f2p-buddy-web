@@ -403,11 +403,22 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
       };
 
       // Find which region this user belongs to from selected regions
+      console.log('🔍 Finding user region for:', user.name || user.displayName);
+      console.log('   User final region:', user.finalRegionName);
+      console.log('   User region hierarchy:', user.regionHierarchy);
+      
       const userRegionId = campaignData.selectedRegions.find(regionId => {
         const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
-        return Object.values(user.regionHierarchy || {}).includes(regionId) ||
-               user.finalRegionName === regionItem?.name;
+        const matchesHierarchy = Object.values(user.regionHierarchy || {}).includes(regionId);
+        const matchesName = user.finalRegionName === regionItem?.name;
+        
+        console.log(`   Testing region ${regionItem?.name} (${regionId}): hierarchy=${matchesHierarchy}, name=${matchesName}`);
+        
+        return matchesHierarchy || matchesName;
       });
+
+      console.log('✅ User matched to region ID:', userRegionId);
+      console.log('   Region name:', hierarchyLevels.flatMap(l => l.items).find(item => item.id === userRegionId)?.name);
 
       if (userRegionId) {
         campaignData.targetConfigs.forEach(config => {
@@ -415,10 +426,22 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
             dist => dist.regionId === userRegionId
           );
           
+          console.log(`🎯 SKU ${config.skuCode} target lookup:`, {
+            userRegionId,
+            regionalDistFound: !!regionalDist,
+            target: regionalDist?.target || 0,
+            individualTarget: regionalDist?.individualTarget || 0
+          });
+          
           if (regionalDist) {
             userTargetData.targets[config.skuId] = regionalDist.individualTarget;
+            console.log(`   ✅ Assigned ${regionalDist.individualTarget} ${config.unit} to user`);
+          } else {
+            console.log(`   ❌ No regional distribution found for region ${userRegionId}`);
           }
         });
+      } else {
+        console.log('❌ User not matched to any selected region');
       }
 
       userTargets.push(userTargetData);
