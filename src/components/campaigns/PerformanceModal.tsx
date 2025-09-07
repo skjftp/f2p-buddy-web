@@ -87,7 +87,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
     });
     
     return updatedPerformances;
-  }, [enhancedUserTargets, hierarchyLevels]);
+  }, [enhancedUserTargets, hierarchyLevels, campaign.targetConfigs]);
 
   const computeRegionSummary = useCallback((performanceData: Record<string, Record<string, number>>) => {
     const summary: Record<string, any> = {};
