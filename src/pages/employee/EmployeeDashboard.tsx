@@ -8,7 +8,7 @@ import MyTargetModal from '../../components/campaigns/MyTargetModal';
 import LeaderboardModal from '../../components/campaigns/LeaderboardModal';
 
 const EmployeeDashboard: React.FC = () => {
-  const { user, organization, logout } = useAuth();
+  const { organization, logout } = useAuth();
   const [activeCampaigns, setActiveCampaigns] = useState<Campaign[]>([]);
   const [pastCampaigns, setPastCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
