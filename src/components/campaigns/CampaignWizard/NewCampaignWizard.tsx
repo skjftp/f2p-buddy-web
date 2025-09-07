@@ -152,6 +152,10 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvData, setCsvData] = useState<any[]>([]);
   const [csvError, setCsvError] = useState<string>('');
+  
+  // Step 4 state for editable targets
+  const [editableTargets, setEditableTargets] = useState<Record<string, Record<string, number>>>({});
+  const [distributionAlgorithm, setDistributionAlgorithm] = useState<'equal' | 'territory' | 'performance' | 'custom'>('equal');
 
   // Load organization SKUs and users
   useEffect(() => {
@@ -475,7 +479,7 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
         // Now distribute parent targets to children
         sortedLevels.forEach(level => {
           levelGroups[level].forEach(parentItem => {
-            if (distributionMap[parentItem.id].children.length > 0) {
+            if (distributionMap[parentItem.id] && distributionMap[parentItem.id].children.length > 0) {
               const parentTarget = distributionMap[parentItem.id].target;
               const childrenCount = distributionMap[parentItem.id].children.length;
               const childTarget = Math.round(parentTarget / childrenCount);
@@ -795,16 +799,26 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
   const renderStep4 = () => {
     const handleRegionToggle = (itemId: string, level: number) => {
       const newSelected = new Set(campaignData.selectedRegions);
+      
       if (newSelected.has(itemId)) {
+        // Deselecting - remove item and all children
         newSelected.delete(itemId);
-        // Remove children
         removeAllChildren(itemId, newSelected);
       } else {
+        // Selecting - add item, auto-select parents, and auto-select all children
         newSelected.add(itemId);
-        // Auto-select parents if not already selected
         autoSelectParents(itemId, newSelected);
+        addAllChildren(itemId, newSelected);
       }
+      
       setCampaignData(prev => ({ ...prev, selectedRegions: Array.from(newSelected) }));
+      
+      // Trigger target distribution recalculation
+      setTimeout(() => {
+        if (Array.from(newSelected).length > 0) {
+          computeRegionalDistribution(distributionAlgorithm);
+        }
+      }, 100);
     };
 
     const removeAllChildren = (parentId: string, selectedSet: Set<string>) => {
@@ -818,9 +832,20 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
       });
     };
 
+    const addAllChildren = (parentId: string, selectedSet: Set<string>) => {
+      hierarchyLevels.forEach(level => {
+        level.items.forEach(item => {
+          if (item.parentId === parentId) {
+            selectedSet.add(item.id);
+            addAllChildren(item.id, selectedSet);
+          }
+        });
+      });
+    };
+
     const autoSelectParents = (childId: string, selectedSet: Set<string>) => {
       const childItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === childId);
-      if (childItem?.parentId) {
+      if (childItem?.parentId && !selectedSet.has(childItem.parentId)) {
         selectedSet.add(childItem.parentId);
         autoSelectParents(childItem.parentId, selectedSet);
       }
@@ -970,7 +995,11 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
                       type="radio" 
                       name="algorithm" 
                       value="equal"
-                      onChange={() => computeRegionalDistribution('equal')}
+                      checked={distributionAlgorithm === 'equal'}
+                      onChange={() => {
+                        setDistributionAlgorithm('equal');
+                        computeRegionalDistribution('equal');
+                      }}
                     />
                     <div className="option-content">
                       <div className="option-icon">⚖️</div>
@@ -986,7 +1015,11 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
                       type="radio" 
                       name="algorithm" 
                       value="territory"
-                      onChange={() => computeRegionalDistribution('territory')}
+                      checked={distributionAlgorithm === 'territory'}
+                      onChange={() => {
+                        setDistributionAlgorithm('territory');
+                        computeRegionalDistribution('territory');
+                      }}
                     />
                     <div className="option-content">
                       <div className="option-icon">🗺️</div>
@@ -1002,13 +1035,37 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
                       type="radio" 
                       name="algorithm" 
                       value="performance"
-                      onChange={() => computeRegionalDistribution('performance')}
+                      checked={distributionAlgorithm === 'performance'}
+                      onChange={() => {
+                        setDistributionAlgorithm('performance');
+                        computeRegionalDistribution('performance');
+                      }}
                     />
                     <div className="option-content">
                       <div className="option-icon">📈</div>
                       <div className="option-text">
                         <strong>Performance-based</strong>
                         <p>Higher performers get higher targets based on historical data</p>
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className="algorithm-option">
+                    <input 
+                      type="radio" 
+                      name="algorithm" 
+                      value="custom"
+                      checked={distributionAlgorithm === 'custom'}
+                      onChange={() => {
+                        setDistributionAlgorithm('custom');
+                        // Don't auto-compute for custom, let user edit
+                      }}
+                    />
+                    <div className="option-content">
+                      <div className="option-icon">✏️</div>
+                      <div className="option-text">
+                        <strong>Custom Distribution</strong>
+                        <p>Manually set targets for each region</p>
                       </div>
                     </div>
                   </label>
@@ -1048,10 +1105,31 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
                       </div>
                     </div>
 
-                    {/* Actual distribution results */}
+                    {/* Editable distribution results */}
                     {campaignData.targetConfigs.map(config => {
                       const distributions = campaignData.regionalDistribution[config.skuId] || [];
                       const totalDistributed = distributions.reduce((sum, dist) => sum + dist.target, 0);
+                      
+                      const updateRegionalTarget = (regionId: string, newTarget: number) => {
+                        setCampaignData(prev => {
+                          const newDistribution = { ...prev.regionalDistribution };
+                          if (newDistribution[config.skuId]) {
+                            newDistribution[config.skuId] = newDistribution[config.skuId].map(dist =>
+                              dist.regionId === regionId 
+                                ? { 
+                                    ...dist, 
+                                    target: newTarget,
+                                    individualTarget: dist.userCount > 0 ? Math.round(newTarget / dist.userCount) : newTarget
+                                  }
+                                : dist
+                            );
+                          }
+                          return {
+                            ...prev,
+                            regionalDistribution: newDistribution
+                          };
+                        });
+                      };
                       
                       return (
                         <div key={config.skuId} className="sku-distribution-card">
@@ -1066,16 +1144,29 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
                           <div className="distribution-table">
                             <div className="table-header">
                               <span>Region</span>
-                              <span>Target</span>
+                              <span>Target {distributionAlgorithm === 'custom' ? '(Editable)' : ''}</span>
                               <span>Users</span>
                               <span>Per User</span>
                             </div>
                             {distributions.map(dist => (
-                              <div key={dist.regionId} className="distribution-row">
+                              <div key={dist.regionId} className="distribution-row editable">
                                 <span className="region-name">{dist.regionName}</span>
-                                <span className="region-target">
-                                  {dist.target} {config.unit}
-                                </span>
+                                {distributionAlgorithm === 'custom' ? (
+                                  <div className="editable-target">
+                                    <input
+                                      type="number"
+                                      className="target-input"
+                                      value={dist.target}
+                                      onChange={(e) => updateRegionalTarget(dist.regionId, parseFloat(e.target.value) || 0)}
+                                      min="0"
+                                    />
+                                    <span className="unit-label">{config.unit}</span>
+                                  </div>
+                                ) : (
+                                  <span className="region-target">
+                                    {dist.target} {config.unit}
+                                  </span>
+                                )}
                                 <span className="user-count">{dist.userCount}</span>
                                 <span className="individual-target">
                                   {dist.individualTarget} {config.unit}
@@ -1084,13 +1175,28 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
                             ))}
                             <div className="distribution-footer">
                               <span>Total Distributed:</span>
-                              <span className="total-distributed">
+                              <span className={`total-distributed ${totalDistributed !== config.target ? 'variance' : ''}`}>
                                 {totalDistributed} {config.unit}
                               </span>
                               {totalDistributed !== config.target && (
                                 <span className="variance">
-                                  (±{Math.abs(config.target - totalDistributed)})
+                                  (Target: {config.target} | Variance: ±{Math.abs(config.target - totalDistributed)})
                                 </span>
+                              )}
+                              {distributionAlgorithm === 'custom' && totalDistributed !== config.target && (
+                                <button 
+                                  className="btn-small"
+                                  onClick={() => {
+                                    // Auto-balance to match target
+                                    const diff = config.target - totalDistributed;
+                                    const perRegion = Math.round(diff / distributions.length);
+                                    distributions.forEach(dist => {
+                                      updateRegionalTarget(dist.regionId, dist.target + perRegion);
+                                    });
+                                  }}
+                                >
+                                  Auto Balance
+                                </button>
                               )}
                             </div>
                           </div>
