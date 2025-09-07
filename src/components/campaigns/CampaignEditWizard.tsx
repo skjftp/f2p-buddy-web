@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { doc, updateDoc, deleteDoc, serverTimestamp, getDoc, query, where, getDocs, collection } from 'firebase/firestore';
+import { doc, updateDoc, deleteDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFirestoreInstance, getStorageInstance } from '../../config/firebase';
 import { Campaign } from '../../store/slices/campaignSlice';
