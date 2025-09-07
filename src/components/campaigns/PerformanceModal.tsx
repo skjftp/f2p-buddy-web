@@ -203,10 +203,24 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
         const campaignDoc = await getDoc(doc(dbInstance, 'campaigns', campaign.id));
         if (campaignDoc.exists()) {
           const campaignData = campaignDoc.data();
+          console.log('🏢 Loading organization hierarchy from:', campaignData.orgId);
+          
           const orgDoc = await getDoc(doc(dbInstance, 'organizations', campaignData.orgId));
-          if (orgDoc.exists() && orgDoc.data().hierarchyLevels) {
-            setHierarchyLevels(orgDoc.data().hierarchyLevels);
+          if (orgDoc.exists()) {
+            const orgData = orgDoc.data();
+            console.log('📊 Organization data loaded:', !!orgData.hierarchyLevels);
+            
+            if (orgData.hierarchyLevels) {
+              setHierarchyLevels(orgData.hierarchyLevels);
+              console.log('✅ HierarchyLevels set:', orgData.hierarchyLevels.length, 'levels');
+            } else {
+              console.log('❌ No hierarchyLevels in organization document');
+            }
+          } else {
+            console.log('❌ Organization document not found');
           }
+        } else {
+          console.log('❌ Campaign document not found');
         }
         
         // First load complete user data with regionHierarchy
