@@ -184,16 +184,36 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
         }
 
         // Load users for participant assignment
-        const usersQuery = query(
-          collection(dbInstance, 'users'),
-          where('orgId', '==', organization.id)
-        );
-        const usersSnapshot = await getDocs(usersQuery);
-        const users: User[] = [];
-        usersSnapshot.forEach((doc) => {
-          users.push({ id: doc.id, ...doc.data() } as User);
-        });
-        setOrganizationUsers(users);
+        console.log('👥 Loading organization users for:', organization.id);
+        
+        try {
+          const usersQuery = query(
+            collection(dbInstance, 'users'),
+            where('organizationId', '==', organization.id)  // Fixed: should be organizationId, not orgId
+          );
+          
+          console.log('📞 Executing users query...');
+          const usersSnapshot = await getDocs(usersQuery);
+          console.log('📊 Users query returned:', usersSnapshot.size, 'documents');
+          
+          const users: User[] = [];
+          usersSnapshot.forEach((doc) => {
+            const userData = doc.data();
+            console.log('👤 Found user:', {
+              id: doc.id,
+              name: userData.name || userData.displayName,
+              designationName: userData.designationName,
+              organizationId: userData.organizationId
+            });
+            users.push({ id: doc.id, ...userData } as User);
+          });
+          
+          setOrganizationUsers(users);
+          console.log('✅ Loaded', users.length, 'organization users');
+        } catch (userError) {
+          console.error('❌ Failed to load users:', userError);
+          setOrganizationUsers([]);
+        }
 
       } catch (error) {
         console.error('Error loading organization data:', error);
