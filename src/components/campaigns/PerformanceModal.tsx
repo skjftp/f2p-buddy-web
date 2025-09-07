@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface PerformanceModalProps {
   campaign: any;
@@ -7,6 +7,85 @@ interface PerformanceModalProps {
 }
 
 const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, onUpdate }) => {
+  const [activeMode, setActiveMode] = useState<'consolidated' | 'dateWise'>('consolidated');
+  const [performances, setPerformances] = useState<Record<string, Record<string, number>>>({});
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+
+  // Initialize performance data from campaign
+  useEffect(() => {
+    const initPerformances: Record<string, Record<string, number>> = {};
+    
+    if (campaign.userTargets && campaign.targetConfigs) {
+      campaign.userTargets.forEach((user: any) => {
+        initPerformances[user.userId] = {};
+        campaign.targetConfigs.forEach((config: any) => {
+          initPerformances[user.userId][config.skuId] = 0; // Default achieved = 0
+        });
+      });
+    }
+    
+    setPerformances(initPerformances);
+  }, [campaign]);
+
+  const updatePerformance = (userId: string, skuId: string, value: number) => {
+    setPerformances(prev => ({
+      ...prev,
+      [userId]: {
+        ...prev[userId],
+        [skuId]: value
+      }
+    }));
+  };
+
+  const renderConsolidated = () => (
+    <div className="performance-content">
+      {campaign.userTargets?.map((user: any) => (
+        <div key={user.userId} className="user-performance-card">
+          <div className="user-header">
+            <h4>{user.userName}</h4>
+            <span className="user-region">{user.regionName}</span>
+          </div>
+          
+          <div className="sku-performances">
+            {campaign.targetConfigs?.map((config: any) => {
+              const target = user.targets[config.skuId] || 0;
+              const achieved = performances[user.userId]?.[config.skuId] || 0;
+              const percentage = target > 0 ? Math.round((achieved / target) * 100) : 0;
+              
+              return (
+                <div key={config.skuId} className="sku-performance">
+                  <div className="sku-info">
+                    <span className="sku-code">{config.skuCode}</span>
+                    <span className="target-info">Target: {target} {config.unit}</span>
+                  </div>
+                  <div className="performance-input">
+                    <input
+                      type="number"
+                      value={achieved}
+                      onChange={(e) => updatePerformance(user.userId, config.skuId, parseFloat(e.target.value) || 0)}
+                      placeholder="Achieved"
+                      min="0"
+                    />
+                    <span className="unit">{config.unit}</span>
+                  </div>
+                  <div className="progress-info">
+                    <span className="percentage">{percentage}%</span>
+                    <div className="progress-bar">
+                      <div 
+                        className="progress-fill" 
+                        style={{ width: `${Math.min(percentage, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <div className="performance-modal">
       <div className="modal-overlay" onClick={onClose}>
@@ -16,30 +95,36 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
             <button className="close-btn" onClick={onClose}>×</button>
           </div>
 
+          {/* Mode Selection */}
+          <div className="performance-modes">
+            <button 
+              className={`mode-btn ${activeMode === 'consolidated' ? 'active' : ''}`}
+              onClick={() => setActiveMode('consolidated')}
+            >
+              📊 Consolidated
+            </button>
+            <button 
+              className={`mode-btn ${activeMode === 'dateWise' ? 'active' : ''}`}
+              onClick={() => setActiveMode('dateWise')}
+            >
+              📅 Date-wise
+            </button>
+          </div>
+
           <div className="performance-content">
-            <div className="coming-soon-performance">
-              <div className="empty-icon">📈</div>
-              <h3>Performance Update System</h3>
-              <p>Comprehensive performance tracking system coming soon!</p>
-              
-              <div className="planned-features">
-                <h4>Planned Features:</h4>
-                <ul>
-                  <li>📊 Consolidated performance tracking</li>
-                  <li>📅 Date-wise performance entry</li>
-                  <li>📄 CSV bulk upload functionality</li>
-                  <li>🗺️ Real-time region-wise summaries</li>
-                  <li>📈 Performance analytics and insights</li>
-                </ul>
+            {activeMode === 'consolidated' ? renderConsolidated() : (
+              <div className="date-wise-content">
+                <div className="date-selector">
+                  <label>Select Date:</label>
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                  />
+                </div>
+                <p>Date-wise performance entry coming soon for {selectedDate}</p>
               </div>
-              
-              <div className="campaign-info">
-                <h4>Campaign Details:</h4>
-                <p><strong>Participants:</strong> {campaign.userTargets?.length || 0}</p>
-                <p><strong>SKUs:</strong> {campaign.targetConfigs?.length || 0}</p>
-                <p><strong>Regions:</strong> {campaign.selectedRegions?.length || 0}</p>
-              </div>
-            </div>
+            )}
           </div>
 
           <div className="modal-actions">
