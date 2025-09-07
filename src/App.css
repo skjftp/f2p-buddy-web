@@ -6010,3 +6010,275 @@ body {
   margin-right: 8px;
 }
 
+
+/* Performance Table Styles */
+.performance-table-container {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+}
+
+.performance-table {
+  width: 100%;
+  min-width: 800px;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 200px 120px repeat(auto-fit, minmax(150px, 1fr)) 100px;
+  gap: 12px;
+  background: var(--gray-50);
+  padding: 12px;
+  font-weight: 600;
+  color: var(--gray-700);
+  font-size: 13px;
+  border-bottom: 1px solid var(--gray-200);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.table-body {
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 200px 120px repeat(auto-fit, minmax(150px, 1fr)) 100px;
+  gap: 12px;
+  padding: 12px;
+  border-bottom: 1px solid var(--gray-100);
+  align-items: center;
+}
+
+.table-row:hover {
+  background: var(--gray-50);
+}
+
+.user-col .user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.user-name {
+  font-weight: 500;
+  color: var(--gray-800);
+  font-size: 14px;
+}
+
+.user-id {
+  font-size: 11px;
+  color: var(--gray-500);
+}
+
+.region-col {
+  font-size: 13px;
+  color: var(--gray-600);
+}
+
+.sku-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.unit-label {
+  font-size: 11px;
+  color: var(--gray-500);
+}
+
+.sku-performance-cell {
+  width: 100%;
+}
+
+.target-display {
+  font-size: 11px;
+  color: var(--gray-600);
+  margin-bottom: 4px;
+}
+
+.input-row {
+  margin-bottom: 6px;
+}
+
+.performance-input {
+  width: 100%;
+  padding: 4px 6px;
+  border: 1px solid var(--gray-300);
+  border-radius: 3px;
+  font-size: 13px;
+  text-align: center;
+}
+
+.performance-input:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.progress-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.percentage-text {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.mini-progress-bar {
+  width: 100%;
+  height: 3px;
+  background: var(--gray-200);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.mini-progress-fill {
+  height: 100%;
+  background: var(--success);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.overall-col {
+  text-align: center;
+}
+
+.overall-percentage {
+  font-weight: 600;
+  color: var(--primary);
+  font-size: 14px;
+}
+
+.overall-progress-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--gray-200);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.overall-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--success), var(--primary));
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* Region Summary */
+.region-summary {
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin: 20px 0;
+}
+
+.region-summary h4 {
+  margin: 0 0 12px 0;
+  color: var(--gray-800);
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 12px;
+}
+
+.region-card {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+
+.region-card h5 {
+  margin: 0 0 4px 0;
+  color: var(--gray-800);
+}
+
+.region-users {
+  font-size: 12px;
+  color: var(--gray-500);
+  margin-bottom: 8px;
+}
+
+.region-skus {
+  display: grid;
+  gap: 6px;
+}
+
+.sku-summary {
+  background: var(--gray-50);
+  padding: 6px;
+  border-radius: 4px;
+}
+
+.sku-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.sku-summary .sku-code {
+  background: var(--primary);
+  font-size: 10px;
+}
+
+.summary-percentage {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.summary-values {
+  font-size: 11px;
+  color: var(--gray-600);
+  margin-bottom: 4px;
+}
+
+.summary-progress {
+  height: 3px;
+  background: var(--gray-200);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.summary-fill {
+  height: 100%;
+  background: var(--success);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.csv-upload-content,
+.date-wise-content {
+  padding: 20px;
+  text-align: center;
+  color: var(--gray-600);
+}
+
+.csv-format {
+  background: var(--gray-50);
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  margin-top: 12px;
+  text-align: left;
+}
+
+.csv-format code {
+  font-family: monospace;
+  font-size: 11px;
+  display: block;
+  margin-top: 8px;
+}
+
