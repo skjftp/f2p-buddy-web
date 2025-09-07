@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { getFirestoreInstance } from '../../config/firebase';
 import { toast } from 'react-toastify';
@@ -28,9 +28,9 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
     
     setPerformances(initData);
     computeRegionSummary(initData);
-  }, []);
+  }, [campaign, computeRegionSummary]);
 
-  const computeRegionSummary = (performanceData: Record<string, Record<string, number>>) => {
+  const computeRegionSummary = useCallback((performanceData: Record<string, Record<string, number>>) => {
     const summary: Record<string, any> = {};
     
     campaign.userTargets?.forEach((user: any) => {
@@ -49,7 +49,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
     });
     
     setRegionSummary(summary);
-  };
+  }, [campaign]);
 
   const updatePerformance = (userId: string, skuId: string, value: number) => {
     const updated = {
