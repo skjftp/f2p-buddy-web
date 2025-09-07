@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { doc, updateDoc, deleteDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, deleteDoc, serverTimestamp, getDoc, query, where, getDocs, collection } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getFirestoreInstance, getStorageInstance } from '../../config/firebase';
 import { Campaign } from '../../store/slices/campaignSlice';
@@ -23,6 +23,7 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
   const [organizationSkus, setOrganizationSkus] = useState<any[]>([]);
   const [hierarchyLevels, setHierarchyLevels] = useState<any[]>([]);
   const [designations, setDesignations] = useState<any[]>([]);
+  const [organizationUsers, setOrganizationUsers] = useState<any[]>([]);
   
   const [campaignData, setCampaignData] = useState({
     name: campaign.name,
@@ -85,6 +86,18 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
             setDesignations(orgData.designations);
           }
         }
+        
+        // Load organization users
+        const usersQuery = query(
+          collection(dbInstance, 'users'),
+          where('organizationId', '==', organization.id)
+        );
+        const usersSnapshot = await getDocs(usersQuery);
+        const users: any[] = [];
+        usersSnapshot.forEach((doc) => {
+          users.push({ id: doc.id, ...doc.data() });
+        });
+        setOrganizationUsers(users);
         
         // Load campaign data
         const campaignDoc = await getDoc(doc(dbInstance, 'campaigns', campaign.id));
@@ -512,42 +525,118 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
         <p>View and edit regional distribution and targeting</p>
       </div>
 
-      {/* Selected Regions Display */}
-      <div className="targeting-summary">
-        <div className="summary-section">
-          <h4>Selected Regions ({campaignData.selectedRegions.length})</h4>
-          <div className="selected-items">
-            {campaignData.selectedRegions.length === 0 ? (
-              <p className="empty-text">No regions selected</p>
-            ) : (
-              campaignData.selectedRegions.map(regionId => {
-                const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
-                return (
-                  <span key={regionId} className="selected-item">
-                    {regionItem?.name || regionId}
-                  </span>
-                );
-              })
-            )}
+      {/* Exact Creation Interface - Interactive Selection */}
+      <div className="targeting-sections">
+        {/* Regional Targeting Section - Same as Creation */}
+        <div className="targeting-section">
+          <div className="section-header">
+            <h4>🗺️ Regional Targeting</h4>
+            <div className="selected-count">
+              {campaignData.selectedRegions.length} region(s) selected
+            </div>
           </div>
+
+          {hierarchyLevels.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-icon">🏗️</div>
+              <h4>Loading Hierarchy...</h4>
+              <p>Please wait while organization hierarchy loads.</p>
+            </div>
+          ) : (
+            <div className="hierarchy-selection">
+              {hierarchyLevels.map(level => (
+                <div key={level.id} className="hierarchy-level-section">
+                  <h5 className="level-title">{level.name}</h5>
+                  <div className="hierarchy-items">
+                    {level.items.map(item => {
+                      const isSelected = campaignData.selectedRegions.includes(item.id);
+                      
+                      return (
+                        <label 
+                          key={item.id} 
+                          className={`hierarchy-item ${isSelected ? 'selected' : ''}`}
+                        >
+                          <div className="checkbox-wrapper">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                setCampaignData(prev => ({
+                                  ...prev,
+                                  selectedRegions: checked
+                                    ? [...prev.selectedRegions, item.id]
+                                    : prev.selectedRegions.filter(id => id !== item.id)
+                                }));
+                              }}
+                            />
+                          </div>
+                          <div className="item-info">
+                            <span className="item-name">{item.name}</span>
+                            {item.parentId && (
+                              <span className="parent-info">
+                                under {hierarchyLevels.flatMap(l => l.items).find(p => p.id === item.parentId)?.name}
+                              </span>
+                            )}
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="summary-section">
-          <h4>Selected Designations ({campaignData.selectedDesignations.length})</h4>
-          <div className="selected-items">
-            {campaignData.selectedDesignations.length === 0 ? (
-              <p className="empty-text">No designations selected</p>
-            ) : (
-              campaignData.selectedDesignations.map(designationId => {
-                const designation = designations.find(des => des.id === designationId);
-                return (
-                  <span key={designationId} className="selected-item">
-                    {designation?.name || designationId}
-                  </span>
-                );
-              })
-            )}
+        {/* Designation Targeting Section - Same as Creation */}
+        <div className="targeting-section">
+          <div className="section-header">
+            <h4>👔 Designation Targeting</h4>
+            <div className="selected-count">
+              {campaignData.selectedDesignations.length} designation(s) selected
+            </div>
           </div>
+
+          {designations.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-icon">👥</div>
+              <h4>Loading Designations...</h4>
+              <p>Please wait while designations load.</p>
+            </div>
+          ) : (
+            <div className="designations-grid">
+              {designations.map(designation => (
+                <label 
+                  key={designation.id}
+                  className={`designation-item ${campaignData.selectedDesignations.includes(designation.id) ? 'selected' : ''}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={campaignData.selectedDesignations.includes(designation.id)}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setCampaignData(prev => ({
+                        ...prev,
+                        selectedDesignations: checked
+                          ? [...prev.selectedDesignations, designation.id]
+                          : prev.selectedDesignations.filter(id => id !== designation.id)
+                      }));
+                    }}
+                  />
+                  <div className="designation-info">
+                    <span className={`category-badge ${designation.category}`}>
+                      {designation.category}
+                    </span>
+                    <span className="designation-name">{designation.name}</span>
+                    {designation.description && (
+                      <span className="designation-desc">{designation.description}</span>
+                    )}
+                  </div>
+                </label>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
