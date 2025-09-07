@@ -89,6 +89,73 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
     return updatedPerformances;
   }, [enhancedUserTargets, hierarchyLevels, campaign.targetConfigs]);
 
+  // Temporary function to compute parent performances with explicit user list
+  const computeParentPerformancesWithUsers = (performanceData: Record<string, Record<string, number>>, usersList: any[]) => {
+    const updatedPerformances = { ...performanceData };
+    
+    console.log('📊 Computing with enhanced users:', usersList.map(u => `${u.userName} (${u.regionName})`));
+    
+    // For each user, check if they're in a parent region
+    usersList.forEach((user: any) => {
+      console.log(`🔍 Checking user ${user.userName} (${user.regionName}) for parent region aggregation`);
+      
+      if (!user.regionName || !user.regionHierarchy) {
+        console.log(`❌ ${user.userName}: Missing regionName or regionHierarchy`);
+        return;
+      }
+      
+      let childPerformanceSum: Record<string, number> = {};
+      let hasChildPerformance = false;
+      
+      campaign.targetConfigs?.forEach((config: any) => {
+        childPerformanceSum[config.skuId] = 0;
+        
+        usersList.forEach((otherUser: any) => {
+          if (otherUser.userId === user.userId) return;
+          
+          console.log(`   🔍 ${otherUser.userName} (${otherUser.regionName}) child of ${user.userName} (${user.regionName})?`);
+          
+          // Simple check: if otherUser's regionName is a child of user's regionName
+          const userRegionId = Object.values(user.regionHierarchy || {}).find(regionId => {
+            const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
+            return regionItem?.name === user.regionName;
+          });
+          
+          const otherUserRegionId = Object.values(otherUser.regionHierarchy || {}).find(regionId => {
+            const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
+            return regionItem?.name === otherUser.regionName;
+          });
+          
+          if (userRegionId && otherUserRegionId) {
+            const otherRegionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === otherUserRegionId);
+            
+            console.log(`     Region check: ${otherUser.regionName} parentId: ${otherRegionItem?.parentId} vs ${user.regionName} regionId: ${userRegionId}`);
+            
+            if (otherRegionItem && otherRegionItem.parentId === userRegionId) {
+              const childPerformance = performanceData[otherUser.userId]?.[config.skuId] || 0;
+              childPerformanceSum[config.skuId] += childPerformance;
+              hasChildPerformance = true;
+              console.log(`✅ ${user.userName} += ${childPerformance} from child ${otherUser.userName}`);
+            }
+          }
+        });
+      });
+      
+      if (hasChildPerformance) {
+        if (!updatedPerformances[user.userId]) {
+          updatedPerformances[user.userId] = {};
+        }
+        
+        Object.entries(childPerformanceSum).forEach(([skuId, sum]) => {
+          updatedPerformances[user.userId][skuId] = sum;
+          console.log(`✅ Auto-updated ${user.userName}: ${campaign.targetConfigs.find((c: any) => c.skuId === skuId)?.skuCode} = ${sum}`);
+        });
+      }
+    });
+    
+    return updatedPerformances;
+  };
+
   const computeRegionSummary = useCallback((performanceData: Record<string, Record<string, number>>) => {
     const summary: Record<string, any> = {};
     
@@ -191,17 +258,14 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
         console.log('📈 Final loaded performances:', loadedPerformances);
         console.log('📅 Final loaded date-wise:', loadedDateWise);
         
-        setPerformances(loadedPerformances);
-        setDateWisePerformances(loadedDateWise);
+        // Immediately compute parent aggregation with loaded data
+        console.log('🔄 Computing initial parent region aggregation...');
+        const withInitialAggregation = computeParentPerformancesWithUsers(loadedPerformances, enhancedUsers);
+        console.log('📊 Initial aggregated performances:', withInitialAggregation);
         
-        // Apply parent region aggregation after setting initial data
-        setTimeout(() => {
-          console.log('🔄 Computing parent region aggregation...');
-          const withParentAggregation = computeParentPerformances(loadedPerformances);
-          console.log('📊 Aggregated performances:', withParentAggregation);
-          setPerformances(withParentAggregation);
-          computeRegionSummary(withParentAggregation);
-        }, 500);
+        setPerformances(withInitialAggregation);
+        setDateWisePerformances(loadedDateWise);
+        computeRegionSummary(withInitialAggregation);
         
       } catch (error) {
         console.error('❌ Error loading performance data:', error);
