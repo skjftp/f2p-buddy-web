@@ -1033,7 +1033,6 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
                   </div>
                 </div>
               )}
-              </div>
             </div>
           ))}
         </div>
