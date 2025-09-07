@@ -185,7 +185,8 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
     };
 
     loadAndInitializeData();
-  }, [campaign]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [campaign.id]); // Only depend on campaign ID to prevent infinite loops
 
   const updatePerformance = (userId: string, skuId: string, value: number) => {
     const updated = {
