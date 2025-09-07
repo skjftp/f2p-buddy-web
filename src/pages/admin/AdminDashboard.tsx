@@ -6,6 +6,7 @@ import { Campaign } from '../../store/slices/campaignSlice';
 import NewCampaignWizard from '../../components/campaigns/CampaignWizard/NewCampaignWizard';
 import CampaignEditWizard from '../../components/campaigns/CampaignEditWizard';
 import PerformanceModal from '../../components/campaigns/PerformanceModal';
+import LeaderboardModal from '../../components/campaigns/LeaderboardModal';
 import CampaignCard from '../../components/campaigns/CampaignCard';
 import AnalyticsDashboard from '../../components/analytics/AnalyticsDashboard';
 import EmployeeManagement from '../../components/admin/EmployeeManagement';
@@ -21,6 +22,7 @@ const AdminDashboard: React.FC = () => {
   const [showCampaignWizard, setShowCampaignWizard] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showPerformanceModal, setShowPerformanceModal] = useState(false);
+  const [showLeaderboardModal, setShowLeaderboardModal] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [organizationStats, setOrganizationStats] = useState({
     totalEmployees: 2,
@@ -91,6 +93,11 @@ const AdminDashboard: React.FC = () => {
     setShowPerformanceModal(true);
   };
 
+  const handleLeaderboard = (campaign: Campaign) => {
+    setSelectedCampaign(campaign);
+    setShowLeaderboardModal(true);
+  };
+
   const handleCloseEdit = () => {
     setShowEditModal(false);
     setSelectedCampaign(null);
@@ -98,6 +105,11 @@ const AdminDashboard: React.FC = () => {
 
   const handleClosePerformance = () => {
     setShowPerformanceModal(false);
+    setSelectedCampaign(null);
+  };
+
+  const handleCloseLeaderboard = () => {
+    setShowLeaderboardModal(false);
     setSelectedCampaign(null);
   };
 
@@ -146,6 +158,7 @@ const AdminDashboard: React.FC = () => {
               userRole="admin"
               onEdit={() => handleEditCampaign(campaign)}
               onPerformanceUpdate={() => handlePerformanceUpdate(campaign)}
+              onLeaderboard={() => handleLeaderboard(campaign)}
               onView={() => {}}
             />
           ))}
@@ -180,6 +193,7 @@ const AdminDashboard: React.FC = () => {
             userRole="admin"
             onEdit={() => handleEditCampaign(campaign)}
             onPerformanceUpdate={() => handlePerformanceUpdate(campaign)}
+            onLeaderboard={() => handleLeaderboard(campaign)}
             onView={() => {}}
           />
         ))}
@@ -310,6 +324,13 @@ const AdminDashboard: React.FC = () => {
           campaign={selectedCampaign as any}
           onClose={handleClosePerformance}
           onUpdate={handleCampaignUpdate}
+        />
+      )}
+
+      {showLeaderboardModal && selectedCampaign && (
+        <LeaderboardModal
+          campaign={selectedCampaign as any}
+          onClose={handleCloseLeaderboard}
         />
       )}
     </div>

@@ -8,6 +8,7 @@ interface CampaignCardProps {
   onEdit?: () => void;
   onView?: () => void;
   onPerformanceUpdate?: () => void;
+  onLeaderboard?: () => void;
 }
 
 const CampaignCard: React.FC<CampaignCardProps> = ({ 
@@ -15,7 +16,8 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
   userRole, 
   onEdit, 
   onView,
-  onPerformanceUpdate
+  onPerformanceUpdate,
+  onLeaderboard
 }) => {
   // Safety check for campaign data
   if (!campaign) {
@@ -113,12 +115,12 @@ const CampaignCard: React.FC<CampaignCardProps> = ({
               <QuickActions campaign={campaign} />
               <button className="btn-icon" onClick={onEdit} title="Edit Campaign">✏️</button>
               <button className="btn-icon" onClick={onPerformanceUpdate} title="Update Performance">📈</button>
-              <button className="btn-icon" onClick={onView} title="Analytics">📊</button>
+              <button className="btn-icon" onClick={onLeaderboard} title="Campaign Leaderboard">🏆</button>
             </>
           ) : (
             <>
               <button className="btn-icon" onClick={onPerformanceUpdate} title="Update Performance">📈</button>
-              <button className="btn-icon" onClick={onView} title="View Campaign">→</button>
+              <button className="btn-icon" onClick={onLeaderboard} title="View Leaderboard">🏆</button>
             </>
           )}
         </div>
