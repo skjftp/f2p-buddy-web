@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { getFirestoreInstance } from '../../config/firebase';
 import { toast } from 'react-toastify';
 
@@ -105,22 +105,34 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
   const savePerformance = async () => {
     setLoading(true);
     try {
-      console.log('💾 Saving performance data...');
+      console.log('💾 Saving performance data to userPerformances collection...');
       const dbInstance = await getFirestoreInstance();
-      console.log('📊 Performance data to save:', { performances, dateWisePerformances, regionSummary });
       
-      const performanceData = {
-        consolidatedPerformances: performances,
-        dateWisePerformances: dateWisePerformances,
-        regionSummary: regionSummary,
-        lastUpdated: new Date().toISOString(),
-        selectedDate: activeMode === 'dateWise' ? selectedDate : null
-      };
-      
-      await updateDoc(doc(dbInstance, 'campaigns', campaign.id), {
-        performanceData,
-        updatedAt: serverTimestamp()
+      // Save to userPerformances collection for each user
+      const savePromises = campaign.userTargets?.map(async (user: any) => {
+        const userPerformanceData = {
+          campaignId: campaign.id,
+          campaignName: campaign.name,
+          consolidated: performances[user.userId] || {},
+          dateWise: dateWisePerformances[user.userId] || {},
+          lastUpdated: serverTimestamp(),
+          updateMode: activeMode,
+          selectedDate: activeMode === 'dateWise' ? selectedDate : null
+        };
+        
+        console.log(`📊 Saving for user ${user.userName}:`, userPerformanceData);
+        
+        // Save to userPerformances/{userId}/campaigns/{campaignId}
+        await setDoc(
+          doc(dbInstance, 'userPerformances', user.userId, 'campaigns', campaign.id),
+          userPerformanceData,
+          { merge: true } // Merge with existing data
+        );
+        
+        console.log(`✅ Saved performance for ${user.userName}`);
       });
+      
+      await Promise.all(savePromises || []);
       
       const message = activeMode === 'dateWise' 
         ? `Performance saved for ${selectedDate}!` 
@@ -130,6 +142,7 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
       onUpdate();
     } catch (error) {
       console.error('Error saving performance:', error);
+      console.log('🔍 Error details:', error);
       toast.error('Failed to save performance data');
     } finally {
       setLoading(false);
