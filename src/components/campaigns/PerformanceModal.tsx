@@ -15,21 +15,6 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
   const [regionSummary, setRegionSummary] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(false);
 
-  // Initialize performance data
-  useEffect(() => {
-    const initData: Record<string, Record<string, number>> = {};
-    
-    campaign.userTargets?.forEach((user: any) => {
-      initData[user.userId] = {};
-      campaign.targetConfigs?.forEach((config: any) => {
-        initData[user.userId][config.skuId] = 0;
-      });
-    });
-    
-    setPerformances(initData);
-    computeRegionSummary(initData);
-  }, [campaign, computeRegionSummary]);
-
   const computeRegionSummary = useCallback((performanceData: Record<string, Record<string, number>>) => {
     const summary: Record<string, any> = {};
     
@@ -50,6 +35,21 @@ const PerformanceModal: React.FC<PerformanceModalProps> = ({ campaign, onClose, 
     
     setRegionSummary(summary);
   }, [campaign]);
+
+  // Initialize performance data
+  useEffect(() => {
+    const initData: Record<string, Record<string, number>> = {};
+    
+    campaign.userTargets?.forEach((user: any) => {
+      initData[user.userId] = {};
+      campaign.targetConfigs?.forEach((config: any) => {
+        initData[user.userId][config.skuId] = 0;
+      });
+    });
+    
+    setPerformances(initData);
+    computeRegionSummary(initData);
+  }, [campaign, computeRegionSummary]);
 
   const updatePerformance = (userId: string, skuId: string, value: number) => {
     const updated = {
