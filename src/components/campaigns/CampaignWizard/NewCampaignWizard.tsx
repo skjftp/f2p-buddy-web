@@ -516,12 +516,10 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
         hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId)
       ).filter(Boolean) as HierarchyItem[];
       
-      console.log('🗺️ Selected region items:', selectedRegionItems.map(item => ({
-        id: item.id,
-        name: item.name,
-        level: item.level,
-        parentId: item.parentId
-      })));
+      console.log('🗺️ Selected region items details:');
+      selectedRegionItems.forEach((item, index) => {
+        console.log(`  ${index + 1}. ${item.name} (Level ${item.level}, ID: ${item.id}, Parent: ${item.parentId || 'None'})`);
+      });
 
       // Build hierarchy tree for proper level-by-level proportional distribution
       const buildDistributionTree = (items: HierarchyItem[]) => {
@@ -537,10 +535,12 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
         const distributionMap: Record<string, { target: number, children: string[] }> = {};
         const sortedLevels = Object.keys(levelGroups).map(Number).sort();
         
-        console.log('📊 Level groups:', Object.keys(levelGroups).map(level => ({
-          level: parseInt(level),
-          items: levelGroups[parseInt(level)].map(i => i.name)
-        })));
+        console.log('📊 Level groups:');
+        Object.keys(levelGroups).forEach(level => {
+          const levelNum = parseInt(level);
+          const items = levelGroups[levelNum];
+          console.log(`  Level ${levelNum}: ${items.map(i => i.name).join(', ')}`);
+        });
         
         // Level 1: Distribute total target equally among top-level items
         const topLevel = sortedLevels[0];
