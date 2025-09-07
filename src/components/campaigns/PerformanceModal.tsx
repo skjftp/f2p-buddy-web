@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { doc, getDoc, updateDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { getFirestoreInstance } from '../../config/firebase';
 import { useDropzone } from 'react-dropzone';
 import { toast } from 'react-toastify';
