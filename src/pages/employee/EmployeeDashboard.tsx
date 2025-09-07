@@ -8,6 +8,8 @@ import CampaignCard from '../../components/campaigns/CampaignCard';
 import LeaderboardWidget from '../../components/dashboard/LeaderboardWidget';
 import AchievementTracker from '../../components/achievements/AchievementTracker';
 import StatsOverview from '../../components/dashboard/StatsOverview';
+import PerformanceModal from '../../components/campaigns/PerformanceModal';
+import LeaderboardModal from '../../components/campaigns/LeaderboardModal';
 
 const EmployeeDashboard: React.FC = () => {
   const { user, organization, logout } = useAuth();
@@ -15,6 +17,9 @@ const EmployeeDashboard: React.FC = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [activeCampaigns, setActiveCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showPerformanceModal, setShowPerformanceModal] = useState(false);
+  const [showLeaderboardModal, setShowLeaderboardModal] = useState(false);
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [userStats, setUserStats] = useState({
     totalAchievements: 0,
     currentRank: 0,
@@ -74,10 +79,12 @@ const EmployeeDashboard: React.FC = () => {
             console.log('🎯 Active campaigns:', campaignList.filter(c => c.status === 'active').length);
             
             setCampaigns(campaignList);
-            setActiveCampaigns(campaignList.filter(c => c.status === 'active'));
+            const activeList = campaignList.filter(c => c.status === 'active');
+            setActiveCampaigns(activeList);
             setLoading(false);
             
             console.log('✅ Employee dashboard data loaded successfully');
+            console.log('🎯 Active campaigns:', activeList.length);
           },
           (error) => {
             console.error('❌ Firestore listener error:', error);
@@ -144,6 +151,22 @@ const EmployeeDashboard: React.FC = () => {
 
     calculateStats();
   }, [user, organization, activeCampaigns]);
+
+  const handlePerformanceUpdate = (campaign: Campaign) => {
+    setSelectedCampaign(campaign);
+    setShowPerformanceModal(true);
+  };
+
+  const handleLeaderboard = (campaign: Campaign) => {
+    setSelectedCampaign(campaign);
+    setShowLeaderboardModal(true);
+  };
+
+  const handleCloseModals = () => {
+    setShowPerformanceModal(false);
+    setShowLeaderboardModal(false);
+    setSelectedCampaign(null);
+  };
 
   if (loading) {
     return (
