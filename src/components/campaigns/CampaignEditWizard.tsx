@@ -315,8 +315,6 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
             
             // Ultimate fallback: for parent regions, SUM all child region targets
             if (!userTargetData.targets[config.skuId]) {
-              // Find all child regions that user's region encompasses
-              const userRegionIds = Object.values(user.regionHierarchy || {});
               let totalChildTargets = 0;
               let childRegionsFound = 0;
               
