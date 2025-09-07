@@ -500,7 +500,11 @@ const NewCampaignWizard: React.FC<CampaignWizardProps> = ({ onClose, onComplete 
 
   const computeRegionalDistribution = (algorithm: 'equal' | 'territory' | 'performance' | 'custom' = 'equal') => {
     console.log('🔄 Computing regional distribution with algorithm:', algorithm);
-    console.log('📊 Selected regions:', campaignData.selectedRegions);
+    console.log('📊 Selected regions count:', campaignData.selectedRegions.length);
+    console.log('📊 Selected regions IDs:', campaignData.selectedRegions);
+    console.log('📊 Selected regions names:', campaignData.selectedRegions.map(id => 
+      hierarchyLevels.flatMap(l => l.items).find(item => item.id === id)?.name || 'Unknown'
+    ));
     
     const newDistribution: Record<string, RegionalDistribution[]> = {};
 
