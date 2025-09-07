@@ -15,7 +15,7 @@ interface CampaignEditWizardProps {
 }
 
 const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClose, onUpdate }) => {
-  const [activeTab, setActiveTab] = useState('basic');
+  const [activeTab, setActiveTab] = useState<'basic' | 'skus' | 'targets' | 'regions' | 'contest' | 'prizes' | 'participants'>('basic');
   const [loading, setLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   
@@ -278,14 +278,62 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
     </div>
   );
 
-  const renderTargetingTab = () => (
+  const renderSkuTab = () => (
+    <div className="edit-tab-content">
+      <div className="section-header">
+        <h3>📦 SKU Selection</h3>
+        <p>Modify which SKUs are included in this campaign</p>
+      </div>
+      <div className="coming-soon">
+        <p>SKU editing coming soon. Use current campaign creation for SKU management.</p>
+      </div>
+    </div>
+  );
+
+  const renderTargetsTab = () => (
+    <div className="edit-tab-content">
+      <div className="section-header">
+        <h3>🎯 Target Metrics Configuration</h3>
+        <p>Edit target values and types for selected SKUs</p>
+      </div>
+      <div className="coming-soon">
+        <p>Target metrics editing coming soon. Use current campaign creation for target management.</p>
+      </div>
+    </div>
+  );
+
+  const renderRegionsTab = () => (
     <CampaignTargeting
       organizationId={campaign.orgId}
       onTargetingChange={handleTargetingChange}
     />
   );
 
-  const renderSkuTab = () => (
+  const renderContestTab = () => (
+    <div className="edit-tab-content">
+      <div className="section-header">
+        <h3>🏆 Contest Structure</h3>
+        <p>Edit contest type and point/milestone configuration</p>
+      </div>
+      <div className="coming-soon">
+        <p>Contest structure editing coming soon. Use current campaign creation for contest management.</p>
+      </div>
+    </div>
+  );
+
+  const renderPrizesTab = () => (
+    <div className="edit-tab-content">
+      <div className="section-header">
+        <h3>🎁 Prize Structure</h3>
+        <p>Edit prize configuration for different levels</p>
+      </div>
+      <div className="coming-soon">
+        <p>Prize structure editing coming soon. Use current campaign creation for prize management.</p>
+      </div>
+    </div>
+  );
+
+  const renderSkuTab_Old = () => (
     <SkuTargeting
       organizationId={campaign.orgId}
       selectedRegions={campaignData.selectedRegions}
@@ -305,32 +353,53 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
           className={`edit-tab ${activeTab === 'basic' ? 'active' : ''}`}
           onClick={() => setActiveTab('basic')}
         >
-          📋 Basic Info
-        </button>
-        <button 
-          className={`edit-tab ${activeTab === 'targeting' ? 'active' : ''}`}
-          onClick={() => setActiveTab('targeting')}
-        >
-          🎯 Targeting
+          📋 Campaign Info
         </button>
         <button 
           className={`edit-tab ${activeTab === 'skus' ? 'active' : ''}`}
           onClick={() => setActiveTab('skus')}
         >
-          📦 SKUs
+          📦 SKU Selection
+        </button>
+        <button 
+          className={`edit-tab ${activeTab === 'targets' ? 'active' : ''}`}
+          onClick={() => setActiveTab('targets')}
+        >
+          🎯 Target Metrics
+        </button>
+        <button 
+          className={`edit-tab ${activeTab === 'regions' ? 'active' : ''}`}
+          onClick={() => setActiveTab('regions')}
+        >
+          🗺️ Regional Targeting
+        </button>
+        <button 
+          className={`edit-tab ${activeTab === 'contest' ? 'active' : ''}`}
+          onClick={() => setActiveTab('contest')}
+        >
+          🏆 Contest Structure
+        </button>
+        <button 
+          className={`edit-tab ${activeTab === 'prizes' ? 'active' : ''}`}
+          onClick={() => setActiveTab('prizes')}
+        >
+          🎁 Prize Structure
         </button>
         <button 
           className={`edit-tab ${activeTab === 'participants' ? 'active' : ''}`}
           onClick={() => setActiveTab('participants')}
         >
-          👥 Participants
+          👥 User Targets
         </button>
       </div>
 
       <div className="edit-wizard-content">
         {activeTab === 'basic' && renderBasicTab()}
-        {activeTab === 'targeting' && renderTargetingTab()}
         {activeTab === 'skus' && renderSkuTab()}
+        {activeTab === 'targets' && renderTargetsTab()}
+        {activeTab === 'regions' && renderRegionsTab()}
+        {activeTab === 'contest' && renderContestTab()}
+        {activeTab === 'prizes' && renderPrizesTab()}
         {activeTab === 'participants' && (
           <div className="participants-tab">
             <h3>Campaign Participants</h3>

@@ -5198,3 +5198,36 @@ body {
   font-weight: 500;
 }
 
+
+/* Coming Soon Styles */
+.coming-soon {
+  text-align: center;
+  padding: 40px 20px;
+  background: var(--gray-50);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-200);
+}
+
+.coming-soon p {
+  color: var(--gray-600);
+  font-size: 14px;
+  margin: 0;
+}
+
+.section-header {
+  margin-bottom: 20px;
+}
+
+.section-header h3 {
+  margin: 0 0 8px 0;
+  color: var(--gray-800);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.section-header p {
+  margin: 0;
+  color: var(--gray-600);
+  font-size: 14px;
+}
+
