@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { getFirestoreInstance } from '../../config/firebase';
 
 interface Campaign {
@@ -154,11 +154,6 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ campaign, onClose }
   const topThree = filteredData.slice(0, 3);
   const restOfList = filteredData.slice(3);
 
-  // Get regions for filtering
-  const getRegionsForFilter = (level: number) => {
-    const levelData = hierarchyLevels.find(h => h.level === level);
-    return levelData?.items || [];
-  };
 
   return (
     <div className="leaderboard-modal">
