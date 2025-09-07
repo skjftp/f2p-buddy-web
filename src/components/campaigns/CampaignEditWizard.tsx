@@ -22,6 +22,8 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
   
   // Organization data
   const [organizationSkus, setOrganizationSkus] = useState<any[]>([]);
+  const [hierarchyLevels, setHierarchyLevels] = useState<any[]>([]);
+  const [designations, setDesignations] = useState<any[]>([]);
   
   const [campaignData, setCampaignData] = useState({
     name: campaign.name,
@@ -70,10 +72,19 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
       try {
         const dbInstance = await getFirestoreInstance();
         
-        // Load organization SKUs
+        // Load organization data
         const orgDoc = await getDoc(doc(dbInstance, 'organizations', organization.id));
-        if (orgDoc.exists() && orgDoc.data().skus) {
-          setOrganizationSkus(orgDoc.data().skus);
+        if (orgDoc.exists()) {
+          const orgData = orgDoc.data();
+          if (orgData.skus) {
+            setOrganizationSkus(orgData.skus);
+          }
+          if (orgData.hierarchyLevels) {
+            setHierarchyLevels(orgData.hierarchyLevels);
+          }
+          if (orgData.designations) {
+            setDesignations(orgData.designations);
+          }
         }
         
         // Load campaign data
@@ -518,11 +529,14 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
             {campaignData.selectedRegions.length === 0 ? (
               <p className="empty-text">No regions selected</p>
             ) : (
-              campaignData.selectedRegions.map(regionId => (
-                <span key={regionId} className="selected-item">
-                  {regionId}
-                </span>
-              ))
+              campaignData.selectedRegions.map(regionId => {
+                const regionItem = hierarchyLevels.flatMap(l => l.items).find(item => item.id === regionId);
+                return (
+                  <span key={regionId} className="selected-item">
+                    {regionItem?.name || regionId}
+                  </span>
+                );
+              })
             )}
           </div>
         </div>
@@ -533,11 +547,14 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
             {campaignData.selectedDesignations.length === 0 ? (
               <p className="empty-text">No designations selected</p>
             ) : (
-              campaignData.selectedDesignations.map(designationId => (
-                <span key={designationId} className="selected-item">
-                  {designationId}
-                </span>
-              ))
+              campaignData.selectedDesignations.map(designationId => {
+                const designation = designations.find(des => des.id === designationId);
+                return (
+                  <span key={designationId} className="selected-item">
+                    {designation?.name || designationId}
+                  </span>
+                );
+              })
             )}
           </div>
         </div>
