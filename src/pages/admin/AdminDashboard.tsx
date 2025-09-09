@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { getFirestoreInstance } from '../../config/firebase';
@@ -15,7 +16,8 @@ import OrganizationSettings from '../../components/admin/OrganizationSettings';
 type TabType = 'overview' | 'campaigns' | 'employees' | 'analytics' | 'settings';
 
 const AdminDashboard: React.FC = () => {
-  const { organization, logout } = useAuth();
+  const navigate = useNavigate();
+  const { user, organization, loading: authLoading, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
@@ -295,15 +297,22 @@ const AdminDashboard: React.FC = () => {
     );
   }
 
-  if (!organization) {
+  // Show loading while auth is still loading
+  if (authLoading) {
     return (
       <div className="loading-container">
-        <div style={{textAlign: 'center'}}>
-          <h2>No Organization</h2>
-          <button className="btn" onClick={logout} style={{marginTop: '16px', maxWidth: '200px'}}>
-            Sign Out
-          </button>
-        </div>
+        <div className="spinner"></div>
+      </div>
+    );
+  }
+
+  // If user is authenticated but no organization, redirect to setup
+  if (user && !organization && !authLoading) {
+    console.log('👤 Admin user without organization, redirecting to setup');
+    navigate('/admin/setup');
+    return (
+      <div className="loading-container">
+        <div className="spinner"></div>
       </div>
     );
   }

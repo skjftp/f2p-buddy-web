@@ -104,8 +104,9 @@ const AdminSetup: React.FC = () => {
         updatedAt: serverTimestamp()
       });
 
-      // Update user with organization ID
-      await updateDoc(doc(dbInstance, 'users', user.uid), {
+      // Update user with organization ID - use phone number as document ID
+      const userDocId = user.phoneNumber || user.uid;
+      await updateDoc(doc(dbInstance, 'users', userDocId), {
         organizationId: orgRef.id,
         updatedAt: serverTimestamp()
       });

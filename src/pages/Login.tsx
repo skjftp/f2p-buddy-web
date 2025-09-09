@@ -142,8 +142,10 @@ const Login: React.FC = () => {
         
         if (userData.role === 'admin') {
           if (userData.organizationId) {
+            console.log('🚀 Admin has organization, navigating to dashboard');
             navigate('/admin/dashboard');
           } else {
+            console.log('🛠️ Admin has no organization, navigating to setup');
             navigate('/admin/setup');
           }
         } else {
@@ -178,7 +180,9 @@ const Login: React.FC = () => {
         updatedAt: serverTimestamp()
       };
       
-      await setDoc(doc(dbInstance, 'users', user.uid), userData);
+      // Use phone number as document ID to match the authentication system
+      const phoneNumberId = user.phoneNumber || `+${phoneNumber}`;
+      await setDoc(doc(dbInstance, 'users', phoneNumberId), userData);
       
       // IMMEDIATELY save auth state to localStorage
       const userStateData = {
