@@ -167,8 +167,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                       };
                       console.log('✅ Organization loaded successfully:', {
                         id: orgData.id,
-                        name: orgData.name,
-                        adminId: orgData.adminId
+                        name: (orgData as any).name,
+                        adminId: (orgData as any).adminId
                       });
                       dispatch(setOrganization(orgData as any));
                       
