@@ -2,10 +2,19 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { getFirestoreInstance, getStorageInstance } from '../../config/firebase';
+import { getFirestoreInstance } from '../../config/firebase';
 import { toast } from 'react-toastify';
 import { useDropzone } from 'react-dropzone';
+
+// Helper function to convert file to base64
+const convertFileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
 
 const AdminSetup: React.FC = () => {
   const { user } = useAuth();
@@ -44,10 +53,10 @@ const AdminSetup: React.FC = () => {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'image/*': ['.png', '.jpg', '.jpeg', '.gif']
+      'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.svg']
     },
     multiple: false,
-    maxSize: 5 * 1024 * 1024, // 5MB
+    maxSize: 2 * 1024 * 1024, // 2MB max for base64 storage
   });
 
   const handleInputChange = (field: string, value: any) => {
@@ -83,12 +92,28 @@ const AdminSetup: React.FC = () => {
     try {
       let logoUrl = '';
       
-      // Upload logo if provided
+      // Convert logo to base64 data URL if provided (temporary CORS workaround)
       if (organizationData.logo) {
-        const storageInstance = await getStorageInstance();
-        const logoRef = ref(storageInstance, `organizations/${Date.now()}_${organizationData.logo.name}`);
-        const snapshot = await uploadBytes(logoRef, organizationData.logo);
-        logoUrl = await getDownloadURL(snapshot.ref);
+        // Check file size (max 2MB for base64 storage)
+        if (organizationData.logo.size > 2 * 1024 * 1024) {
+          toast.error('Logo file size must be less than 2MB');
+          return;
+        }
+        
+        try {
+          logoUrl = await convertFileToBase64(organizationData.logo);
+          console.log('✅ Logo converted to base64, size:', Math.round(logoUrl.length / 1024), 'KB');
+          
+          // Additional check for base64 size (Firestore has a 1MB document limit)
+          if (logoUrl.length > 800 * 1024) { // 800KB limit for safety
+            toast.error('Logo is too large when processed. Please use a smaller image.');
+            return;
+          }
+        } catch (error) {
+          console.error('❌ Failed to convert logo to base64:', error);
+          toast.error('Failed to process logo image');
+          return;
+        }
       }
 
       // Create organization
@@ -151,7 +176,7 @@ const AdminSetup: React.FC = () => {
             <div className="dropzone-content">
               <div className="upload-icon">📁</div>
               <p>Drag & drop your logo here, or click to select</p>
-              <p className="upload-hint">PNG, JPG, GIF up to 5MB</p>
+              <p className="upload-hint">PNG, JPG, GIF, SVG up to 2MB</p>
             </div>
           )}
         </div>
