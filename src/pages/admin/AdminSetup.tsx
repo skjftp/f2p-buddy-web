@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { getFirestoreInstance } from '../../config/firebase';
 import { toast } from 'react-toastify';
 import { useDropzone } from 'react-dropzone';
@@ -198,9 +198,25 @@ const AdminSetup: React.FC = () => {
       
       console.log('✅ Organization created successfully:', orgRef.id);
 
-      // Update user with organization ID - use phone number as document ID
-      const userDocId = user.phoneNumber || user.uid;
-      console.log('📝 Updating user document:', userDocId, 'with orgId:', orgRef.id);
+      // Update user with organization ID - use the same logic as AuthContext
+      // First try phone number, then fallback to UID (matching AuthContext.tsx logic)
+      let userDocId = user.phoneNumber || user.uid;
+      
+      console.log('📝 Attempting to update user document:', userDocId, 'with orgId:', orgRef.id);
+      
+      // Check if phone-based document exists first
+      try {
+        const phoneDocRef = doc(dbInstance, 'users', user.phoneNumber || '');
+        const phoneDoc = await getDoc(phoneDocRef);
+        
+        if (!phoneDoc.exists() && user.phoneNumber) {
+          console.log('📞 Phone-based document not found, trying UID-based document');
+          userDocId = user.uid; // Fallback to UID
+        }
+      } catch (checkError) {
+        console.log('📞 Error checking phone document, using UID:', checkError);
+        userDocId = user.uid;
+      }
       
       try {
         await updateDoc(doc(dbInstance, 'users', userDocId), {
