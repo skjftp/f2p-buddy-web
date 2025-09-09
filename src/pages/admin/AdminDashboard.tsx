@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, getDocs } from 'firebase/firestore';
 import { getFirestoreInstance } from '../../config/firebase';
 import { Campaign } from '../../store/slices/campaignSlice';
 import NewCampaignWizard from '../../components/campaigns/CampaignWizard/NewCampaignWizard';
@@ -27,14 +27,79 @@ const AdminDashboard: React.FC = () => {
   const [showLeaderboardModal, setShowLeaderboardModal] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [organizationStats, setOrganizationStats] = useState({
-    totalEmployees: 2,
+    totalEmployees: 0,
     activeCampaigns: 0,
-    totalAchievements: 1,
+    totalAchievements: 0,
     completionRate: 0
   });
 
+  // Function to load real organization statistics
+  const loadOrganizationStats = async () => {
+    if (!organization?.id) return;
+    
+    try {
+      const dbInstance = await getFirestoreInstance();
+      
+      // Get total employees count
+      const usersQuery = query(
+        collection(dbInstance, 'users'),
+        where('organizationId', '==', organization.id)
+      );
+      const usersSnapshot = await getDocs(usersQuery);
+      const totalEmployees = usersSnapshot.size;
+      
+      // Get total achievements count
+      const achievementsQuery = query(
+        collection(dbInstance, 'userPerformances'),
+        where('organizationId', '==', organization.id)
+      );
+      const achievementsSnapshot = await getDocs(achievementsQuery);
+      
+      // Calculate total achievements and completion rate
+      let totalAchievements = 0;
+      let totalTargets = 0;
+      let totalAchieved = 0;
+      
+      achievementsSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.skuPerformances) {
+          Object.values(data.skuPerformances).forEach((perf: any) => {
+            if (perf.target && perf.achieved !== undefined) {
+              totalTargets += perf.target;
+              totalAchieved += perf.achieved;
+              if (perf.achieved >= perf.target) {
+                totalAchievements++;
+              }
+            }
+          });
+        }
+      });
+      
+      const completionRate = totalTargets > 0 ? (totalAchieved / totalTargets) * 100 : 0;
+      
+      console.log('📊 Calculated organization stats:', {
+        totalEmployees,
+        totalAchievements,
+        completionRate: completionRate.toFixed(1)
+      });
+      
+      setOrganizationStats(prev => ({
+        ...prev,
+        totalEmployees,
+        totalAchievements,
+        completionRate
+      }));
+      
+    } catch (error) {
+      console.error('Error loading organization stats:', error);
+    }
+  };
+
   useEffect(() => {
     if (!organization?.id) return;
+
+    // Load organization stats
+    loadOrganizationStats();
 
     const setupCampaignListener = async (): Promise<(() => void) | undefined> => {
       try {
