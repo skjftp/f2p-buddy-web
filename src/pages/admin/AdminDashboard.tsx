@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { collection, query, where, onSnapshot, orderBy, getDocs } from 'firebase/firestore';
@@ -34,7 +34,7 @@ const AdminDashboard: React.FC = () => {
   });
 
   // Function to load real organization statistics
-  const loadOrganizationStats = async () => {
+  const loadOrganizationStats = useCallback(async () => {
     if (!organization?.id) return;
     
     try {
@@ -93,7 +93,7 @@ const AdminDashboard: React.FC = () => {
     } catch (error) {
       console.error('Error loading organization stats:', error);
     }
-  };
+  }, [organization?.id]);
 
   useEffect(() => {
     if (!organization?.id) return;
@@ -148,7 +148,7 @@ const AdminDashboard: React.FC = () => {
         unsubscribe();
       }
     };
-  }, [organization?.id]);
+  }, [organization?.id, loadOrganizationStats]);
 
   const handleEditCampaign = (campaign: Campaign) => {
     setSelectedCampaign(campaign);
