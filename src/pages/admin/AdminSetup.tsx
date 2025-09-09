@@ -6,13 +6,53 @@ import { getFirestoreInstance } from '../../config/firebase';
 import { toast } from 'react-toastify';
 import { useDropzone } from 'react-dropzone';
 
-// Helper function to convert file to base64
-const convertFileToBase64 = (file: File): Promise<string> => {
+// Helper function to compress and convert image to base64
+const compressAndConvertToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
+    // For SVG files, just convert to base64 without compression
+    if (file.type === 'image/svg+xml') {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    // For other image types, compress using canvas
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = () => {
+      // Calculate new dimensions (max 200x200 for logos)
+      const maxSize = 200;
+      let { width, height } = img;
+      
+      if (width > height) {
+        if (width > maxSize) {
+          height = (height * maxSize) / width;
+          width = maxSize;
+        }
+      } else {
+        if (height > maxSize) {
+          width = (width * maxSize) / height;
+          height = maxSize;
+        }
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      // Draw and compress
+      ctx?.drawImage(img, 0, 0, width, height);
+      
+      // Convert to base64 with compression
+      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7); // 70% quality
+      resolve(compressedBase64);
+    };
+    
+    img.onerror = reject;
+    img.src = URL.createObjectURL(file);
   });
 };
 
@@ -56,7 +96,7 @@ const AdminSetup: React.FC = () => {
       'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.svg']
     },
     multiple: false,
-    maxSize: 2 * 1024 * 1024, // 2MB max for base64 storage
+    maxSize: 500 * 1024, // 500KB max for Firestore compatibility
   });
 
   const handleInputChange = (field: string, value: any) => {
@@ -94,25 +134,28 @@ const AdminSetup: React.FC = () => {
       
       // Convert logo to base64 data URL if provided (temporary CORS workaround)
       if (organizationData.logo) {
-        // Check file size (max 2MB for base64 storage)
-        if (organizationData.logo.size > 2 * 1024 * 1024) {
-          toast.error('Logo file size must be less than 2MB');
+        // Stricter file size limits for Firestore compatibility
+        const maxSize = organizationData.logo.type === 'image/svg+xml' ? 50 * 1024 : 500 * 1024; // 50KB for SVG, 500KB for others
+        if (organizationData.logo.size > maxSize) {
+          const sizeLimit = organizationData.logo.type === 'image/svg+xml' ? '50KB' : '500KB';
+          toast.error(`Logo file size must be less than ${sizeLimit}`);
           return;
         }
         
         try {
-          logoUrl = await convertFileToBase64(organizationData.logo);
-          console.log('✅ Logo converted to base64, size:', Math.round(logoUrl.length / 1024), 'KB');
+          logoUrl = await compressAndConvertToBase64(organizationData.logo);
+          console.log('✅ Logo processed, base64 size:', Math.round(logoUrl.length / 1024), 'KB');
           
-          // Additional check for base64 size (Firestore has a 1MB document limit)
-          if (logoUrl.length > 800 * 1024) { // 800KB limit for safety
-            toast.error('Logo is too large when processed. Please use a smaller image.');
-            return;
+          // Strict check for base64 size (Firestore document limit is ~1MB total)
+          if (logoUrl.length > 200 * 1024) { // 200KB limit for base64 to leave room for other fields
+            console.warn('Logo too large after processing, proceeding without logo');
+            toast.warning('Logo is too large. Organization will be created without logo. You can add a logo later.');
+            logoUrl = ''; // Skip the logo
           }
         } catch (error) {
-          console.error('❌ Failed to convert logo to base64:', error);
-          toast.error('Failed to process logo image');
-          return;
+          console.error('❌ Failed to process logo:', error);
+          toast.warning('Failed to process logo image. Organization will be created without logo.');
+          logoUrl = ''; // Proceed without logo
         }
       }
 
@@ -176,7 +219,7 @@ const AdminSetup: React.FC = () => {
             <div className="dropzone-content">
               <div className="upload-icon">📁</div>
               <p>Drag & drop your logo here, or click to select</p>
-              <p className="upload-hint">PNG, JPG, GIF, SVG up to 2MB</p>
+              <p className="upload-hint">PNG, JPG, GIF up to 500KB, SVG up to 50KB</p>
             </div>
           )}
         </div>
