@@ -161,30 +161,83 @@ const AdminSetup: React.FC = () => {
 
       // Create organization
       const dbInstance = await getFirestoreInstance();
-      const orgRef = await addDoc(collection(dbInstance, 'organizations'), {
+      console.log('🏢 Creating organization with data:', {
         name: organizationData.name,
-        logo: logoUrl,
-        primaryColor: organizationData.primaryColor,
-        secondaryColor: organizationData.secondaryColor,
         adminId: user.uid,
-        settings: organizationData.settings,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        logoSize: logoUrl.length,
+        settings: organizationData.settings
       });
+      
+      // Try creating organization (with fallback for serverTimestamp issues)
+      let orgRef;
+      try {
+        orgRef = await addDoc(collection(dbInstance, 'organizations'), {
+          name: organizationData.name,
+          logo: logoUrl,
+          primaryColor: organizationData.primaryColor,
+          secondaryColor: organizationData.secondaryColor,
+          adminId: user.uid,
+          settings: organizationData.settings,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+      } catch (timestampError: any) {
+        console.warn('⚠️ ServerTimestamp failed, trying with regular timestamp:', timestampError);
+        // Fallback without serverTimestamp
+        orgRef = await addDoc(collection(dbInstance, 'organizations'), {
+          name: organizationData.name,
+          logo: logoUrl,
+          primaryColor: organizationData.primaryColor,
+          secondaryColor: organizationData.secondaryColor,
+          adminId: user.uid,
+          settings: organizationData.settings,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+      }
+      
+      console.log('✅ Organization created successfully:', orgRef.id);
 
       // Update user with organization ID - use phone number as document ID
       const userDocId = user.phoneNumber || user.uid;
-      await updateDoc(doc(dbInstance, 'users', userDocId), {
-        organizationId: orgRef.id,
-        updatedAt: serverTimestamp()
-      });
+      console.log('📝 Updating user document:', userDocId, 'with orgId:', orgRef.id);
+      
+      try {
+        await updateDoc(doc(dbInstance, 'users', userDocId), {
+          organizationId: orgRef.id,
+          updatedAt: serverTimestamp()
+        });
+      } catch (updateError: any) {
+        console.warn('⚠️ User update with serverTimestamp failed, trying regular timestamp:', updateError);
+        await updateDoc(doc(dbInstance, 'users', userDocId), {
+          organizationId: orgRef.id,
+          updatedAt: new Date().toISOString()
+        });
+      }
+      
+      console.log('✅ User document updated successfully');
 
       toast.success('Organization created successfully!');
       navigate('/admin/dashboard');
       
     } catch (error: any) {
-      console.error('Error creating organization:', error);
-      toast.error('Failed to create organization. Please try again.');
+      console.error('❌ Error creating organization:', error);
+      console.error('Error details:', {
+        code: error.code,
+        message: error.message,
+        stack: error.stack
+      });
+      
+      // More specific error messages
+      if (error.code === 'permission-denied') {
+        toast.error('Permission denied. Please ensure you have admin privileges.');
+      } else if (error.code === 'invalid-argument') {
+        toast.error('Invalid data format. Please try without logo or with a smaller image.');
+      } else if (error.code === 'resource-exhausted') {
+        toast.error('Document too large. Please use a smaller logo.');
+      } else {
+        toast.error(`Failed to create organization: ${error.message}`);
+      }
     } finally {
       setLoading(false);
     }

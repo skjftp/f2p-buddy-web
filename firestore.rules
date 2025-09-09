@@ -61,8 +61,19 @@ service cloud.firestore {
       allow read, write: if isOrgAdmin(orgId);
       // Organization members can read their organization
       allow read: if belongsToOrg(orgId);
-      // Authenticated users can create organizations (for admin setup)
-      allow create: if isAuthenticated() && hasRole('admin');
+      // Allow authenticated users with admin role to create organizations (simplified check for first-time admin setup)
+      allow create: if isAuthenticated() && (
+        // Try phone number first (new system)
+        (exists(/databases/$(database)/documents/users/$(request.auth.token.phone_number)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.token.phone_number)).data.role == 'admin') ||
+        // Fallback to UID (old system) 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+        // Emergency fallback: allow creation if user document shows admin role and no organizationId yet
+        (exists(/databases/$(database)/documents/users/$(request.auth.token.phone_number)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.token.phone_number)).data.role == 'admin' &&
+         !('organizationId' in get(/databases/$(database)/documents/users/$(request.auth.token.phone_number)).data))
+      );
     }
 
     // Campaigns collection
