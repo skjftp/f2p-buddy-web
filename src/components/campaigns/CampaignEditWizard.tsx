@@ -1,11 +1,55 @@
 import React, { useState, useEffect } from 'react';
 import { doc, updateDoc, deleteDoc, serverTimestamp, getDoc, query, where, getDocs, collection } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { getFirestoreInstance, getStorageInstance } from '../../config/firebase';
+import { getFirestoreInstance } from '../../config/firebase';
 import { Campaign } from '../../store/slices/campaignSlice';
 import { toast } from 'react-toastify';
 import { useDropzone } from 'react-dropzone';
 import { useAuth } from '../../contexts/AuthContext';
+
+// Helper function to compress and convert image to base64 (same as AdminSetup)
+const compressAndConvertToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    // For SVG files, just convert to base64 without compression
+    if (file.type === 'image/svg+xml') {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    // For other image types, compress using canvas
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = () => {
+      // Calculate new dimensions (max 800x400 for campaign banners)
+      const maxWidth = 800;
+      const maxHeight = 400;
+      let { width, height } = img;
+      
+      if (width > maxWidth || height > maxHeight) {
+        const ratio = Math.min(maxWidth / width, maxHeight / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      // Draw and compress
+      ctx?.drawImage(img, 0, 0, width, height);
+      
+      // Convert to base64 with compression
+      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8); // 80% quality for banners
+      resolve(compressedBase64);
+    };
+    
+    img.onerror = reject;
+    img.src = URL.createObjectURL(file);
+  });
+};
 
 interface CampaignEditWizardProps {
   campaign: Campaign;
@@ -152,11 +196,31 @@ const CampaignEditWizard: React.FC<CampaignEditWizardProps> = ({ campaign, onClo
       let bannerUrl = campaign.banner || '';
       
       if (campaignData.banner) {
-        const storageInstance = await getStorageInstance();
-        const fileName = `${Date.now()}_${campaignData.banner.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-        const bannerRef = ref(storageInstance, `campaigns/${fileName}`);
-        const snapshot = await uploadBytes(bannerRef, campaignData.banner);
-        bannerUrl = await getDownloadURL(snapshot.ref);
+        console.log('📷 Processing campaign banner...');
+        
+        // File size limits for campaign banners (larger than logos)
+        const maxSize = campaignData.banner.type === 'image/svg+xml' ? 100 * 1024 : 1024 * 1024; // 100KB for SVG, 1MB for others
+        if (campaignData.banner.size > maxSize) {
+          const sizeLimit = campaignData.banner.type === 'image/svg+xml' ? '100KB' : '1MB';
+          toast.error(`Banner file size must be less than ${sizeLimit}`);
+          return;
+        }
+        
+        try {
+          bannerUrl = await compressAndConvertToBase64(campaignData.banner);
+          console.log('✅ Banner processed, base64 size:', Math.round(bannerUrl.length / 1024), 'KB');
+          
+          // Check base64 size for campaign banners (more lenient than logos)
+          if (bannerUrl.length > 400 * 1024) { // 400KB limit for base64
+            console.warn('Banner too large after processing, keeping existing banner');
+            toast.warning('Banner is too large. Campaign will be saved with existing banner.');
+            bannerUrl = campaign.banner || '';
+          }
+        } catch (error) {
+          console.error('❌ Failed to process banner:', error);
+          toast.warning('Failed to process banner image. Campaign will be saved with existing banner.');
+          bannerUrl = campaign.banner || '';
+        }
       }
 
       const updateData: any = {
