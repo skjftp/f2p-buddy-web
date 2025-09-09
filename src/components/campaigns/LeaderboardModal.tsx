@@ -32,7 +32,7 @@ interface LeaderboardEntry {
 const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ campaign, onClose }) => {
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterLevel, setFilterLevel] = useState<'panIndia' | 'region' | 'subRegion'>('panIndia');
+  const [filterLevel, setFilterLevel] = useState<number>(0); // 0 = All levels, 1 = Level 1, 2 = Level 2, etc.
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [hierarchyLevels, setHierarchyLevels] = useState<any[]>([]);
 
@@ -170,9 +170,10 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ campaign, onClose }
     loadLeaderboard();
   }, [campaign]);
 
-  // Simple filtering with debugging
+  // Dynamic filtering based on hierarchy levels
   const getFilteredLeaderboard = () => {
-    if (filterLevel === 'panIndia') {
+    if (filterLevel === 0) {
+      // All levels - show everyone
       return leaderboardData;
     }
     
@@ -219,53 +220,58 @@ const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ campaign, onClose }
             <button className="close-btn" onClick={onClose}>×</button>
           </div>
 
-          {/* Filter Controls */}
-          <div className="leaderboard-filters">
-            <div className="filter-tabs">
-              <button 
-                className={`filter-tab ${filterLevel === 'panIndia' ? 'active' : ''}`}
-                onClick={() => {
-                  setFilterLevel('panIndia');
-                  setSelectedRegion('');
-                }}
-              >
-                🇮🇳 Pan India
-              </button>
-              <button 
-                className={`filter-tab ${filterLevel === 'region' ? 'active' : ''}`}
-                onClick={() => setFilterLevel('region')}
-              >
-                🗺️ Regional
-              </button>
-              <button 
-                className={`filter-tab ${filterLevel === 'subRegion' ? 'active' : ''}`}
-                onClick={() => setFilterLevel('subRegion')}
-              >
-                📍 Sub-Regional
-              </button>
-            </div>
-
-            {/* Region Selector */}
-            {filterLevel !== 'panIndia' && (
-              <div className="region-selector">
-                <label>Select Region:</label>
-                <select 
-                  value={selectedRegion}
-                  onChange={(e) => setSelectedRegion(e.target.value)}
-                  className="region-dropdown"
+          {/* Filter Controls - Dynamic based on organization hierarchy */}
+          {/* Only show tabs if there are multiple hierarchy levels */}
+          {hierarchyLevels.length > 1 && (
+            <div className="leaderboard-filters">
+              <div className="filter-tabs">
+                {/* All Levels Tab (equivalent to Pan India) */}
+                <button 
+                  className={`filter-tab ${filterLevel === 0 ? 'active' : ''}`}
+                  onClick={() => {
+                    setFilterLevel(0);
+                    setSelectedRegion('');
+                  }}
                 >
-                  <option value="">All Regions</option>
-                  {hierarchyLevels.map(level => 
-                    level.items.map((item: any) => (
-                      <option key={item.id} value={item.id}>
-                        {item.name} ({level.name})
-                      </option>
-                    ))
-                  )}
-                </select>
+                  🏆 All Levels
+                </button>
+                
+                {/* Dynamic Level Tabs */}
+                {hierarchyLevels.map((level, index) => (
+                  <button 
+                    key={level.id}
+                    className={`filter-tab ${filterLevel === level.level ? 'active' : ''}`}
+                    onClick={() => setFilterLevel(level.level)}
+                  >
+                    📊 Level {level.level}
+                  </button>
+                ))}
               </div>
-            )}
-          </div>
+
+              {/* Region Selector */}
+              {filterLevel !== 0 && (
+                <div className="region-selector">
+                  <label>Select Region:</label>
+                  <select 
+                    value={selectedRegion}
+                    onChange={(e) => setSelectedRegion(e.target.value)}
+                    className="region-dropdown"
+                  >
+                    <option value="">All Regions at this Level</option>
+                    {hierarchyLevels
+                      .filter(level => level.level === filterLevel)
+                      .map(level => 
+                        level.items.map((item: any) => (
+                          <option key={item.id} value={item.id}>
+                            {item.name}
+                          </option>
+                        ))
+                      )}
+                  </select>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="leaderboard-content">
             {loading ? (
