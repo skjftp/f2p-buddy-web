@@ -297,8 +297,18 @@ const AdminDashboard: React.FC = () => {
     );
   }
 
+  // Debug logging for dashboard state
+  console.log('📊 AdminDashboard render state:', {
+    authLoading,
+    hasUser: !!user,
+    hasOrganization: !!organization,
+    organizationId: user?.organizationId,
+    loading
+  });
+
   // Show loading while auth is still loading
   if (authLoading) {
+    console.log('🔄 Dashboard showing auth loading spinner');
     return (
       <div className="loading-container">
         <div className="spinner"></div>

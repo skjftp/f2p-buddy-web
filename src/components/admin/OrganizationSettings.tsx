@@ -1,11 +1,60 @@
 import React, { useState, useEffect } from 'react';
 import { doc, updateDoc, serverTimestamp, getDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { getFirestoreInstance, getStorageInstance } from '../../config/firebase';
+import { getFirestoreInstance } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import { useDropzone } from 'react-dropzone';
 import DesignationManager from './DesignationManager';
+
+// Helper function to compress and convert image to base64 (same as AdminSetup)
+const compressAndConvertToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    // For SVG files, just convert to base64 without compression
+    if (file.type === 'image/svg+xml') {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    // For other image types, compress using canvas
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = () => {
+      // Calculate new dimensions (max 200x200 for logos)
+      const maxSize = 200;
+      let { width, height } = img;
+      
+      if (width > height) {
+        if (width > maxSize) {
+          height = (height * maxSize) / width;
+          width = maxSize;
+        }
+      } else {
+        if (height > maxSize) {
+          width = (width * maxSize) / height;
+          height = maxSize;
+        }
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      // Draw and compress
+      ctx?.drawImage(img, 0, 0, width, height);
+      
+      // Convert to base64 with compression
+      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7); // 70% quality
+      resolve(compressedBase64);
+    };
+    
+    img.onerror = reject;
+    img.src = URL.createObjectURL(file);
+  });
+};
 
 interface HierarchyLevel {
   id: string;
@@ -142,9 +191,9 @@ const OrganizationSettings: React.FC = () => {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: onLogoDrop,
-    accept: { 'image/*': ['.png', '.jpg', '.jpeg'] },
+    accept: { 'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.svg'] },
     multiple: false,
-    maxSize: 5 * 1024 * 1024,
+    maxSize: 500 * 1024, // 500KB max for Firestore compatibility
   });
 
   const addHierarchyLevel = () => {
@@ -248,13 +297,31 @@ const OrganizationSettings: React.FC = () => {
       let logoUrl = organization.logo || '';
       
       if (basicInfo.logo) {
-        console.log('📷 Uploading new logo...');
-        const storageInstance = await getStorageInstance();
-        const fileName = `logo_${Date.now()}_${basicInfo.logo.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-        const logoRef = ref(storageInstance, `organizations/${fileName}`);
-        const snapshot = await uploadBytes(logoRef, basicInfo.logo);
-        logoUrl = await getDownloadURL(snapshot.ref);
-        console.log('✅ Logo uploaded:', logoUrl);
+        console.log('📷 Processing new logo...');
+        
+        // Stricter file size limits for Firestore compatibility
+        const maxSize = basicInfo.logo.type === 'image/svg+xml' ? 50 * 1024 : 500 * 1024; // 50KB for SVG, 500KB for others
+        if (basicInfo.logo.size > maxSize) {
+          const sizeLimit = basicInfo.logo.type === 'image/svg+xml' ? '50KB' : '500KB';
+          toast.error(`Logo file size must be less than ${sizeLimit}`);
+          return;
+        }
+        
+        try {
+          logoUrl = await compressAndConvertToBase64(basicInfo.logo);
+          console.log('✅ Logo processed, base64 size:', Math.round(logoUrl.length / 1024), 'KB');
+          
+          // Strict check for base64 size (Firestore document limit is ~1MB total)
+          if (logoUrl.length > 200 * 1024) { // 200KB limit for base64 to leave room for other fields
+            console.warn('Logo too large after processing, keeping existing logo');
+            toast.warning('Logo is too large. Organization settings will be saved with existing logo.');
+            logoUrl = organization.logo || ''; // Keep existing logo
+          }
+        } catch (error) {
+          console.error('❌ Failed to process logo:', error);
+          toast.warning('Failed to process logo image. Organization settings will be saved with existing logo.');
+          logoUrl = organization.logo || ''; // Keep existing logo
+        }
       }
 
       // Clean data for Firestore (remove any undefined values)
@@ -444,6 +511,9 @@ const OrganizationSettings: React.FC = () => {
                   <div style={{textAlign: 'center', padding: '30px'}}>
                     <div style={{fontSize: '32px', marginBottom: '8px'}}>🏢</div>
                     <p>Drop logo here or click to select</p>
+                    <p style={{fontSize: '12px', color: '#666', marginTop: '4px'}}>
+                      PNG, JPG, GIF up to 500KB, SVG up to 50KB
+                    </p>
                   </div>
                 )}
               </div>

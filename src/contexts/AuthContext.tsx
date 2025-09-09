@@ -156,6 +156,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
                 // Load organization data if user has organizationId
                 if (userData.organizationId) {
+                  console.log('🏢 Loading organization:', userData.organizationId);
                   try {
                     const orgDocRef = doc(dbInstance, 'organizations', userData.organizationId);
                     const orgDoc = await getDoc(orgDocRef);
@@ -164,17 +165,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         id: orgDoc.id,
                         ...orgDoc.data(),
                       };
+                      console.log('✅ Organization loaded successfully:', {
+                        id: orgData.id,
+                        name: orgData.name,
+                        adminId: orgData.adminId
+                      });
                       dispatch(setOrganization(orgData as any));
                       
                       // Save both user and org state to localStorage
                       saveAuthState(userStateData, orgData);
+                    } else {
+                      console.error('❌ Organization document not found:', userData.organizationId);
+                      // Save user state without org
+                      saveAuthState(userStateData);
                     }
                   } catch (orgError) {
-                    console.warn('Could not load organization:', orgError);
+                    console.error('❌ Could not load organization:', orgError);
                     // Save user state even if org loading fails
                     saveAuthState(userStateData);
                   }
                 } else {
+                  console.log('📝 User has no organizationId, skipping org loading');
                   // Save user state without org
                   saveAuthState(userStateData);
                 }
