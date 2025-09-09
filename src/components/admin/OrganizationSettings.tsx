@@ -43,11 +43,25 @@ const compressAndConvertToBase64 = (file: File): Promise<string> => {
       canvas.width = width;
       canvas.height = height;
       
-      // Draw and compress
+      // Fill with white background for JPEG, preserve transparency for PNG
+      if (file.type === 'image/png' || file.type === 'image/gif') {
+        // Keep transparent background for PNG/GIF
+        ctx?.clearRect(0, 0, width, height);
+      } else {
+        // White background for JPEG
+        if (ctx) {
+          ctx.fillStyle = 'white';
+          ctx.fillRect(0, 0, width, height);
+        }
+      }
+      
+      // Draw image
       ctx?.drawImage(img, 0, 0, width, height);
       
-      // Convert to base64 with compression
-      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7); // 70% quality
+      // Use appropriate format based on original file type
+      const format = (file.type === 'image/png' || file.type === 'image/gif') ? 'image/png' : 'image/jpeg';
+      const quality = format === 'image/jpeg' ? 0.7 : undefined;
+      const compressedBase64 = canvas.toDataURL(format, quality);
       resolve(compressedBase64);
     };
     
