@@ -7,6 +7,7 @@ import { useDropzone } from 'react-dropzone';
 import DesignationManager from './DesignationManager';
 import HierarchyImporter from './HierarchyImporter';
 import BulkHierarchyCreator from './BulkHierarchyCreator';
+import ConfirmDialog from '../common/ConfirmDialog';
 
 // Helper function to compress and convert image to base64 (same as AdminSetup)
 const compressAndConvertToBase64 = (file: File): Promise<string> => {
@@ -145,6 +146,7 @@ const OrganizationSettings: React.FC = () => {
   const [showDesignationManager, setShowDesignationManager] = useState(false);
   const [showHierarchyImporter, setShowHierarchyImporter] = useState(false);
   const [showBulkCreator, setShowBulkCreator] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   
   // Load existing organization data on component mount
   useEffect(() => {
@@ -264,6 +266,75 @@ const OrganizationSettings: React.FC = () => {
   const handleHierarchyImport = (importedHierarchy: HierarchyLevel[]) => {
     setHierarchyLevels(importedHierarchy);
     toast.success('Hierarchy imported successfully! Remember to save your settings.');
+  };
+
+  const handleClearHierarchy = () => {
+    setShowClearConfirm(true);
+  };
+
+  const confirmClearHierarchy = () => {
+    setHierarchyLevels([
+      { id: '1', name: 'Region', level: 1, items: [] },
+      { id: '2', name: 'Cluster', level: 2, items: [] },
+      { id: '3', name: 'Branch', level: 3, items: [] },
+      { id: '4', name: 'Channel', level: 4, items: [] }
+    ]);
+    setShowClearConfirm(false);
+    toast.success('Hierarchy cleared successfully! Remember to save your settings to persist this change.');
+  };
+
+  const getTotalHierarchyItems = () => {
+    return hierarchyLevels.reduce((total, level) => total + level.items.length, 0);
+  };
+
+  const handleExportHierarchy = () => {
+    const csvContent = generateCSVFromHierarchy();
+    navigator.clipboard.writeText(csvContent).then(() => {
+      toast.success('Hierarchy copied to clipboard as CSV format!');
+    }).catch(() => {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = csvContent;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      toast.success('Hierarchy copied to clipboard as CSV format!');
+    });
+  };
+
+  const generateCSVFromHierarchy = () => {
+    const lines = ['Region,Cluster,Branch,Channel'];
+    
+    hierarchyLevels[0]?.items.forEach(region => {
+      const regionClusters = hierarchyLevels[1]?.items.filter(cluster => cluster.parentId === region.id) || [];
+      
+      regionClusters.forEach(cluster => {
+        const clusterBranches = hierarchyLevels[2]?.items.filter(branch => branch.parentId === cluster.id) || [];
+        
+        clusterBranches.forEach(branch => {
+          const branchChannels = hierarchyLevels[3]?.items.filter(channel => channel.parentId === branch.id) || [];
+          
+          if (branchChannels.length > 0) {
+            branchChannels.forEach(channel => {
+              lines.push(`${region.name},${cluster.name},${branch.name},${channel.name}`);
+            });
+          } else {
+            lines.push(`${region.name},${cluster.name},${branch.name},`);
+          }
+        });
+        
+        if (clusterBranches.length === 0) {
+          lines.push(`${region.name},${cluster.name},,`);
+        }
+      });
+      
+      if (regionClusters.length === 0) {
+        lines.push(`${region.name},,,`);
+      }
+    });
+    
+    return lines.join('\n');
   };
 
   const addSku = () => {
@@ -596,6 +667,16 @@ const OrganizationSettings: React.FC = () => {
                 <button className="btn-secondary" onClick={addHierarchyLevel}>
                   + Add Level
                 </button>
+                {hierarchyLevels.some(level => level.items.length > 0) && (
+                  <>
+                    <button className="btn-secondary" onClick={handleExportHierarchy} title="Copy hierarchy as CSV">
+                      📋 Copy CSV
+                    </button>
+                    <button className="btn-danger" onClick={handleClearHierarchy} title="Delete entire hierarchy">
+                      🗑️ Clear All
+                    </button>
+                  </>
+                )}
               </div>
             </div>
             <p className="section-description">
@@ -907,10 +988,22 @@ const OrganizationSettings: React.FC = () => {
             <BulkHierarchyCreator
               onGenerate={handleHierarchyImport}
               onClose={() => setShowBulkCreator(false)}
+              existingHierarchyCount={getTotalHierarchyItems()}
             />
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={showClearConfirm}
+        type="danger"
+        title="Delete Entire Hierarchy"
+        message={`Are you sure you want to delete the entire organizational hierarchy? This will remove all ${getTotalHierarchyItems()} items including regions, clusters, branches, and channels. This action cannot be undone once you save the settings.`}
+        confirmText="Delete All"
+        cancelText="Keep Hierarchy"
+        onConfirm={confirmClearHierarchy}
+        onCancel={() => setShowClearConfirm(false)}
+      />
     </div>
   );
 };

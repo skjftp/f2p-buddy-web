@@ -18,9 +18,10 @@ interface HierarchyItem {
 interface BulkHierarchyCreatorProps {
   onGenerate: (hierarchyLevels: HierarchyLevel[]) => void;
   onClose: () => void;
+  existingHierarchyCount?: number;
 }
 
-const BulkHierarchyCreator: React.FC<BulkHierarchyCreatorProps> = ({ onGenerate, onClose }) => {
+const BulkHierarchyCreator: React.FC<BulkHierarchyCreatorProps> = ({ onGenerate, onClose, existingHierarchyCount = 0 }) => {
   const [config, setConfig] = useState({
     regions: ['North', 'South', 'East', 'West'],
     clustersPerRegion: 3,
@@ -64,6 +65,20 @@ const BulkHierarchyCreator: React.FC<BulkHierarchyCreatorProps> = ({ onGenerate,
   };
 
   const generateHierarchy = () => {
+    // Show confirmation if there's existing hierarchy
+    if (existingHierarchyCount > 0) {
+      const confirmed = window.confirm(
+        `⚠️ Replace Existing Hierarchy?\n\n` +
+        `This will replace your current hierarchy (${existingHierarchyCount} items) ` +
+        `with the new generated hierarchy (${previewCount.total} items).\n\n` +
+        `Click OK to proceed or Cancel to keep the existing hierarchy.`
+      );
+      
+      if (!confirmed) {
+        return;
+      }
+    }
+    
     setGenerating(true);
     
     try {
