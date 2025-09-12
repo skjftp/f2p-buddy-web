@@ -5,6 +5,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import { useDropzone } from 'react-dropzone';
 import DesignationManager from './DesignationManager';
+import HierarchyImporter from './HierarchyImporter';
+import BulkHierarchyCreator from './BulkHierarchyCreator';
 
 // Helper function to compress and convert image to base64 (same as AdminSetup)
 const compressAndConvertToBase64 = (file: File): Promise<string> => {
@@ -141,6 +143,8 @@ const OrganizationSettings: React.FC = () => {
   const [selectedLevel, setSelectedLevel] = useState(1);
   const [selectedParent, setSelectedParent] = useState('');
   const [showDesignationManager, setShowDesignationManager] = useState(false);
+  const [showHierarchyImporter, setShowHierarchyImporter] = useState(false);
+  const [showBulkCreator, setShowBulkCreator] = useState(false);
   
   // Load existing organization data on component mount
   useEffect(() => {
@@ -255,6 +259,11 @@ const OrganizationSettings: React.FC = () => {
 
   const handleDesignationUpdate = (updatedDesignations: Designation[]) => {
     setDesignations(updatedDesignations);
+  };
+
+  const handleHierarchyImport = (importedHierarchy: HierarchyLevel[]) => {
+    setHierarchyLevels(importedHierarchy);
+    toast.success('Hierarchy imported successfully! Remember to save your settings.');
   };
 
   const addSku = () => {
@@ -577,12 +586,20 @@ const OrganizationSettings: React.FC = () => {
           <div className="hierarchy-settings">
             <div className="section-header">
               <h3>Regional Hierarchy Setup</h3>
-              <button className="btn-secondary" onClick={addHierarchyLevel}>
-                + Add Level
-              </button>
+              <div className="hierarchy-actions">
+                <button className="btn" onClick={() => setShowBulkCreator(true)}>
+                  🚀 Bulk Generate
+                </button>
+                <button className="btn" onClick={() => setShowHierarchyImporter(true)}>
+                  📥 Import CSV
+                </button>
+                <button className="btn-secondary" onClick={addHierarchyLevel}>
+                  + Add Level
+                </button>
+              </div>
             </div>
             <p className="section-description">
-              Create your organization's regional breakdown. Start with top level (e.g., Zones) and work down to smaller areas.
+              Create your organization's regional breakdown. Import from CSV for bulk operations or manually add levels. Start with top level (e.g., Zones) and work down to smaller areas.
             </p>
 
             <div className="hierarchy-builder">
@@ -868,6 +885,28 @@ const OrganizationSettings: React.FC = () => {
               designations={designations}
               onUpdate={handleDesignationUpdate}
               onClose={() => setShowDesignationManager(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {showHierarchyImporter && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <HierarchyImporter
+              onImport={handleHierarchyImport}
+              onClose={() => setShowHierarchyImporter(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {showBulkCreator && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <BulkHierarchyCreator
+              onGenerate={handleHierarchyImport}
+              onClose={() => setShowBulkCreator(false)}
             />
           </div>
         </div>
